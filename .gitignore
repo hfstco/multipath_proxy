@@ -1,0 +1,6 @@
+# Project exclude paths
+/cmake-build-debug/
+/cmake-build-debug-client1/
+/cmake-build-debug-left/
+/cmake-build-debug-right/
+/cmake-build-debug-server1/

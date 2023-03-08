@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="client1 (a253301f-d224-4ae4-8ea4-60bec3e4cf99)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.gbAigk" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-client1" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-left" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-right" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-server1" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="left (85fa0d94-a10c-443d-922b-303ed35b9a20)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.llIBgg" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-client1" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-left" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-right" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-server1" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="right (4abc6d86-cd7f-49ca-8d3a-06791ebabf45)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.flijif" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-client1" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-left" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-right" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-server1" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="server1 (f9804143-43ca-41cd-9613-97902b80f360)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.cJHNbB" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-client1" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-left" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-right" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-server1" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
