@@ -80,10 +80,10 @@ namespace net {
         }
 
         std::vector<char> Read() {
-            std::vector<char> buf(1000); // TODO buffer size
+            std::vector<char> buf(1024); // TODO buffer size
             int bytes_read = 0;
 
-            if ((bytes_read = read(this->fd_, &buf[0], 1000)) < 0) { // TODO buffer size
+            if ((bytes_read = read(this->fd_, &buf[0], buf.size())) < 0) { // TODO buffer size
                 throw SocketError("Read error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
@@ -95,26 +95,39 @@ namespace net {
         }
 
         void Write(std::vector<char> buf) {
-            if (write(this->fd_, &buf[0], buf.size()) < 0) { // TODO check bytes written
-                throw SocketError("Write error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+            int bytes_written = 0;
+
+            while (bytes_written < buf.size()) {
+                int bytes_returned = 0; // TODO combine =+ possible?
+                if ((bytes_returned = write(this->fd_, &buf[bytes_written], buf.size() - bytes_written)) < 0) { // TODO check bytes written
+                    throw SocketError("Write error." + std::string(" errno=") + std::to_string(errno) + " (" +
+                                      std::string(strerror(errno)) + ")");
+                }
+                bytes_written += bytes_returned;
             }
 
             LOG(INFO) << "Write() S[fd=" << this->fd_ << "]";
         }
 
         void Send(std::vector<char> buf, int flags) {
-            if(send(this->fd_, &buf[0], buf.size(), flags) < 0) { // TODO check bytes written
-                throw SocketError("Send error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+            int bytes_sent = 0;
+
+            while (bytes_sent < buf.size()) {
+                int bytes_returned = 0;
+                if((bytes_returned = send(this->fd_, &buf[bytes_sent], buf.size() - bytes_sent, flags)) < 0) { // TODO check bytes written
+                    throw SocketError("Send error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                }
+                bytes_sent += bytes_returned;
             }
 
             LOG(INFO) << "Send() S[fd=" << this->fd_ << "]";
         }
 
         std::vector<char> Recv(int flags) {
-            std::vector<char> buf(1000); // TODO buffer size
+            std::vector<char> buf(1024); // TODO buffer size
             int bytes_read = 0;
 
-            if ((bytes_read = recv(this->fd_, &buf[0], 1000, flags)) < 0) { // TODO buffer size
+            if ((bytes_read = recv(this->fd_, &buf[0], buf.size(), flags)) < 0) { // TODO buffer size
                 throw SocketError("Recv error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
@@ -126,8 +139,14 @@ namespace net {
         }
 
         void SendTo(std::vector<char> buf, int flags, SA dest_addr) {
-            if (sendto(this->fd_, &buf[0], buf.size(), flags, (struct sockaddr *) &dest_addr, sizeof(dest_addr)) < 0) { // TODO check bytes written
-                throw SocketError("SendTo error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+            int bytes_sent = 0;
+
+            while (bytes_sent < buf.size()) {
+                int bytes_returned = 0;
+                if ((bytes_returned = sendto(this->fd_, &buf[bytes_sent], buf.size() - bytes_sent, flags, (struct sockaddr *) &dest_addr, sizeof(dest_addr))) < 0) { // TODO check bytes written
+                    throw SocketError("SendTo error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                }
+                bytes_sent += bytes_returned;
             }
 
             LOG(INFO) << "SendTo() S[fd=" << this->fd_ << "]";
