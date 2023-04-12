@@ -8,7 +8,7 @@
 
 TEST(utils_Utils, split_ip_and_port) {
     std::string str1("127.0.0.1:4321");
-    auto ipandport = mpp::utils::splitIPandPort(str1);
+    auto ipandport = utils::splitIPandPort(str1);
 
     EXPECT_EQ(ipandport.ip, "127.0.0.1");
     EXPECT_EQ(ipandport.port, 4321);
