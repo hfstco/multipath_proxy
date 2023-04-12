@@ -1,7 +1,11 @@
-FROM alpine:latest
+FROM ubuntu:latest
 
-RUN apk add --update openssh gcc g++ clang gdb cmake make ninja autoconf automake dos2unix tar rsync python3 \
-  && rm  -rf /tmp/* /var/cache/apk/*
+# update
+RUN apt update -y
+RUN apt upgrade
+
+# ssh
+RUN apt install -y openssh-server
 
 RUN echo "root:root" | chpasswd
 
@@ -20,10 +24,25 @@ RUN ( \
 	echo 'Subsystem sftp /usr/lib/ssh/sftp-server'; \
   ) > /etc/sshd_config_mpp
 
-RUN /usr/bin/ssh-keygen -A
+RUN ssh-keygen -A
 RUN ssh-keygen -t rsa -b 4096 -f  /etc/ssh/ssh_host_key
+RUN mkdir -p /run/sshd
 
-RUN apk add glog-dev libunwind-dev ncurses-dev gtest-dev
+# EXPOSE 22
 
-EXPOSE 22
-CMD ["/usr/sbin/sshd", "-D", "-f", "/etc/sshd_config_mpp"]
+# wireshark
+RUN DEBIAN_FRONTEND=noninteractive apt install -y wireshark
+
+# network configuration
+RUN apt install -y net-tools iputils-ping iptables iproute2
+
+# iperf
+RUN apt install -y git build-essential
+
+WORKDIR /root
+RUN git clone https://github.com/esnet/iperf.git
+WORKDIR /root/iperf
+RUN ./configure
+RUN make
+RUN make install
+RUN ldconfig

@@ -5,68 +5,49 @@
 #ifndef MULTIPATH_PROXY_CONNECTION_H
 #define MULTIPATH_PROXY_CONNECTION_H
 
-#include "Socket.h"
-#include "SockAddr.h"
+#include "TcpSocket.h"
+#include "UdpSocket.h"
 
-namespace mpp::net {
+namespace net {
 
     template <class S, class SA>
-    class Connection : protected S, protected SA {
+    class Listener;
+
+    template <class S, class SA>
+    class Connection : public S {
+        friend Listener<S, SA>;
+
     public:
-        void Connect(SA sockaddr) {
-            S::Connect(sockaddr);
-        }
+        std::vector<char> Recv(int flags) {
+            return S::Recv(flags);
+        };
 
-        std::vector<char> Read() {
-            return S::Read();
-        }
+        void Send(std::vector<char> buf, int flags) {
+            S::Send(buf, flags);
+        };
 
-        void Write(std::vector<char> buffer) {
-            S::Write(buffer);
-        }
-
-        virtual ~Connection() {
+        void Close() {
             S::Close();
         }
 
     protected:
-        Connection(SA sockaddr) : SA(sockaddr) {
+        Connection(S socket) : S(socket) {}
+
+        Connection(SA peeraddr) : Connection() {
+            S::Connect(peeraddr);
+        }
+
+        Connection(SA peeraddr, SA sockaddr) : Connection() {
+            S::Bind(peeraddr);
+            S::Connect(peeraddr);
+        };
+
+    private:
+        Connection() {
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
-            S::Bind((SA)*this);
         };
     };
 
-    namespace ipv4 {
-
-        class TcpConnection : protected Connection<TcpSocket, SockAddr_In> {
-        public:
-            TcpConnection(SockAddr_In sockaddr) : Connection<TcpSocket, SockAddr_In>(sockaddr) {}
-
-            void Connect(SockAddr_In sockaddr) { Connection<TcpSocket, SockAddr_In>::Connect(sockaddr); }
-
-            void Accept() { Connection<TcpSocket, SockAddr_In>::Accept(); }
-
-            std::vector<char> Read() { return Connection<TcpSocket, SockAddr_In>::Read(); }
-
-            void Write(std::vector<char> buffer) { Connection<TcpSocket, SockAddr_In>::Write(buffer); }
-        };
-    }
-
-    namespace ipv6 {
-
-        class TcpConnection : protected Connection<mpp::net::ipv6::TcpSocket, SockAddr_In6> {
-        public:
-            TcpConnection(SockAddr_In6 sockaddr) : Connection<TcpSocket, SockAddr_In6>(sockaddr) {};
-
-            void Connect(SockAddr_In6 sockaddr) { Connection<TcpSocket, SockAddr_In6>::Connect(sockaddr); }
-
-            void Accept() { Connection<TcpSocket, SockAddr_In6>::Accept(); }
-
-            std::vector<char> Read() { return Connection<TcpSocket, SockAddr_In6>::Read(); }
-
-            void Write(std::vector<char> buffer) { Connection<TcpSocket, SockAddr_In6>::Write(buffer); }
-        };
-    }
 }
 
 

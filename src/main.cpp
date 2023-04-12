@@ -1,25 +1,25 @@
-#include "gui/gui.h"
-#include <thread>
-#include "glog/logging.h"
-#include "log/log.h"
-#include "args.h"
+//
+// Created by Matthias Hofstätter on 04.04.23.
+//
 
-namespace mpp {
-    namespace main {
-        void init(int argc, char *argv[]) {
-            mpp::log::init();
-            mpp::args::init(argc, argv);
+#include "base/Local.h"
+#include "base/Remote.h"
+#include "args/Args.h"
+#include "log/Log.h"
 
-            LOG(INFO) << "Starting multipath_proxy...";
+int main(int argc, char *argv[]) {
+    // init logging
+    log::init();
 
-            if(mpp::gui::ENABLED) {
-                mpp::gui::init();
-                mpp::gui::start();
-            }
+    // init arguments
+    args::init(argc, argv);
 
-            if(mpp::gui::ENABLED) {
-                mpp::gui::stop();
-            }
-        }
+    // init mpp
+    if(args::MODE == args::mode::REMOTE) {
+
+    } else {
+
     }
+
+    return 0;
 }

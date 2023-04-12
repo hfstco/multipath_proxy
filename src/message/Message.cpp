@@ -3,3 +3,9 @@
 //
 
 #include "Message.h"
+
+namespace message {
+
+
+
+} // message

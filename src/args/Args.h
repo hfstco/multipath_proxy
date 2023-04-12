@@ -5,17 +5,23 @@
 #ifndef MULTIPATH_PROXY_ARGS_H
 #define MULTIPATH_PROXY_ARGS_H
 
+#include <string>
 
-namespace mpp::args {
+
+namespace args {
+
     enum class mode : bool {
-        LEFT = false,
-        RIGHT = true
+        LOCAL = false,
+        REMOTE = true
     };
 
-    extern mode PROG;
+    inline mode MODE;
+    inline std::string TER;
+    inline std::string SAT;
 
     void init(int argc, char *argv[]);
-}
+
+} // mpp::args
 
 
 #endif //MULTIPATH_PROXY_ARGS_H

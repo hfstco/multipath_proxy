@@ -9,7 +9,7 @@
 #include <ncurses.h>
 #include <chrono>
 
-namespace mpp::gui {
+namespace gui {
     extern bool ENABLED;
     extern int TERMINAL_WIDTH;
     extern int TERMINAL_HEIGHT;

@@ -5,12 +5,12 @@
 #include <atomic>
 #include <thread>
 #include <iostream>
-#include "gui.h"
+#include "Gui.h"
 #include "glog/logging.h"
-#include "../log/log.h"
+#include "../log/Log.h"
 #include <fstream>
 
-namespace mpp::gui {
+namespace gui {
     bool ENABLED = false;
     int TERMINAL_WIDTH = 80;
     int TERMINAL_HEIGHT = 24;
@@ -30,7 +30,7 @@ namespace mpp::gui {
         LOG(INFO) << "Starting gui...";
 
         running.store(true, std::memory_order_release);
-        tScreen = std::thread(&mpp::gui::run);
+        tScreen = std::thread(&gui::run);
     }
 
     void run() {
@@ -38,13 +38,13 @@ namespace mpp::gui {
 
         while(running.load(std::memory_order_acquire)) {
             clear();
-            mpp::gui::display();
+            gui::display();
             refresh();
 
             bool frame = second_frame.load(std::memory_order_acquire);
             second_frame.store(!frame, std::memory_order_release);
 
-            std::this_thread::sleep_for(mpp::gui::TERMINAL_REFRESH_RATE);
+            std::this_thread::sleep_for(gui::TERMINAL_REFRESH_RATE);
         }
     }
 
@@ -63,7 +63,7 @@ namespace mpp::gui {
         for (int i = 0; i < 3; i++) {
             display_connection();
         }
-        display_log(mpp::gui::TERMINAL_HEIGHT - 9);
+        display_log(gui::TERMINAL_HEIGHT - 9);
         std::cout << std::flush;
     }
 
@@ -75,13 +75,13 @@ namespace mpp::gui {
         int packets_out = rand();
 
         std::string metrics = "in: " + std::to_string(datarate_in) + " out: " + std::to_string(datarate_out) + " pkt_in: " + std::to_string(packets_in) + " pkt_out: " + std::to_string(packets_out);
-        printw((std::string((mpp::gui::TERMINAL_WIDTH - conname.length()) / 2, ' ') + conname + '\n').c_str());
+        printw((std::string((gui::TERMINAL_WIDTH - conname.length()) / 2, ' ') + conname + '\n').c_str());
         if(second_frame.load(std::memory_order_acquire)) {
             printw("LOCAL     <- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - >    REMOTE\n");
         } else {
             printw("LOCAL     < - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ->    REMOTE\n");
         }
-        printw((std::string((mpp::gui::TERMINAL_WIDTH - metrics.length()) / 2, ' ') + metrics + '\n').c_str());
+        printw((std::string((gui::TERMINAL_WIDTH - metrics.length()) / 2, ' ') + metrics + '\n').c_str());
     }
 
     void display_log(int lines_max) {

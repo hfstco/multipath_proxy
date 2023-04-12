@@ -8,7 +8,7 @@
 #include <string>
 
 
-namespace mpp::log {
+namespace log {
     extern std::string FILE;
 
     void init();
