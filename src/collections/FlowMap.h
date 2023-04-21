@@ -14,6 +14,10 @@ namespace collections {
     public:
         FlowMap() : std::unordered_map<std::string, net::Flow *>() {}
 
+        int size() {
+            return std::unordered_map<std::string, net::Flow *>::size();
+        }
+
         bool contains(std::string key) {
             return std::unordered_map<std::string, net::Flow *>::contains(key);
         }
@@ -32,7 +36,6 @@ namespace collections {
         }
 
         //erase
-
     };
 
 } // collections

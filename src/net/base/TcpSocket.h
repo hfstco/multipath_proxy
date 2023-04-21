@@ -35,7 +35,7 @@ namespace net {
 
             ssize_t Recv(unsigned char *buf, size_t size, int flags);
 
-            short Poll(short revents, int nfds, int timeout = 0);
+            short Poll(short events, int timeout = 0);
 
             SockAddr_In GetSockName();
 
@@ -80,7 +80,7 @@ namespace net {
 
             ssize_t Recv(unsigned char *buf, size_t size, int flags);
 
-            short Poll(short revents, int nfds, int timeout = 0);
+            short Poll(short revents, int timeout = 0);
 
             SockAddr_In6 GetSockName();
 

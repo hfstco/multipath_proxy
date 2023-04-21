@@ -154,16 +154,18 @@ namespace net {
             return bytes_read;
         }
 
-        short Poll(short revents, int nfds, int timeout = 0) {
-            pollfd poll_fd[2];
+        short Poll(short events, int timeout = 0) {
+            pollfd poll_fd[1];
             poll_fd[0].fd = this->fd_;
-            poll_fd[0].revents = revents;
+            poll_fd[0].events = events;
 
-            if (poll(poll_fd, nfds, timeout) < 0) {
+            if (poll(poll_fd, 1, timeout) < 0) {
                 throw SocketException("Poll failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
-            return 0;
+            LOG(INFO) << "Poll(" << events << ", " << timeout << ") -> " << poll_fd[0].revents << ", S[fd=" << this->fd_ << "]";
+
+            return poll_fd[0].revents;
         }
 
         SA GetSockName() {

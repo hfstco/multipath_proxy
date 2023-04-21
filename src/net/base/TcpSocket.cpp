@@ -36,8 +36,8 @@ namespace net {
             return Socket<TcpSocket, SockAddr_In>::Recv(buf, size, flags);
         }
 
-        short TcpSocket::Poll(short revents, int nfds, int timeout) {
-            return Socket<TcpSocket, SockAddr_In>::Poll(revents, nfds, timeout);
+        short TcpSocket::Poll(short events, int timeout) {
+            return Socket<TcpSocket, SockAddr_In>::Poll(events, timeout);
         }
 
         SockAddr_In TcpSocket::GetSockName() {
@@ -87,8 +87,8 @@ namespace net {
             return Socket<TcpSocket, SockAddr_In6>::Recv(buf, size, flags);
         }
 
-        short TcpSocket::Poll(short revents, int nfds, int timeout) {
-            return Socket<TcpSocket, SockAddr_In6>::Poll(revents, nfds, timeout);
+        short TcpSocket::Poll(short revents, int timeout) {
+            return Socket<TcpSocket, SockAddr_In6>::Poll(revents, timeout);
         }
 
         SockAddr_In6 TcpSocket::GetSockName() {

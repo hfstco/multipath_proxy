@@ -16,7 +16,10 @@ TEST(collections_FlowMap, insert) {
     net::ipv4::TcpConnection *pTcpConnection2 = net::ipv4::TcpConnection::make(net::ipv4::SockAddr_In("127.0.0.1", 5000));
     net::ipv4::TcpConnection *pTcpConnection3 = net::ipv4::TcpConnection::make(net::ipv4::SockAddr_In("127.0.0.1", 5000));
 
+    sleep(1);
+
     // TODO
+    EXPECT_EQ(flowMap1.size(), 3);
 
     delete proxy1;
     delete pTcpConnection1;

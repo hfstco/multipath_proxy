@@ -10,7 +10,7 @@
 
 namespace packet {
 
-    struct Packet : public packet::Buffer { // TODO make protected
+    struct Packet : public packet::Buffer {
     public:
         packet::header::Header *header() {
             return reinterpret_cast<packet::header::Header *>(packet::Buffer::data());

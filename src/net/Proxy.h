@@ -22,7 +22,7 @@ namespace net {
         }
 
         virtual ~Proxy() {
-            stop_.store(false);
+            stop_.store(true);
 
             acceptHandler_->join();
             delete acceptHandler_;
@@ -42,13 +42,19 @@ namespace net {
             LOG(INFO) << "Starting AcceptFromConnection loop...";
 
             while (!stop_.load()) {
-                net::ipv4::SockAddr_In destinationSockAddrIn;
-                net::ipv4::TcpConnection *pTcpConnection = listener_->Accept(destinationSockAddrIn);
-                net::Flow *pFlow = net::Flow::make(pTcpConnection);
+                short events = listener_->Poll(POLLIN); // TODO timeout?
 
-                flows_->insert(utils::connectionString(pTcpConnection->GetSockName(), destinationSockAddrIn), pFlow);
+                if (events & POLLIN) {
+                    net::ipv4::SockAddr_In destinationSockAddrIn;
+                    net::ipv4::TcpConnection *pTcpConnection = listener_->Accept(destinationSockAddrIn);
+                    net::Flow *pFlow = net::Flow::make(pTcpConnection);
 
-                LOG(INFO) << "Accepted connection " << pTcpConnection->GetPeerName().ip() << ":" << pTcpConnection->GetPeerName().port() << "|" << destinationSockAddrIn.ip() << ":" << destinationSockAddrIn.port() << ".";
+                    flows_->insert(utils::connectionString(pTcpConnection->GetSockName(), destinationSockAddrIn), pFlow);
+
+                    LOG(INFO) << "Accepted connection " << pTcpConnection->GetPeerName().ip() << ":" << pTcpConnection->GetPeerName().port() << "|" << destinationSockAddrIn.ip() << ":" << destinationSockAddrIn.port() << ".";
+                }
+
+                usleep(100); // TODO timeout?
             }
 
             LOG(INFO) << "Stopping AcceptFromConnection loop...";

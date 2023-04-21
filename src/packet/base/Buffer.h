@@ -9,7 +9,7 @@
 
 namespace packet {
 
-    struct Buffer : private std::vector<unsigned char> {
+    struct Buffer : private std::vector<unsigned char> { // TODO unsigned char*
         static Buffer *make(size_t size) {
             return new Buffer(size);
         }
