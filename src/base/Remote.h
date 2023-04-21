@@ -6,8 +6,8 @@
 #define MULTIPATH_PROXY_REMOTE_H
 
 #include <thread>
-#include "../net/TcpListener.h"
 #include "Base.h"
+#include "../net/base/TcpListener.h"
 
 
 namespace base {
@@ -19,6 +19,7 @@ namespace base {
     public:
         Remote(net::ipv4::TcpListener ter, net::ipv4::TcpListener sat);
     };
+
 } // remote
 
 

@@ -3,6 +3,8 @@
 //
 
 #include <gtest/gtest.h>
+#include <glog/logging.h>
+#include <uuid/uuid.h>
 
 TEST(random_tests, std_string_to_std_vector_char) {
     std::string str1("helloworld!");
@@ -20,6 +22,22 @@ TEST(random_tests, std__vector_char_to_std__string) {
     std::string str2 = std::string(vec1.data());
 
     EXPECT_EQ(0, strcmp(str2.c_str(), vec1.data()));
+}
+
+struct X {
+    int a;
+    int b;
+    short c;
+};
+
+TEST(random_tests, struct_to_buffer_vector) {
+    X x = X();
+    x.a = 1;
+    x.b = 2;
+    x.c = 3;
+
+    auto const ptr = reinterpret_cast<unsigned char *>(&x);
+    std::vector<unsigned char> b1 = std::vector<unsigned char>(ptr, ptr + sizeof(X));
 }
 
 class A {
@@ -60,4 +78,11 @@ TEST(random_tests, get_inherited_class) {
     A a2 = b1.get_a();
 
     EXPECT_EQ(a1.i_, a2.i_);
+}
+
+TEST(random_tests, uuid) {
+    uuid_t uuid;
+    uuid_generate(uuid);
+
+    LOG(INFO) << sizeof(uuid);
 }

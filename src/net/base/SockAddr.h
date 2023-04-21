@@ -10,13 +10,12 @@
 
 #include <arpa/inet.h>
 #include <string>
-#include "../exception/Exception.h"
+#include "../../exception/Exception.h"
 
 namespace net {
 
-    class SockAddr : public sockaddr {
+    struct SockAddr : public sockaddr {
 
-    public:
         SockAddr() {
             memset(&this[0], 0, sizeof(struct sockaddr));
         };
@@ -40,9 +39,8 @@ namespace net {
 
     namespace ipv4 {
 
-        class SockAddr_In : public sockaddr_in {
+        struct SockAddr_In : public sockaddr_in {
 
-        public:
             SockAddr_In() {
                 memset(&this[0], 0, sizeof(struct sockaddr_in));
                 this->family(AF_INET);
@@ -51,6 +49,11 @@ namespace net {
             SockAddr_In(std::string ip, uint16_t port) : SockAddr_In() {
                 this->ip(ip);
                 this->port(port);
+            };
+
+            SockAddr_In(in_addr sin6_addr, in_port_t port) : SockAddr_In() {
+                this->sin_addr = sin6_addr;
+                this->sin_port = port;
             };
 
             socklen_t length() {
@@ -71,13 +74,17 @@ namespace net {
                 int result;
                 if ((result = inet_pton(this->sin_family, ip.c_str(), &this->sin_addr)) <= 0) {
                     if (result == 0) {
-                        throw SockAddrError("not a valid ipv4 address.");
+                        throw SockAddrException("not a valid ipv4 address.");
                     }
-                    throw SockAddrError("inet_pton failed. errno=" +  std::string(strerror(errno)));
+                    throw SockAddrException("inet_pton failed. errno=" + std::string(strerror(errno)));
                 }
             }
 
-            unsigned short port() {
+            void ip(in_addr ip) {
+                this->sin_addr = ip;
+            }
+
+            uint16_t port() {
                 return ntohs(this->sin_port);
             }
 
@@ -94,9 +101,8 @@ namespace net {
 
     namespace ipv6 {
 
-        class SockAddr_In6 : public sockaddr_in6 {
+        struct SockAddr_In6 : public sockaddr_in6 {
 
-        public:
             SockAddr_In6() {
                 memset(&this[0], 0, sizeof(struct sockaddr_in6));
                 this->family(AF_INET6);
@@ -105,6 +111,11 @@ namespace net {
             SockAddr_In6(std::string ip, uint16_t port) : SockAddr_In6() {
                 this->ip(ip);
                 this->port(port);
+            };
+
+            SockAddr_In6(in6_addr sin6_addr, in_port_t port) : SockAddr_In6() {
+                this->sin6_addr = sin6_addr;
+                this->sin6_port = port;
             };
 
             socklen_t length() {
@@ -125,9 +136,9 @@ namespace net {
                 int result;
                 if ((result = inet_pton(this->sin6_family, ip.c_str(), &this->sin6_addr)) <= 0) {
                     if (result == 0) {
-                        throw SockAddrError("not a valid ipv6 address.");
+                        throw SockAddrException("not a valid ipv6 address.");
                     }
-                    throw SockAddrError("inet_pton failed. errno=" + std::string(strerror(errno)));
+                    throw SockAddrException("inet_pton failed. errno=" + std::string(strerror(errno)));
                 }
             }
 

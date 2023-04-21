@@ -14,21 +14,22 @@ namespace net {
         class TcpListener;
 
         class TcpConnection : public Connection<TcpSocket, SockAddr_In> {
-            friend TcpListener;
+            friend TcpListener; // allow TcpListener to call protected TcpConnection(TcpSocket socket)
 
         public:
+            static TcpConnection *make(SockAddr_In peeraddr) {
+                return new TcpConnection(peeraddr);
+            }
+
+            static TcpConnection *make(SockAddr_In peeraddr, SockAddr_In sockaddr) {
+                return new TcpConnection(peeraddr, sockaddr);
+            }
+
+        protected:
             TcpConnection(SockAddr_In peeraddr) : Connection<TcpSocket, SockAddr_In>(peeraddr) {}
             TcpConnection(SockAddr_In peeraddr, SockAddr_In sockaddr) : Connection<TcpSocket, SockAddr_In>(peeraddr, sockaddr) {}
 
-        protected:
             TcpConnection(TcpSocket socket) : Connection<TcpSocket, SockAddr_In>(socket) {}
-        };
-
-        class UdpConnection : public Connection<UdpSocket, SockAddr_In> {
-
-        public:
-            UdpConnection(SockAddr_In peeraddr) : Connection<UdpSocket, SockAddr_In>(peeraddr) {}
-            UdpConnection(SockAddr_In peeraddr, SockAddr_In sockaddr) : Connection<UdpSocket, SockAddr_In>(peeraddr, sockaddr) {}
         };
 
     } // ipv4
@@ -38,21 +39,22 @@ namespace net {
         class TcpListener;
 
         class TcpConnection : public Connection<TcpSocket, SockAddr_In6> {
-            friend TcpListener;
+            friend TcpListener; // allow TcpListener to call protected TcpConnection(TcpSocket socket)
 
         public:
+            static TcpConnection *make(SockAddr_In6 sockaddr) {
+                return new TcpConnection(sockaddr);
+            }
+
+            static TcpConnection *make(SockAddr_In6 peeraddr, SockAddr_In6 sockaddr) {
+                return new TcpConnection(peeraddr, sockaddr);
+            }
+
+        protected:
             TcpConnection(SockAddr_In6 sockaddr) : Connection<TcpSocket, SockAddr_In6>(sockaddr) {};
             TcpConnection(SockAddr_In6 peeraddr, SockAddr_In6 sockaddr) : Connection<TcpSocket, SockAddr_In6>(peeraddr, sockaddr) {}
 
-        protected:
             TcpConnection(TcpSocket socket) : Connection<TcpSocket, SockAddr_In6>(socket) {}
-        };
-
-        class UdpConnection : public Connection<UdpSocket, SockAddr_In6> {
-
-        public:
-            UdpConnection(SockAddr_In6 peeraddr) : Connection<UdpSocket, SockAddr_In6>(peeraddr) {}
-            UdpConnection(SockAddr_In6 peeraddr, SockAddr_In6 sockaddr) : Connection<UdpSocket, SockAddr_In6>(peeraddr, sockaddr) {}
         };
 
     } // ipv6

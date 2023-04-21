@@ -13,8 +13,9 @@ TEST(exception_Exception, NetworkError_what_str) {
 }
 
 TEST(exception_Exception, NetworkError_what_char_array) {
-    char* cs1 = "test2";
-    NetworkError ne1 = NetworkError(cs1);
+    std::string str1 = "test1";
+    char *cs1 = str1.data();
+    NetworkException ne1 = NetworkException(cs1);
 
     EXPECT_EQ(0, strcmp(cs1, ne1.what()));
 }

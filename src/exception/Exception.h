@@ -21,6 +21,8 @@ private:
     const std::string _message;
 };
 
+// dev exceptions
+
 class NotImplementedError : public Exception {
 public:
     NotImplementedError(const char *what_arg) : Exception(what_arg) {};
@@ -28,26 +30,36 @@ public:
     NotImplementedError(std::string what_arg) : Exception(what_arg) {};
 };
 
-class NetworkError : public Exception {
-public:
-    NetworkError(const char *what_arg) : Exception(what_arg) {};
+// net exceptions
 
-    NetworkError(std::string what_arg) : Exception(what_arg) {};
+class NetworkException : public Exception {
+public:
+    NetworkException(const char *what_arg) : Exception(what_arg) {};
+
+    NetworkException(std::string what_arg) : Exception(what_arg) {};
 };
 
-class SocketError : public Exception {
+class SocketException : public Exception {
 public:
-    SocketError(const char *what_arg) : Exception(what_arg) {};
+    SocketException(const char *what_arg) : Exception(what_arg) {};
 
-    SocketError(std::string what_arg) : Exception(what_arg) {};
+    SocketException(std::string what_arg) : Exception(what_arg) {};
 };
 
-class SockAddrError : public Exception {
+class SockAddrException : public Exception {
 public:
-    SockAddrError(const char *what_arg) : Exception(what_arg) {};
+    SockAddrException(const char *what_arg) : Exception(what_arg) {};
 
-    SockAddrError(std::string what_arg) : Exception(what_arg) {};
+    SockAddrException(std::string what_arg) : Exception(what_arg) {};
 };
 
+// collections exception
+
+class NotFoundException : public Exception {
+public:
+    NotFoundException(const char *what_arg) : Exception(what_arg) {};
+
+    NotFoundException(std::string what_arg) : Exception(what_arg) {};
+};
 
 #endif //MULTIPATH_PROXY_EXCEPTION_H

@@ -13,3 +13,9 @@ TEST(utils_Utils, split_ip_and_port) {
     EXPECT_EQ(ipandport.ip, "127.0.0.1");
     EXPECT_EQ(ipandport.port, 4321);
 }
+
+TEST(utils_Utils, connection_string) {
+    auto connectionString = utils::connectionString("127.0.0.1", 2345, "10.0.0.1", 8543);
+
+    EXPECT_EQ(connectionString, "127.0.0.1:2345|10.0.0.1:8543");
+}

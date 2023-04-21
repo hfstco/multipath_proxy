@@ -8,90 +8,162 @@
 #include <glog/logging.h>
 
 #include "gtest/gtest.h"
-#include "../src/net/TcpSocket.h"
+#include "../src/net/base/TcpSocket.h"
 
 
-TEST(net_Socket, net_ipv4_TcpSocket) {
-    std::thread t1([&] {
-        try {
-            net::ipv4::TcpSocket s1 = net::ipv4::TcpSocket();
-            s1.SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
-            s1.Bind(net::ipv4::SockAddr_In("127.0.0.1", 7001));
-            s1.Listen();
-            net::ipv4::TcpSocket s2 = s1.Accept();
-            std::vector<char> buffer1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
-            s2.Write(buffer1);
-            s1.Close();
-            s2.Close();
-        } catch (SocketError e) {
-            LOG(ERROR) << e.what();
-        } catch (NetworkError e) {
-            LOG(ERROR) << e.what();
-        } catch (SockAddrError e) {
-            LOG(ERROR) << e.what();
-        }
-    });
-
-    sleep(3);
-
+TEST(net_Socket, ipv4_TcpSocket_connect_send_recv) {
     try {
-        net::ipv4::TcpSocket s3 = net::ipv4::TcpSocket();
-        s3.Connect(net::ipv4::SockAddr_In("127.0.0.1", 7001));
-        std::vector<char> buffer1 = s3.Read();
-        std::vector<char> buffer2 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
-        EXPECT_EQ(buffer2, buffer1);
-    } catch (SocketError e) {
+        net::ipv4::TcpSocket *pTcpSocket1 = net::ipv4::TcpSocket::make();
+        pTcpSocket1->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
+        pTcpSocket1->Bind(net::ipv4::SockAddr_In("127.0.0.1", 7001));
+        pTcpSocket1->Listen();
+
+        net::ipv4::TcpSocket *pTcpSocket2 = net::ipv4::TcpSocket::make();
+
+        pTcpSocket2->Connect(net::ipv4::SockAddr_In("127.0.0.1", 7001));
+        net::ipv4::TcpSocket *pTcpSocket3 = pTcpSocket1->Accept();
+
+        std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
+        pTcpSocket3->Send(vector1.data(), vector1.size(), 0);
+
+        std::vector<unsigned char> vector2(1024);
+        ssize_t size = pTcpSocket2->Recv(vector2.data(), vector2.size(), 0);
+        vector2.resize(size);
+
+        EXPECT_EQ(vector2, vector1);
+
+        delete pTcpSocket1;
+        delete pTcpSocket2;
+        delete pTcpSocket3;
+    } catch (SocketException e) {
         LOG(ERROR) << e.what();
-    } catch (NetworkError e) {
+    } catch (NetworkException e) {
         LOG(INFO) << e.what();
-    } catch (SockAddrError e) {
+    } catch (SockAddrException e) {
         LOG(ERROR) << e.what();
     }
-
-    t1.join();
 }
 
-TEST(net_Socket, net_ipv6_TcpSocket) {
-    std::thread t1([&] {
-        try {
-            net::ipv6::TcpSocket s1 = net::ipv6::TcpSocket();
-            s1.SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
-            s1.Bind(net::ipv6::SockAddr_In6("::1", 6542));
-            s1.Listen();
-            net::ipv6::TcpSocket s2 = s1.Accept();
-            std::vector<char> buffer1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
-            s2.Write(buffer1);
-        } catch (SocketError e) {
-            LOG(ERROR) << e.what();
-            FAIL();
-        } catch (NetworkError e) {
-            LOG(ERROR) << e.what();
-            FAIL();
-        } catch (SockAddrError e) {
-            LOG(ERROR) << e.what();
-            FAIL();
-        }
-    });
-
-    sleep(1);
-
+TEST(net_Socket, ipv6_TcpSocket_connect_send_recv) {
     try {
-        net::ipv6::TcpSocket s3 = net::ipv6::TcpSocket();
-        s3.Connect(net::ipv6::SockAddr_In6("::1", 6542));
-        LOG(INFO) << "Connected to socket s1.";
-        std::vector<char> buffer1 = s3.Read();
-        std::vector<char> buffer2 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
-        EXPECT_EQ(buffer2, buffer1);
-    } catch (SocketError e) {
-        LOG(ERROR) << e.what();
-        FAIL();
-    } catch (NetworkError e) {
-        LOG(INFO) << e.what();
-        FAIL();
-    } catch (SockAddrError e) {
-        LOG(ERROR) << e.what();
-        FAIL();
-    }
+        // create listener
+        net::ipv6::TcpSocket *pTcpSocket1 = net::ipv6::TcpSocket::make();
+        pTcpSocket1->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
+        pTcpSocket1->Bind(net::ipv6::SockAddr_In6("::1", 7002));
+        pTcpSocket1->Listen();
 
-    t1.join();
+        // create remote socket
+        net::ipv6::TcpSocket *pTcpSocket2 = net::ipv6::TcpSocket::make();
+        pTcpSocket2->Connect(net::ipv6::SockAddr_In6("::1", 7002));
+
+        // accept connection on local side
+        net::ipv6::TcpSocket *pTcpSocket3 = pTcpSocket1->Accept();
+
+        // send from local -> remote
+        std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
+        pTcpSocket3->Send(vector1.data(), vector1.size(), 0);
+
+        // recv on remote side
+        std::vector<unsigned char> vector2(1024);
+        ssize_t size1 = pTcpSocket2->Recv(vector2.data(), vector2.size(), 0);
+        vector2.resize(size1);
+
+        // send back to local side
+        pTcpSocket2->Send(vector2.data(), vector2.size(), 0);
+
+        // recv on remote side
+        std::vector<unsigned char> vector3(1024);
+        ssize_t size2 = pTcpSocket3->Recv(vector3.data(), vector3.size(), 0);
+        vector3.resize(size2);
+
+        EXPECT_EQ(vector3, vector1);
+
+        delete pTcpSocket1;
+        delete pTcpSocket2;
+        delete pTcpSocket3;
+    } catch (SocketException e) {
+        LOG(ERROR) << e.what();
+    } catch (NetworkException e) {
+        LOG(INFO) << e.what();
+    } catch (SockAddrException e) {
+        LOG(ERROR) << e.what();
+    }
+}
+
+TEST(net_Socket, ipv4_TcpSocket_recv_closed_socket) {
+    try {
+        // create listener
+        net::ipv4::TcpSocket *pTcpSocket1 = net::ipv4::TcpSocket::make();
+        pTcpSocket1->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
+        pTcpSocket1->Bind(net::ipv4::SockAddr_In("127.0.0.1", 7001));
+        pTcpSocket1->Listen();
+
+        // create remote connection
+        net::ipv4::TcpSocket *pTcpSocket2 = net::ipv4::TcpSocket::make();
+        pTcpSocket2->Connect(net::ipv4::SockAddr_In("127.0.0.1", 7001));
+
+        // accept remote connection on local side
+        net::ipv4::TcpSocket *pTcpSocket3 = pTcpSocket1->Accept();
+        // close listener
+        delete pTcpSocket1;
+
+        // close remote connection
+        delete pTcpSocket2;
+
+        // try to read local socket with closed remote socket
+        std::vector<unsigned char> vector1(1024);
+        ssize_t size = pTcpSocket3->Recv(vector1.data(), vector1.size(), 0);
+
+        // close local socket
+        delete pTcpSocket3;
+
+        // recv size should be zero
+        EXPECT_EQ(size, 0);
+    } catch (SocketException e) {
+        LOG(ERROR) << e.what();
+    } catch (NetworkException e) {
+        LOG(INFO) << e.what();
+    } catch (SockAddrException e) {
+        LOG(ERROR) << e.what();
+    }
+}
+
+TEST(net_Socket, ipv4_TcpSocket_send_closed_socket) {
+    try {
+        // create listener
+        net::ipv4::TcpSocket *pTcpSocket1 = net::ipv4::TcpSocket::make();
+        pTcpSocket1->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
+        pTcpSocket1->Bind(net::ipv4::SockAddr_In("127.0.0.1", 7001));
+        pTcpSocket1->Listen();
+
+        // create remote connection
+        net::ipv4::TcpSocket *pTcpSocket2 = net::ipv4::TcpSocket::make();
+        pTcpSocket2->Connect(net::ipv4::SockAddr_In("127.0.0.1", 7001));
+
+        // accept remote connection on local side
+        net::ipv4::TcpSocket *pTcpSocket3 = pTcpSocket1->Accept();
+        // close listener
+        delete pTcpSocket1;
+
+        // close remote connection
+        delete pTcpSocket2;
+
+        sleep(30);
+
+        // try to read local socket with closed remote socket
+        std::vector<unsigned char> vector1 = {'a'};
+        ssize_t size = pTcpSocket3->Send(vector1.data(), vector1.size(), 0);
+
+        // close local socket
+        delete pTcpSocket3;
+
+        // recv size should be zero
+        EXPECT_EQ(size, vector1.size());
+    } catch (SocketException e) {
+        LOG(ERROR) << e.what();
+    } catch (NetworkException e) {
+        LOG(INFO) << e.what();
+    } catch (SockAddrException e) {
+        LOG(ERROR) << e.what();
+    }
 }

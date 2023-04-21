@@ -6,25 +6,34 @@
 #define MULTIPATH_PROXY_CONNECTION_H
 
 #include "TcpSocket.h"
-#include "UdpSocket.h"
+#include "../../packet/Packet.h"
 
 namespace net {
 
-    template <class S, class SA>
+    template <IsSocket S, IsSockAddr SA>
     class Listener;
 
-    template <class S, class SA>
+    template <IsSocket S, IsSockAddr SA>
     class Connection : public S {
         friend Listener<S, SA>;
 
     public:
-        std::vector<char> Recv(int flags) {
-            return S::Recv(flags);
+        ssize_t Recv(unsigned char*data, size_t size, int flags) {
+            // TODO epoll?!
+            return S::Recv(data, size, flags);
         };
 
-        void Send(std::vector<char> buf, int flags) {
-            S::Send(buf, flags);
+        ssize_t Send(unsigned char *data, size_t size, int flags) {
+            return S::Send(data, size, flags);
         };
+
+        SA GetSockName() {
+            return S::GetSockName();
+        }
+
+        SA GetPeerName() {
+            return S::GetSockName();
+        }
 
         void Close() {
             S::Close();

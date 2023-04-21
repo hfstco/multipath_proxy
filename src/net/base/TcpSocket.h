@@ -12,29 +12,28 @@
 namespace net {
     namespace ipv4 {
 
+
         class TcpSocket : protected Socket<TcpSocket, SockAddr_In> {
-            friend Socket<TcpSocket, SockAddr_In>;
+            friend Socket<TcpSocket, SockAddr_In>; // S Accept()
 
         public:
-            TcpSocket() : Socket<TcpSocket, SockAddr_In>(AF_INET, SOCK_STREAM, 0) {};
+            static TcpSocket *make() {
+                return new TcpSocket();
+            };
 
             void Bind(SockAddr_In addr);
 
             void Listen(int backlog = SOMAXCONN);
 
-            TcpSocket Accept();
+            TcpSocket *Accept();
 
-            TcpSocket Accept(SockAddr_In &addr);
+            TcpSocket *Accept(SockAddr_In &addr);
 
             void Connect(SockAddr_In addr);
 
-            void Write(std::vector<char> buf);
+            ssize_t Send(unsigned char *buf, size_t size, int flags);
 
-            std::vector<char> Read();
-
-            void Send(std::vector<char> buf, int flags);
-
-            std::vector<char> Recv(int flags);
+            ssize_t Recv(unsigned char *buf, size_t size, int flags);
 
             short Poll(short revents, int nfds, int timeout = 0);
 
@@ -50,6 +49,8 @@ namespace net {
             void Close();
 
         protected:
+            TcpSocket() : Socket<TcpSocket, SockAddr_In>(AF_INET, SOCK_STREAM, 0) {};
+
             TcpSocket(int sock_fd);
         };
 
@@ -58,28 +59,26 @@ namespace net {
     namespace ipv6 {
 
         class TcpSocket : protected Socket<TcpSocket, SockAddr_In6> {
-            friend Socket<TcpSocket, SockAddr_In6>;
+            friend Socket<TcpSocket, SockAddr_In6>; // S Accept()
 
         public:
-            TcpSocket() : Socket<TcpSocket, SockAddr_In6>(AF_INET6, SOCK_STREAM, 0) {};
+            static TcpSocket *make() {
+                return new TcpSocket();
+            };
 
             void Bind(SockAddr_In6 addr);
 
             void Listen(int backlog = SOMAXCONN);
 
-            TcpSocket Accept();
+            TcpSocket *Accept();
 
-            TcpSocket Accept(SockAddr_In6 &addr);
+            TcpSocket *Accept(SockAddr_In6 &addr);
 
             void Connect(SockAddr_In6 addr);
 
-            void Write(std::vector<char> buf);
+            ssize_t Send(unsigned char *buf, size_t size, int flags);
 
-            std::vector<char> Read();
-
-            void Send(std::vector<char> buf, int flags);
-
-            std::vector<char> Recv(int flags);
+            ssize_t Recv(unsigned char *buf, size_t size, int flags);
 
             short Poll(short revents, int nfds, int timeout = 0);
 
@@ -95,6 +94,8 @@ namespace net {
             void Close();
 
         protected:
+            TcpSocket() : Socket<TcpSocket, SockAddr_In6>(AF_INET6, SOCK_STREAM, 0) {};
+
             TcpSocket(int sock_fd);;
         };
 

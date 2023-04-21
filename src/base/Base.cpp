@@ -7,7 +7,4 @@
 
 namespace base {
 
-    Base::Base(net::ipv4::TcpConnection ter, net::ipv4::TcpConnection sat) : ter_(ter), sat_(sat) {
-
-    }
 }

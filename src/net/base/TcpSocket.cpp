@@ -16,11 +16,11 @@ namespace net {
             return Socket<TcpSocket, SockAddr_In>::Listen(backlog);
         }
 
-        TcpSocket TcpSocket::Accept() {
-            return Socket<TcpSocket, SockAddr_In>::Accept();
+        TcpSocket *TcpSocket::Accept() {
+            return (TcpSocket *)Socket<TcpSocket, SockAddr_In>::Accept();
         }
 
-        TcpSocket TcpSocket::Accept(SockAddr_In &addr) {
+        TcpSocket *TcpSocket::Accept(SockAddr_In &addr) {
             return Socket<TcpSocket, SockAddr_In>::Accept(addr);
         }
 
@@ -28,20 +28,12 @@ namespace net {
             Socket<TcpSocket, SockAddr_In>::Connect(addr);
         }
 
-        void TcpSocket::Write(std::vector<char> buf) {
-            Socket<TcpSocket, SockAddr_In>::Write(buf);
+        ssize_t TcpSocket::Send(unsigned char *buf, size_t size, int flags) {
+            return Socket<TcpSocket, SockAddr_In>::Send(buf, size, flags);
         }
 
-        std::vector<char> TcpSocket::Read() {
-            return Socket<TcpSocket, SockAddr_In>::Read();
-        }
-
-        void TcpSocket::Send(std::vector<char> buf, int flags) {
-            Socket<TcpSocket, SockAddr_In>::Send(buf, flags);
-        }
-
-        std::vector<char> TcpSocket::Recv(int flags) {
-            return Socket<TcpSocket, SockAddr_In>::Recv(flags);
+        ssize_t TcpSocket::Recv(unsigned char *buf, size_t size, int flags) {
+            return Socket<TcpSocket, SockAddr_In>::Recv(buf, size, flags);
         }
 
         short TcpSocket::Poll(short revents, int nfds, int timeout) {
@@ -57,7 +49,7 @@ namespace net {
         }
 
         void TcpSocket::Close() {
-            Socket<TcpSocket, SockAddr_In>::Close();
+            Socket::Close();
         }
 
         TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In>(sock_fd) {}
@@ -75,11 +67,11 @@ namespace net {
             return Socket<TcpSocket, SockAddr_In6>::Listen(backlog);
         }
 
-        TcpSocket TcpSocket::Accept() {
+        TcpSocket *TcpSocket::Accept() {
             return Socket<TcpSocket, SockAddr_In6>::Accept();
         }
 
-        TcpSocket TcpSocket::Accept(SockAddr_In6 &addr) {
+        TcpSocket *TcpSocket::Accept(SockAddr_In6 &addr) {
             return Socket::Accept(addr);
         }
 
@@ -87,20 +79,12 @@ namespace net {
             Socket<TcpSocket, SockAddr_In6>::Connect(addr);
         }
 
-        void TcpSocket::Write(std::vector<char> buf) {
-            Socket<TcpSocket, SockAddr_In6>::Write(buf);
+        ssize_t TcpSocket::Send(unsigned char *buf, size_t size, int flags) {
+            return Socket<TcpSocket, SockAddr_In6>::Send(buf, size, flags);
         }
 
-        std::vector<char> TcpSocket::Read() {
-            return Socket<TcpSocket, SockAddr_In6>::Read();
-        }
-
-        void TcpSocket::Send(std::vector<char> buf, int flags) {
-            Socket<TcpSocket, SockAddr_In6>::Send(buf, flags);
-        }
-
-        std::vector<char> TcpSocket::Recv(int flags) {
-            return Socket<TcpSocket, SockAddr_In6>::Recv(flags);
+        ssize_t TcpSocket::Recv(unsigned char *buf, size_t size, int flags) {
+            return Socket<TcpSocket, SockAddr_In6>::Recv(buf, size, flags);
         }
 
         short TcpSocket::Poll(short revents, int nfds, int timeout) {
@@ -116,7 +100,7 @@ namespace net {
         }
 
         void TcpSocket::Close() {
-            Socket<TcpSocket, SockAddr_In6>::Close();
+            Socket::Close();
         }
 
         TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In6>(sock_fd) {}

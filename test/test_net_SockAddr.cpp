@@ -3,7 +3,7 @@
 //
 
 #include "gtest/gtest.h"
-#include "../src/net/SockAddr.h"
+#include "../src/net/base/SockAddr.h"
 
 TEST(net_SockAddr, memcmp_net_SockAddr) {
     net::SockAddr sa1 = net::SockAddr();
