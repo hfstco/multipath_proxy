@@ -40,7 +40,6 @@ TEST(packet_Packet, verify_FlowPacket) {
 TEST(packet_Packet, verify_FlowInitPacket) {
     net::ipv4::SockAddr_In sourceSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7777);
     net::ipv4::SockAddr_In destinationSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7778);
-    uint16_t id = 1;
 
     packet::header::FlowInitHeader flowInitHeader(sourceSockAddrIn, destinationSockAddrIn);
     packet::FlowPacket *pFlowInitPacket = packet::FlowPacket::make(flowInitHeader);
@@ -60,7 +59,7 @@ TEST(packet_Packet, verify_FlowInitPacket) {
     // destinationPort
     EXPECT_EQ(pFlowInitPacket->header()->destinationPort(), destinationSockAddrIn.sin_port);
     // id
-    EXPECT_EQ(pFlowInitPacket->header()->id(), id);
+    EXPECT_EQ(pFlowInitPacket->header()->id(), 0);
     // size
     EXPECT_EQ(pFlowInitPacket->header()->size(), 0);
     // buffer size
@@ -74,15 +73,15 @@ TEST(packet_Packet, verify_FlowClosePacket) {
     net::ipv4::SockAddr_In destinationSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7778);
     uint16_t id = 1;
 
-    packet::header::FlowInitHeader flowCloseHeader(sourceSockAddrIn, destinationSockAddrIn);
-    packet::FlowPacket *pFlowClosePacket = packet::FlowPacket::make(flowCloseHeader, id);
+    packet::header::FlowCloseHeader flowCloseHeader(sourceSockAddrIn, destinationSockAddrIn, id);
+    packet::FlowPacket *pFlowClosePacket = packet::FlowPacket::make(flowCloseHeader);
 
     // magic
     EXPECT_EQ(0, memcmp(pFlowClosePacket->header(), &packet::header::MAGIC, sizeof(packet::header::MAGIC)));
     // type
     EXPECT_EQ(pFlowClosePacket->header()->type(), packet::header::TYPE::FLOW);
     // ctrl
-    EXPECT_EQ(pFlowClosePacket->header()->ctrl(), packet::header::FLOW_CTRL::INIT);
+    EXPECT_EQ(pFlowClosePacket->header()->ctrl(), packet::header::FLOW_CTRL::CLOSE);
     // sourceIp
     EXPECT_TRUE(pFlowClosePacket->header()->sourceIp().s_addr == sourceSockAddrIn.sin_addr.s_addr);
     // destinationip
