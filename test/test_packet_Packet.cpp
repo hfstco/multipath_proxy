@@ -100,6 +100,25 @@ TEST(packet_Packet, verify_FlowClosePacket) {
     delete pFlowClosePacket;
 }
 
+TEST(packet_Header, verify_FlowHeader_size) {
+    net::ipv4::SockAddr_In sourceSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7777);
+    net::ipv4::SockAddr_In destinationSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7778);
+    uint16_t id = 7;
+    uint16_t size = 77;
+
+    packet::header::FlowHeader flowHeader = packet::header::FlowHeader(sourceSockAddrIn, destinationSockAddrIn, id);
+
+    packet::FlowPacket *pFlowPacket = packet::FlowPacket::make(flowHeader, size);
+    // size
+    EXPECT_EQ(pFlowPacket->header()->size(), size);
+    delete pFlowPacket;
+
+    pFlowPacket = packet::FlowPacket::make(flowHeader);
+    // size
+    EXPECT_EQ(pFlowPacket->header()->size(), 0);
+    delete pFlowPacket;
+}
+
 TEST(packet_Packet, Packet_data) {
     packet::Buffer *b1 = packet::Buffer::make(0);
     EXPECT_EQ(b1->size(), 0);

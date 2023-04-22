@@ -2,12 +2,12 @@
 // Created by Matthias Hofstätter on 04.04.23.
 //
 
-#ifndef MULTIPATH_PROXY_UTILS_H
-#define MULTIPATH_PROXY_UTILS_H
+#ifndef MPP_UTILS_UTILS_H
+#define MPP_UTILS_UTILS_H
 
 #include <string>
-#include "../net/base/TcpConnection.h"
-#include "../packet/header/FlowHeader.h"
+#include <arpa/inet.h>
+#include "../exception/Exception.h"
 
 namespace utils {
 
@@ -16,31 +16,21 @@ namespace utils {
         int port;
     };
 
-    static IpAndPort splitIPandPort(std::string ipandport);
-    IpAndPort splitIPandPort(std::string ipandport) {
-        int end = ipandport.find(':');
-        return {ipandport.substr(0, end), std::stoi(ipandport.substr(end + 1, ipandport.length() - end))};
-    }
+    IpAndPort splitIPandPort(std::string ipandport);
 
-    static std::string connectionString(std::string sourceIp, unsigned short sourcePort, std::string destinationIp, unsigned short destinationPort) {
-        return sourceIp + ":" + std::to_string(sourcePort) + "|" + destinationIp + ":" + std::to_string(destinationPort);
-    }
+    std::string InAddrToString(in_addr &inAddr);
 
-    static std::string connectionString(packet::header::FlowHeader &flowHeader) {
-        in_addr sip = flowHeader.sourceIp();
-        in_addr dip = flowHeader.destinationIp();
-        char sourceIp[INET_ADDRSTRLEN], destinationIp[INET_ADDRSTRLEN];
+    std::string In6AddrToString(in6_addr &in6Addr);
 
-        inet_ntop(AF_INET, (const void *)&sip, sourceIp, INET_ADDRSTRLEN);
-        inet_ntop(AF_INET, (const void *)&dip, destinationIp, INET_ADDRSTRLEN);
-        return connectionString(sourceIp, htons(flowHeader.sourcePort()), destinationIp, htons(flowHeader.destinationPort()));
-    }
+    in_addr StringToInAddr(std::string ip);
 
-    static std::string connectionString(net::ipv4::SockAddr_In sourceSockAddr_In, net::ipv4::SockAddr_In destinationSockAddr_In) {
-        return connectionString(sourceSockAddr_In.ip(), sourceSockAddr_In.port(), destinationSockAddr_In.ip(), destinationSockAddr_In.port());
-    }
+    in6_addr StringToIn6Addr(std::string ip);
+
+    std::string ConnectionString(std::string sourceIp, unsigned short sourcePort, std::string destinationIp, unsigned short destinationPort);
+
+    std::string ConnectionString(in_addr sourceIp, in_port_t sourcePort, in_addr destinationIp, in_port_t destinationPort);
 
 } // mpp::utils
 
 
-#endif //MULTIPATH_PROXY_UTILS_H
+#endif //MPP_UTILS_UTILS_H

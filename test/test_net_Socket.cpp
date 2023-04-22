@@ -35,12 +35,9 @@ TEST(net_Socket, ipv4_TcpSocket_connect_send_recv) {
         delete pTcpSocket1;
         delete pTcpSocket2;
         delete pTcpSocket3;
-    } catch (SocketException e) {
+    } catch (Exception e) {
         LOG(ERROR) << e.what();
-    } catch (NetworkException e) {
-        LOG(INFO) << e.what();
-    } catch (SockAddrException e) {
-        LOG(ERROR) << e.what();
+        FAIL();
     }
 }
 
@@ -81,12 +78,9 @@ TEST(net_Socket, ipv6_TcpSocket_connect_send_recv) {
         delete pTcpSocket1;
         delete pTcpSocket2;
         delete pTcpSocket3;
-    } catch (SocketException e) {
+    } catch (Exception e) {
         LOG(ERROR) << e.what();
-    } catch (NetworkException e) {
-        LOG(INFO) << e.what();
-    } catch (SockAddrException e) {
-        LOG(ERROR) << e.what();
+        FAIL();
     }
 }
 
@@ -112,19 +106,15 @@ TEST(net_Socket, ipv4_TcpSocket_recv_closed_socket) {
 
         // try to read local socket with closed remote socket
         std::vector<unsigned char> vector1(1024);
-        ssize_t size = pTcpSocket3->Recv(vector1.data(), vector1.size(), 0);
+        EXPECT_THROW({
+            pTcpSocket3->Recv(vector1.data(), vector1.size(), 0);
+        }, SocketClosedException);
 
         // close local socket
         delete pTcpSocket3;
-
-        // recv size should be zero
-        EXPECT_EQ(size, 0);
-    } catch (SocketException e) {
+    } catch (Exception e) {
         LOG(ERROR) << e.what();
-    } catch (NetworkException e) {
-        LOG(INFO) << e.what();
-    } catch (SockAddrException e) {
-        LOG(ERROR) << e.what();
+        FAIL();
     }
 }
 
@@ -154,11 +144,8 @@ TEST(net_Socket, ipv4_TcpSocket_send_closed_socket) {
 
         // close local socket
         delete pTcpSocket3;
-    } catch (SocketException e) {
+    } catch (Exception e) {
         LOG(ERROR) << e.what();
-    } catch (NetworkException e) {
-        LOG(INFO) << e.what();
-    } catch (SockAddrException e) {
-        LOG(ERROR) << e.what();
+        FAIL();
     }
 }

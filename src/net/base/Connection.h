@@ -6,7 +6,6 @@
 #define MULTIPATH_PROXY_CONNECTION_H
 
 #include "TcpSocket.h"
-#include "../../packet/Packet.h"
 
 namespace net {
 
@@ -14,18 +13,21 @@ namespace net {
     class Listener;
 
     template <IsSocket S, IsSockAddr SA>
-    class Connection : public S {
+    class Connection : protected S {
         friend Listener<S, SA>;
 
     public:
-        ssize_t Recv(unsigned char*data, size_t size, int flags) {
-            // TODO epoll?!
-            return S::Recv(data, size, flags);
+        ssize_t Recv(unsigned char *data, size_t size, int flags) {
+                return S::Recv(data, size, flags);
         };
 
         ssize_t Send(unsigned char *data, size_t size, int flags) {
             return S::Send(data, size, flags);
         };
+
+        short Poll(short events, int timeout = 0) {
+            return S::Poll(events, timeout);
+        }
 
         SA GetSockName() {
             return S::GetSockName();

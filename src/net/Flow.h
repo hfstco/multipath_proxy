@@ -56,6 +56,7 @@ namespace net {
             packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowInitHeader);
 
             rx_.push(flowPacket);
+            tx_.push(flowPacket);
 
             LOG(INFO) << "created FlowInitPacket(0)[0]";
         }
@@ -76,47 +77,41 @@ namespace net {
             LOG(INFO) << "Starting RecvFromConnection loop...";
 
             while(!stop_.load()) { // TODO implement Handler
-                // TODO epoll?
+                short events = connection_->Poll(POLLIN, 100);
 
-                // create packet with data
-                packet::header::FlowHeader flowHeader = packet::header::FlowHeader(connection_->GetPeerName(),
-                                                                                   connection_->GetSockName(),
-                                                                                   rxId_); // TODO GetSock/PeerName local variable?
-                packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 1024); // TODO reserve()
+                if (events & POLLIN) {
+                    // create packet with data
+                    packet::header::FlowHeader flowHeader = packet::header::FlowHeader(connection_->GetPeerName(),
+                                                                                       connection_->GetSockName(),
+                                                                                       rxId_); // TODO GetSock/PeerName local variable?
+                    packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 1024); // TODO reserve()
 
-                // read available data from connection
-                ssize_t size = 0;
-                try {
-                    size = connection_->Recv(flowPacket->data(), 1024, 0);
-                } catch (Exception e) {
-                    LOG(ERROR) << e.what();
-                }
+                    // read available data from connection
+                    ssize_t size = 0;
+                    try {
+                        size = connection_->Recv(flowPacket->data(), 1024, 0);
+                    } catch (SocketClosedException e) {
+                        // add close flow packet to queue
+                        flowHeader = packet::header::FlowCloseHeader(connection_->GetPeerName(),connection_->GetSockName(),rxId_);
+                        memcpy(flowPacket->header(), &flowHeader, sizeof(packet::header::FlowHeader));
 
-                // return if no data available TODO connection closed? if size == 0
-                if (size == 0) {
-                    // add close flow packet to queue
-                    flowHeader = packet::header::FlowCloseHeader(connection_->GetPeerName(),connection_->GetSockName(),rxId_);
-                    memcpy(flowPacket->header(), &flowHeader, sizeof(packet::header::FlowHeader));
+                        // TODO shutdown flow because client has already closed socket?
+                        stop_.store(true, std::memory_order_release); // TODO implement Handler
+                    } catch (Exception e) {
+                        LOG(ERROR) << e.what();
+                    }
 
+                    // resize packet to fit data
+                    flowPacket->resize(size); // TODO avoid resize if possible
+
+                    // write package to rx queue
                     rx_.push(flowPacket);
-                    LOG(INFO) << "created FlowClosePacket(" << rxId_ << ")[0]";
 
-                    stop_.store(true, std::memory_order_release); // TODO implement Handler
-                    continue; // or continue?
+                    LOG(INFO) << "created FlowPacket(" << rxId_ << ")[" << flowPacket->header()->size() << "]";
+
+                    // increment id
+                    rxId_ += 1;
                 }
-
-                // resize packet to fit data
-                flowPacket->resize(size); // TODO avoid resize if possible
-
-                // write package to rx queue
-                rx_.push(flowPacket);
-
-                LOG(INFO) << "created FlowPacket(" << rxId_ << ")[" << flowPacket->header()->size() << "]";
-
-                // increment id
-                rxId_ += 1;
-
-                usleep(100000); // TODO implement Handler
             }
 
             LOG(INFO) << "Stopping RecvFromConnection loop...";
@@ -126,6 +121,9 @@ namespace net {
             LOG(INFO) << "Starting SendToConnection loop...";
 
             while(!stop_.load()) { // TODO implement Handler
+                // sleep 10ms
+                usleep(10000); // TODO implement Handler
+
                 // if queue is empty do nothing
                 if (tx_.empty()) {
                     continue;
@@ -139,15 +137,21 @@ namespace net {
                     continue;
                 }
 
+                // init packet
+                if (flowPacket->header()->ctrl() == packet::header::FLOW_CTRL::INIT) {
+                    delete flowPacket;
+                    continue;
+                }
+
                 // delete if close packet arrived
                 if (flowPacket->header()->ctrl() == packet::header::FLOW_CTRL::CLOSE) {
-                    delete this;
+                    stop_.store(true, std::memory_order_release); // TODO implement Handler
+                    connection_->Close();
+                    continue;
                 }
 
                 // send packet to connection
                 connection_->Send(flowPacket->data(), flowPacket->header()->size(), 0);
-
-                usleep(100000); // TODO implement Handler
             }
 
             LOG(INFO) << "Stopping SendToConnection loop...";

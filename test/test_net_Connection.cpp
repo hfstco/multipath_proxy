@@ -4,10 +4,10 @@
 
 #include <thread>
 #include <glog/logging.h>
-
 #include "gtest/gtest.h"
 #include "../src/net/base/TcpConnection.h"
 #include "../src/net/base/TcpListener.h"
+#include "../src/packet/base/Buffer.h"
 
 TEST(net_Connection, ipv4_TcpConnection) {
     std::thread t1([&] {
@@ -22,13 +22,7 @@ TEST(net_Connection, ipv4_TcpConnection) {
             delete l1;
             delete c1;
             delete b1;
-        } catch (SocketException e) {
-            LOG(ERROR) << e.what();
-            FAIL();
-        } catch (NetworkException e) {
-            LOG(ERROR) << e.what();
-            FAIL();
-        } catch (SockAddrException e) {
+        } catch (Exception e) {
             LOG(ERROR) << e.what();
             FAIL();
         }
@@ -48,13 +42,7 @@ TEST(net_Connection, ipv4_TcpConnection) {
 
         delete c2;
         delete b1;
-    } catch (SocketException e) {
-        LOG(ERROR) << e.what();
-        FAIL();
-    } catch (NetworkException e) {
-        LOG(INFO) << e.what();
-        FAIL();
-    } catch (SockAddrException e) {
+    } catch (Exception e) {
         LOG(ERROR) << e.what();
         FAIL();
     }
@@ -75,13 +63,13 @@ TEST(net_Connection, ipv6_TcpConnection) {
             delete l1;
             delete c1;
             delete b1;
-        } catch (SocketException e) {
+        } catch (SocketErrorException e) {
             LOG(ERROR) << e.what();
             FAIL();
         } catch (NetworkException e) {
             LOG(ERROR) << e.what();
             FAIL();
-        } catch (SockAddrException e) {
+        } catch (SockAddrErrorException e) {
             LOG(ERROR) << e.what();
             FAIL();
         }
@@ -101,13 +89,13 @@ TEST(net_Connection, ipv6_TcpConnection) {
 
         delete c2;
         delete b1;
-    } catch (SocketException e) {
+    } catch (SocketErrorException e) {
         LOG(ERROR) << e.what();
         FAIL();
     } catch (NetworkException e) {
         LOG(INFO) << e.what();
         FAIL();
-    } catch (SockAddrException e) {
+    } catch (SockAddrErrorException e) {
         LOG(ERROR) << e.what();
         FAIL();
     }

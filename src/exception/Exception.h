@@ -39,18 +39,25 @@ public:
     NetworkException(std::string what_arg) : Exception(what_arg) {};
 };
 
-class SocketException : public Exception {
+class SocketErrorException : public Exception {
 public:
-    SocketException(const char *what_arg) : Exception(what_arg) {};
+    SocketErrorException(const char *what_arg) : Exception(what_arg) {};
 
-    SocketException(std::string what_arg) : Exception(what_arg) {};
+    SocketErrorException(std::string what_arg) : Exception(what_arg) {};
 };
 
-class SockAddrException : public Exception {
+class SocketClosedException: public Exception {
 public:
-    SockAddrException(const char *what_arg) : Exception(what_arg) {};
+    SocketClosedException(const char *what_arg) : Exception(what_arg) {};
 
-    SockAddrException(std::string what_arg) : Exception(what_arg) {};
+    SocketClosedException(std::string what_arg) : Exception(what_arg) {};
+};
+
+class SockAddrErrorException : public Exception {
+public:
+    SockAddrErrorException(const char *what_arg) : Exception(what_arg) {};
+
+    SockAddrErrorException(std::string what_arg) : Exception(what_arg) {};
 };
 
 // collections exception
@@ -60,6 +67,15 @@ public:
     NotFoundException(const char *what_arg) : Exception(what_arg) {};
 
     NotFoundException(std::string what_arg) : Exception(what_arg) {};
+};
+
+// utils exceptions
+
+class UtilsException : public Exception {
+public:
+    UtilsException(const char *what_arg) : Exception(what_arg) {};
+
+    UtilsException(std::string what_arg) : Exception(what_arg) {};
 };
 
 #endif //MULTIPATH_PROXY_EXCEPTION_H

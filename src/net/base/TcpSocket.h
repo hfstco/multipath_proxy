@@ -13,7 +13,7 @@ namespace net {
     namespace ipv4 {
 
 
-        class TcpSocket : protected Socket<TcpSocket, SockAddr_In> {
+        class TcpSocket : public Socket<TcpSocket, SockAddr_In> {
             friend Socket<TcpSocket, SockAddr_In>; // S Accept()
 
         public:

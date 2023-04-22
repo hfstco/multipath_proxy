@@ -6,6 +6,7 @@
 #define MULTIPATH_PROXY_FLOWHEADER_H
 
 #include <netinet/in.h>
+#include <sstream>
 #include "Header.h"
 #include "../../net/base/SockAddr.h"
 
@@ -79,6 +80,24 @@ namespace packet {
             void size(uint16_t size) {
                 size_ = size;
             }
+
+            std::string ToString() {
+                std::stringstream stringStream;
+                stringStream << "FlowPacket[ctrl=";
+                switch (ctrl_) {
+                    case FLOW_CTRL::INIT:
+                        stringStream << "INIT, ";
+                        break;
+                    case FLOW_CTRL::REGULAR:
+                        stringStream << "REGULAR, ";
+                        break;
+                    case FLOW_CTRL::CLOSE:
+                        stringStream << "CLOSE, ";
+                        break;
+                }
+                stringStream << ""; // TODO
+                return stringStream.str();
+            };
 
         protected:
             FlowHeader(FLOW_CTRL ctrl, net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, uint16_t id) : Header(TYPE::FLOW), ctrl_(ctrl), sourceIP_(source.sin_addr),

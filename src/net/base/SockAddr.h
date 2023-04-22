@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <string>
 #include "../../exception/Exception.h"
+#include "../../utils/Utils.h"
 
 namespace net {
 
@@ -65,18 +66,18 @@ namespace net {
             };
 
             std::string ip() {
-                char buffer[INET_ADDRSTRLEN] = {0};
-                inet_ntop(AF_INET, &this->sin_addr, buffer, INET_ADDRSTRLEN); // err handling not necessary
-                return std::string(buffer);
+                try {
+                    return utils::InAddrToString(this->sin_addr);
+                } catch (UtilsException e) {
+                    throw SockAddrErrorException(e.what());
+                }
             }
 
             void ip(std::string ip) {
-                int result;
-                if ((result = inet_pton(this->sin_family, ip.c_str(), &this->sin_addr)) <= 0) {
-                    if (result == 0) {
-                        throw SockAddrException("not a valid ipv4 address.");
-                    }
-                    throw SockAddrException("inet_pton failed. errno=" + std::string(strerror(errno)));
+                try {
+                    this->sin_addr = utils::StringToInAddr(ip);
+                } catch (UtilsException e) {
+                    throw SockAddrErrorException(e.what());
                 }
             }
 
@@ -127,18 +128,18 @@ namespace net {
             };
 
             std::string ip() {
-                char buffer[INET6_ADDRSTRLEN] = {0};
-                inet_ntop(AF_INET6, &this->sin6_addr, buffer, INET6_ADDRSTRLEN); // err handling not necessary
-                return std::string(buffer);
+                try {
+                    return utils::In6AddrToString(this->sin6_addr);
+                } catch (UtilsException e) {
+                    throw SockAddrErrorException(e.what());
+                }
             }
 
             void ip(std::string ip) {
-                int result;
-                if ((result = inet_pton(this->sin6_family, ip.c_str(), &this->sin6_addr)) <= 0) {
-                    if (result == 0) {
-                        throw SockAddrException("not a valid ipv6 address.");
-                    }
-                    throw SockAddrException("inet_pton failed. errno=" + std::string(strerror(errno)));
+                try {
+                    this->sin6_addr = utils::StringToIn6Addr(ip);
+                } catch (UtilsException e) {
+                    throw SockAddrErrorException(e.what());
                 }
             }
 

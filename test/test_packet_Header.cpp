@@ -3,11 +3,10 @@
 //
 
 #include <glog/logging.h>
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include "../src/packet/header/Header.h"
 #include "../src/packet/header/FlowHeader.h"
 #include "../src/packet/header/HeartBeatHeader.h"
-#include "../src/packet/FlowPacket.h"
 
 TEST(packet_Header, verify_FlowHeader) {
     net::ipv4::SockAddr_In sourceSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7777);
@@ -87,24 +86,5 @@ TEST(packet_Header, verify_FlowCloseHeader) {
     EXPECT_EQ(flowCloseHeader.id(), id);
     // size
     EXPECT_EQ(flowCloseHeader.size(), 0);
-}
-
-TEST(packet_Header, verify_FlowHeader_size) {
-    net::ipv4::SockAddr_In sourceSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7777);
-    net::ipv4::SockAddr_In destinationSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7778);
-    uint16_t id = 7;
-    uint16_t size = 77;
-
-    packet::header::FlowHeader flowHeader = packet::header::FlowHeader(sourceSockAddrIn, destinationSockAddrIn, id);
-
-    packet::FlowPacket *pFlowPacket = packet::FlowPacket::make(flowHeader, size);
-    // size
-    EXPECT_EQ(pFlowPacket->header()->size(), size);
-    delete pFlowPacket;
-
-    pFlowPacket = packet::FlowPacket::make(flowHeader);
-    // size
-    EXPECT_EQ(pFlowPacket->header()->size(), 0);
-    delete pFlowPacket;
 }
 

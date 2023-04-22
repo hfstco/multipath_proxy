@@ -42,19 +42,17 @@ namespace net {
             LOG(INFO) << "Starting AcceptFromConnection loop...";
 
             while (!stop_.load()) {
-                short events = listener_->Poll(POLLIN); // TODO timeout?
+                short events = listener_->Poll(POLLIN, 100); // TODO timeout?
 
                 if (events & POLLIN) {
                     net::ipv4::SockAddr_In destinationSockAddrIn;
                     net::ipv4::TcpConnection *pTcpConnection = listener_->Accept(destinationSockAddrIn);
                     net::Flow *pFlow = net::Flow::make(pTcpConnection);
 
-                    flows_->insert(utils::connectionString(pTcpConnection->GetSockName(), destinationSockAddrIn), pFlow);
+                    flows_->insert(utils::ConnectionString(pTcpConnection->GetSockName().ip(), pTcpConnection->GetSockName().port(), destinationSockAddrIn.ip(), destinationSockAddrIn.port()), pFlow);
 
                     LOG(INFO) << "Accepted connection " << pTcpConnection->GetPeerName().ip() << ":" << pTcpConnection->GetPeerName().port() << "|" << destinationSockAddrIn.ip() << ":" << destinationSockAddrIn.port() << ".";
                 }
-
-                usleep(100); // TODO timeout?
             }
 
             LOG(INFO) << "Stopping AcceptFromConnection loop...";

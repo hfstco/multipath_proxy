@@ -49,74 +49,73 @@ namespace net {
 
         void ReadFromConnection(net::ipv4::TcpConnection *connection) {
             while (!stop_.load()) {
-                // TODO poll?
+                int events = connection->Poll(POLLIN, 100);
 
-                // create buffer
-                packet::Buffer *buffer = packet::Buffer::make(1024);
+                if (events & POLLIN) {
+                    // create buffer
+                    packet::Buffer *buffer = packet::Buffer::make(1024);
 
-                // read header
-                ssize_t size = 0;
-                while (size < sizeof(packet::header::Header)) {
-                    size = connection->Recv(buffer->data() + size, buffer->size() - size, 0);
-                }
+                    // read header
+                    try {
+                        connection->Recv(buffer->data(), sizeof(packet::header::Header), 0);
+                    } catch (SocketClosedException e) {
+                        // TODO
+                    } catch (SocketErrorException e) {
+                        // TODO
+                    }
 
-                packet::Packet *packet = (packet::Packet *) buffer;
+                    packet::Packet *packet = (packet::Packet *)buffer;
 
-                // check if HeartBeatHeader
-                if (packet->header()->type() == packet::header::TYPE::HEARTBEAT) {
-                    delete buffer;
-                    continue;
-                } // TODO merge with size == 0
+                    // check if HeartBeatHeader
+                    if (packet->header()->type() == packet::header::TYPE::HEARTBEAT) {
+                        delete buffer;
+                        continue;
+                    }
 
-                // return if no new packet is available
-                if (size == 0) {
-                    delete buffer;
-                    continue;
-                }
+                    assert(packet->header()->type() == packet::header::TYPE::FLOW);
 
-                assert(packet->header()->type() == packet::header::TYPE::FLOW);
+                    // read full header
+                    try {
+                        connection->Recv((unsigned char*)packet->header() + sizeof(packet::header::Header), sizeof(packet::header::FlowHeader) - sizeof(packet::header::Header), 0);
+                    } catch (SocketClosedException e) {
+                        // TODO
+                    } catch (SocketErrorException e) {
+                        // TODO
+                    }
 
-                // read full header
-                size = 0;
-                while (size < (sizeof(packet::header::FlowHeader) - sizeof(packet::header::Header))) {
-                    size = connection->Recv(buffer->data() + size, buffer->size() - size, 0);
-                }
+                    packet::FlowPacket *flowPacket = (packet::FlowPacket *)packet;
 
-                packet::FlowPacket *flowPacket = (packet::FlowPacket *) buffer;
+                    // create flow if init packet
+                    if (flowPacket->header()->ctrl() == packet::header::FLOW_CTRL::INIT) {
+                        // check if flow already created
+                        // if ( flowVector.find("127.0.0.1:2345|192.168.18.1:3456") )
+                        //      return nullptr;
 
-                // create flow if init packet
-                if (flowPacket->header()->ctrl() == packet::header::FLOW_CTRL::INIT) {
-                    // check if flow already created
-                    // if ( flowVector.find("127.0.0.1:2345|192.168.18.1:3456") )
-                    //      return nullptr;
+                        // create flow
+                        net::ipv4::SockAddr_In flowSockAddrIn = net::ipv4::SockAddr_In(
+                                flowPacket->header()->destinationIp(), flowPacket->header()->destinationPort());
+                        net::ipv4::TcpConnection *flowConnection = net::ipv4::TcpConnection::make(flowSockAddrIn);
+                        net::Flow *flow = net::Flow::make(flowConnection);
 
-                    // create flow
-                    net::ipv4::SockAddr_In flowSockAddrIn = net::ipv4::SockAddr_In(
-                            flowPacket->header()->destinationIp(), flowPacket->header()->destinationPort());
-                    net::ipv4::TcpConnection *flowConnection = net::ipv4::TcpConnection::make(flowSockAddrIn);
-                    net::Flow *flow = net::Flow::make(flowConnection);
+                        // TODO add Flow to FlowVector
 
-                    // TODO add Flow to FlowVector
+                        continue;
+                    }
 
-                    continue;
-                }
+                    // read packet data from socket
+                    try {
+                        connection->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
+                    } catch (SocketClosedException e) {
+                        // TODO
+                    } catch (SocketErrorException e) {
+                        // TODO
+                    }
+                    flowPacket->resize(flowPacket->header()->size()); // TODO avoid resize if possible
 
-                // if close header
-                if (flowPacket->header()->ctrl() == packet::header::FLOW_CTRL::CLOSE) {
+                    // TODO Flow regular packet before Flow init packet
+
                     // TODO find Flow in FlowVector and push FlowPacket
-                    continue;
-                } // TODO merge with read packet data
-
-                // read packet data from socket
-                size = 0;
-                while (size < flowPacket->header()->size()) {
-                    size = connection->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
                 }
-                flowPacket->resize(flowPacket->header()->size()); // TODO avoid resize if possible
-
-                // TODO Flow regular packet before Flow init packet
-
-                // TODO find Flow in FlowVector and push FlowPacket
             }
         }
     };
