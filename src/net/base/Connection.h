@@ -18,7 +18,7 @@ namespace net {
 
     public:
         ssize_t Recv(unsigned char *data, size_t size, int flags) {
-                return S::Recv(data, size, flags);
+            return S::Recv(data, size, flags);
         };
 
         ssize_t Send(unsigned char *data, size_t size, int flags) {

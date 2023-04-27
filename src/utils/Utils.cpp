@@ -4,6 +4,8 @@
 
 #include "Utils.h"
 
+#include "../exception/Exception.h"
+
 namespace utils {
 
     IpAndPort splitIPandPort(std::string ipandport) {

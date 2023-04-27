@@ -7,7 +7,7 @@
 #include "gtest/gtest.h"
 #include "../src/net/base/TcpConnection.h"
 #include "../src/net/base/TcpListener.h"
-#include "../src/packet/base/Buffer.h"
+#include "../src/packet/Buffer.h"
 
 TEST(net_Connection, ipv4_TcpConnection) {
     std::thread t1([&] {

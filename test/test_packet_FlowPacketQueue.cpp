@@ -4,7 +4,7 @@
 
 #include <glog/logging.h>
 #include "gtest/gtest.h"
-#include "../src/packet/header/FlowHeader.h"
+#include "../src/packet/FlowHeader.h"
 #include "../src/packet/Packet.h"
 #include "../src/packet/FlowPacket.h"
 #include "../src/collections/FlowPacketQueue.h"
@@ -16,7 +16,7 @@ TEST(packet_FlowPacketQueue, FlowPacketQueue_empty) {
 
     net::ipv4::SockAddr_In sockAddr1 = net::ipv4::SockAddr_In("127.0.0.1", 2345);
     net::ipv4::SockAddr_In sockAddr2 = net::ipv4::SockAddr_In("127.0.0.1", 2346);
-    packet::header::FlowInitHeader flowInitHeader1 = packet::header::FlowInitHeader(sockAddr1, sockAddr2);
+    packet::FlowInitHeader flowInitHeader1 = packet::FlowInitHeader(sockAddr1, sockAddr2);
     packet::FlowPacket *pFlowPacket1 = packet::FlowPacket::make(flowInitHeader1);
 
     flowPacketQueue1.push(pFlowPacket1);
@@ -33,7 +33,7 @@ TEST(packet_FlowPacketQueue, FlowPacketQueue_pop_on_empty_queue) {
 
     net::ipv4::SockAddr_In sockAddr1 = net::ipv4::SockAddr_In("127.0.0.1", 2345);
     net::ipv4::SockAddr_In sockAddr2 = net::ipv4::SockAddr_In("127.0.0.1", 2346);
-    packet::header::FlowInitHeader flowInitHeader1 = packet::header::FlowInitHeader(sockAddr1, sockAddr2);
+    packet::FlowInitHeader flowInitHeader1 = packet::FlowInitHeader(sockAddr1, sockAddr2);
     packet::FlowPacket *pFlowPacket1 = packet::FlowPacket::make(flowInitHeader1);
 
     flowPacketQueue1.push(pFlowPacket1);
@@ -48,7 +48,7 @@ TEST(packet_FlowPacketQueue, FlowPacketQueue_push_and_pop_single_packet) {
 
     net::ipv4::SockAddr_In sockAddr1 = net::ipv4::SockAddr_In("127.0.0.1", 2345);
     net::ipv4::SockAddr_In sockAddr2 = net::ipv4::SockAddr_In("127.0.0.1", 2346);
-    packet::header::FlowInitHeader flowInitHeader1 = packet::header::FlowInitHeader(sockAddr1, sockAddr2);
+    packet::FlowInitHeader flowInitHeader1 = packet::FlowInitHeader(sockAddr1, sockAddr2);
     packet::FlowPacket *pFlowPacket1 = packet::FlowPacket::make(flowInitHeader1);
 
     flowPacketQueue1.push(pFlowPacket1);
@@ -67,19 +67,19 @@ TEST(packet_FlowPacketQueue, FlowPacketQueue_push_and_pop_sorted) { // TODO put 
     net::ipv4::SockAddr_In sockAddrIn1 = net::ipv4::SockAddr_In("127.0.0.1", 2345);
     net::ipv4::SockAddr_In sockAddrIn2 = net::ipv4::SockAddr_In("127.0.0.1", 2346);
 
-    packet::header::FlowInitHeader flowInitHeader1 = packet::header::FlowInitHeader(sockAddrIn1, sockAddrIn2);
+    packet::FlowInitHeader flowInitHeader1 = packet::FlowInitHeader(sockAddrIn1, sockAddrIn2);
     packet::FlowPacket *pFlowPacket1 = packet::FlowPacket::make(flowInitHeader1);
 
-    packet::header::FlowHeader flowHeader1 = packet::header::FlowHeader(sockAddrIn1, sockAddrIn2, 1);
+    packet::FlowHeader flowHeader1 = packet::FlowHeader(sockAddrIn1, sockAddrIn2, 1);
     packet::FlowPacket *pFlowPacket2 = packet::FlowPacket::make(flowHeader1, vector1.data(), vector1.size());
 
-    packet::header::FlowHeader flowHeader2 = packet::header::FlowHeader(sockAddrIn1, sockAddrIn2, 2);
+    packet::FlowHeader flowHeader2 = packet::FlowHeader(sockAddrIn1, sockAddrIn2, 2);
     packet::FlowPacket *pFlowPacket3 = packet::FlowPacket::make(flowHeader2, vector2.data(), vector2.size());
 
-    packet::header::FlowHeader flowHeader3 = packet::header::FlowHeader(sockAddrIn1, sockAddrIn2, 3);
+    packet::FlowHeader flowHeader3 = packet::FlowHeader(sockAddrIn1, sockAddrIn2, 3);
     packet::FlowPacket *pFlowPacket4 = packet::FlowPacket::make(flowHeader3, vector3.data(), vector3.size());
 
-    packet::header::FlowCloseHeader flowCloseHeader1 = packet::header::FlowCloseHeader(sockAddrIn1, sockAddrIn2, 4);
+    packet::FlowCloseHeader flowCloseHeader1 = packet::FlowCloseHeader(sockAddrIn1, sockAddrIn2, 4);
     packet::FlowPacket *pFlowPacket5 = packet::FlowPacket::make(flowCloseHeader1);
 
     flowPacketQueue1.push(pFlowPacket1);
@@ -109,19 +109,19 @@ TEST(packet_FlowPacketQueue, FlowPacketQueue_push_pop_unsorted) {
     net::ipv4::SockAddr_In sockAddrIn1 = net::ipv4::SockAddr_In("127.0.0.1", 2345);
     net::ipv4::SockAddr_In sockAddrIn2 = net::ipv4::SockAddr_In("127.0.0.1", 2346);
 
-    packet::header::FlowInitHeader flowInitHeader1 = packet::header::FlowInitHeader(sockAddrIn1, sockAddrIn2);
+    packet::FlowInitHeader flowInitHeader1 = packet::FlowInitHeader(sockAddrIn1, sockAddrIn2);
     packet::FlowPacket *pFlowPacket1 = packet::FlowPacket::make(flowInitHeader1);
 
-    packet::header::FlowHeader flowHeader1 = packet::header::FlowHeader(sockAddrIn1, sockAddrIn2, 1);
+    packet::FlowHeader flowHeader1 = packet::FlowHeader(sockAddrIn1, sockAddrIn2, 1);
     packet::FlowPacket *pFlowPacket2 = packet::FlowPacket::make(flowHeader1, vector1.data(), vector1.size());
 
-    packet::header::FlowHeader flowHeader2 = packet::header::FlowHeader(sockAddrIn1, sockAddrIn2, 2);
+    packet::FlowHeader flowHeader2 = packet::FlowHeader(sockAddrIn1, sockAddrIn2, 2);
     packet::FlowPacket *pFlowPacket3 = packet::FlowPacket::make(flowHeader2, vector2.data(), vector2.size());
 
-    packet::header::FlowHeader flowHeader3 = packet::header::FlowHeader(sockAddrIn1, sockAddrIn2, 3);
+    packet::FlowHeader flowHeader3 = packet::FlowHeader(sockAddrIn1, sockAddrIn2, 3);
     packet::FlowPacket *pFlowPacket4 = packet::FlowPacket::make(flowHeader3, vector3.data(), vector3.size());
 
-    packet::header::FlowCloseHeader flowCloseHeader1 = packet::header::FlowCloseHeader(sockAddrIn1, sockAddrIn2, 4);
+    packet::FlowCloseHeader flowCloseHeader1 = packet::FlowCloseHeader(sockAddrIn1, sockAddrIn2, 4);
     packet::FlowPacket *pFlowPacket5 = packet::FlowPacket::make(flowCloseHeader1);
 
     flowPacketQueue1.push(pFlowPacket1);
@@ -151,19 +151,19 @@ TEST(packet_FlowPacketQueue, FlowPacketQueue_id_not_available) {
     net::ipv4::SockAddr_In sockAddrIn1 = net::ipv4::SockAddr_In("127.0.0.1", 2345);
     net::ipv4::SockAddr_In sockAddrIn2 = net::ipv4::SockAddr_In("127.0.0.1", 2346);
 
-    packet::header::FlowInitHeader flowInitHeader1 = packet::header::FlowInitHeader(sockAddrIn1, sockAddrIn2);
+    packet::FlowInitHeader flowInitHeader1 = packet::FlowInitHeader(sockAddrIn1, sockAddrIn2);
     packet::FlowPacket *pFlowPacket1 = packet::FlowPacket::make(flowInitHeader1);
 
-    packet::header::FlowHeader flowHeader1 = packet::header::FlowHeader(sockAddrIn1, sockAddrIn2, 1);
+    packet::FlowHeader flowHeader1 = packet::FlowHeader(sockAddrIn1, sockAddrIn2, 1);
     packet::FlowPacket *pFlowPacket2 = packet::FlowPacket::make(flowHeader1, vector1.data(), vector1.size());
 
-    packet::header::FlowHeader flowHeader2 = packet::header::FlowHeader(sockAddrIn1, sockAddrIn2, 2);
+    packet::FlowHeader flowHeader2 = packet::FlowHeader(sockAddrIn1, sockAddrIn2, 2);
     packet::FlowPacket *pFlowPacket3 = packet::FlowPacket::make(flowHeader2, vector2.data(), vector2.size());
 
-    packet::header::FlowHeader flowHeader3 = packet::header::FlowHeader(sockAddrIn1, sockAddrIn2, 3);
+    packet::FlowHeader flowHeader3 = packet::FlowHeader(sockAddrIn1, sockAddrIn2, 3);
     packet::FlowPacket *pFlowPacket4 = packet::FlowPacket::make(flowHeader3, vector3.data(), vector3.size());
 
-    packet::header::FlowCloseHeader flowCloseHeader1 = packet::header::FlowCloseHeader(sockAddrIn1, sockAddrIn2, 4);
+    packet::FlowCloseHeader flowCloseHeader1 = packet::FlowCloseHeader(sockAddrIn1, sockAddrIn2, 4);
     packet::FlowPacket *pFlowPacket5 = packet::FlowPacket::make(flowCloseHeader1);
 
     flowPacketQueue1.push(pFlowPacket1);

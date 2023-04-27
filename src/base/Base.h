@@ -5,26 +5,31 @@
 #ifndef MULTIPATH_PROXY_BASE_H
 #define MULTIPATH_PROXY_BASE_H
 
-#include "../net/base/TcpConnection.h"
-#include "../net/base/TcpListener.h"
 #include "../collections/FlowMap.h"
-#include "../net/Bond.h"
+
+namespace net {
+    namespace ipv4 {
+        class TcpConnection;
+    }
+
+    class Bond;
+}
+
+/*namespace collections {
+    class FlowMap;
+}*/
 
 namespace base {
 
     class Base {
-
     public:
-        Base(net::ipv4::TcpConnection *ter, net::ipv4::TcpConnection *sat) : bond_(ter, sat, &flowMap_) {}
+        Base(net::ipv4::TcpConnection *ter, net::ipv4::TcpConnection *sat);
 
-        virtual ~Base() {}
+        virtual ~Base();
 
     protected:
-        net::Bond bond_;
-        collections::FlowMap flowMap_ = collections::FlowMap();
-
-    private:
-
+        collections::FlowMap flowMap_;
+        net::Bond *bond_;
     };
 }
 

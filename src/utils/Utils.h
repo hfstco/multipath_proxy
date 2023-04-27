@@ -7,7 +7,6 @@
 
 #include <string>
 #include <arpa/inet.h>
-#include "../exception/Exception.h"
 
 namespace utils {
 

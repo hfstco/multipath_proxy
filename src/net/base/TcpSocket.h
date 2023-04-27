@@ -17,28 +17,21 @@ namespace net {
             friend Socket<TcpSocket, SockAddr_In>; // S Accept()
 
         public:
-            static TcpSocket *make() {
-                return new TcpSocket();
-            };
+            static TcpSocket *make();
 
             void Bind(SockAddr_In addr);
-
             void Listen(int backlog = SOMAXCONN);
 
             TcpSocket *Accept();
-
             TcpSocket *Accept(SockAddr_In &addr);
-
             void Connect(SockAddr_In addr);
 
             ssize_t Send(unsigned char *buf, size_t size, int flags);
-
             ssize_t Recv(unsigned char *buf, size_t size, int flags);
 
             short Poll(short events, int timeout = 0);
 
             SockAddr_In GetSockName();
-
             SockAddr_In GetPeerName();
 
             template<typename T>
@@ -49,8 +42,7 @@ namespace net {
             void Close();
 
         protected:
-            TcpSocket() : Socket<TcpSocket, SockAddr_In>(AF_INET, SOCK_STREAM, 0) {};
-
+            TcpSocket();
             TcpSocket(int sock_fd);
         };
 
@@ -62,28 +54,21 @@ namespace net {
             friend Socket<TcpSocket, SockAddr_In6>; // S Accept()
 
         public:
-            static TcpSocket *make() {
-                return new TcpSocket();
-            };
+            static TcpSocket *make();
 
             void Bind(SockAddr_In6 addr);
-
             void Listen(int backlog = SOMAXCONN);
 
             TcpSocket *Accept();
-
             TcpSocket *Accept(SockAddr_In6 &addr);
-
             void Connect(SockAddr_In6 addr);
 
             ssize_t Send(unsigned char *buf, size_t size, int flags);
-
             ssize_t Recv(unsigned char *buf, size_t size, int flags);
 
             short Poll(short revents, int timeout = 0);
 
             SockAddr_In6 GetSockName();
-
             SockAddr_In6 GetPeerName();
 
             template<typename T>
@@ -94,9 +79,8 @@ namespace net {
             void Close();
 
         protected:
-            TcpSocket() : Socket<TcpSocket, SockAddr_In6>(AF_INET6, SOCK_STREAM, 0) {};
-
-            TcpSocket(int sock_fd);;
+            TcpSocket();
+            TcpSocket(int sock_fd);
         };
 
     } // ipv6

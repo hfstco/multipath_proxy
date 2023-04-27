@@ -2,7 +2,7 @@ FROM ubuntu:latest
 
 # update
 RUN apt update -y
-RUN apt upgrade
+RUN apt upgrade -y
 
 # ssh
 RUN apt install -y openssh-server
@@ -28,7 +28,7 @@ RUN ssh-keygen -A
 RUN ssh-keygen -t rsa -b 4096 -f  /etc/ssh/ssh_host_key
 RUN mkdir -p /run/sshd
 
-# EXPOSE 22
+EXPOSE 22
 
 # wireshark
 RUN DEBIAN_FRONTEND=noninteractive apt install -y wireshark

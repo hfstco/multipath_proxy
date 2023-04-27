@@ -4,15 +4,17 @@
 
 #include "Local.h"
 
-#include "glog/logging.h"
-
+#include "../net/Proxy.h"
+#include "../net/base/SockAddr.h"
 
 namespace base {
-    Local::Local(net::ipv4::TcpListener proxy, net::ipv4::TcpConnection *ter, net::ipv4::TcpConnection *sat) : Base(ter, sat),
-                                                                                                                proxy_(proxy) {
+
+    Local::Local(net::ipv4::TcpConnection *ter, net::ipv4::TcpConnection *sat, net::ipv4::SockAddr_In sockAddrInProxy) : Base(ter, sat), proxy_(net::Proxy::make(sockAddrInProxy, &flowMap_, bond_)) {
+
     }
 
     Local::~Local() {
-        this->proxy_.Close();
+        delete proxy_;
     }
+
 } // mpp

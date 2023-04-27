@@ -5,16 +5,17 @@
 #ifndef MULTIPATH_PROXY_HEARTBEATHEADER_H
 #define MULTIPATH_PROXY_HEARTBEATHEADER_H
 
+#include <string>
 #include "Header.h"
 
 namespace packet {
-    namespace header {
 
         struct HeartBeatHeader : Header {
-            HeartBeatHeader() : Header(TYPE::HEARTBEAT) {}
+            HeartBeatHeader();
+
+            std::string ToString();
         };
 
-    } // header
 } // packet
 
 #endif //MULTIPATH_PROXY_HEARTBEATHEADER_H

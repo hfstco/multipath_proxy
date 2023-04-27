@@ -6,25 +6,25 @@
 #define MULTIPATH_PROXY_HEARTBEATPACKET_H
 
 #include "Packet.h"
-#include "header/HeartBeatHeader.h"
 
 namespace packet {
 
+    class HeartBeatHeader;
+
     struct HeartBeatPacket : public Packet {
     public:
-        static HeartBeatPacket *make() {
-            return new HeartBeatPacket();
-        }
+        static HeartBeatPacket *make();
 
-        packet::header::HeartBeatHeader *header() {
-            return reinterpret_cast<packet::header::HeartBeatHeader *>(Packet::header());
-        }
+        packet::HeartBeatHeader *header();
+
+        uint16_t size();
+
+        std::string ToString();
+
+        ~HeartBeatPacket() override;
 
     private:
-        HeartBeatPacket() : Packet(sizeof(packet::header::HeartBeatHeader)) {
-            packet::header::HeartBeatHeader heartBeatHeader = packet::header::HeartBeatHeader();
-            memcpy(this->header(), &heartBeatHeader, sizeof(packet::header::HeartBeatHeader));
-        }
+        HeartBeatPacket();
     };
 
 } // packet

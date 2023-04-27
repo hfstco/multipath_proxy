@@ -13,11 +13,10 @@
 namespace base {
 
     class Remote : public Base {
-    private:
-        std::thread tSat_, tTer;
-
     public:
         Remote(net::ipv4::TcpListener ter, net::ipv4::TcpListener sat);
+
+        ~Remote() override;
     };
 
 } // remote

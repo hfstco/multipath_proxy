@@ -4,23 +4,23 @@
 
 #include <glog/logging.h>
 #include <gtest/gtest.h>
-#include "../src/packet/header/Header.h"
-#include "../src/packet/header/FlowHeader.h"
-#include "../src/packet/header/HeartBeatHeader.h"
+#include "../src/packet/Header.h"
+#include "../src/packet/FlowHeader.h"
+#include "../src/packet/HeartBeatHeader.h"
 
 TEST(packet_Header, verify_FlowHeader) {
     net::ipv4::SockAddr_In sourceSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7777);
     net::ipv4::SockAddr_In destinationSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7778);
     uint16_t id = 7;
 
-    packet::header::FlowHeader flowHeader = packet::header::FlowHeader(sourceSockAddrIn, destinationSockAddrIn, id);
+    packet::FlowHeader flowHeader = packet::FlowHeader(sourceSockAddrIn, destinationSockAddrIn, id);
 
     // magic
-    EXPECT_EQ(0, memcmp(&flowHeader, &packet::header::MAGIC, sizeof(packet::header::MAGIC)));
+    EXPECT_EQ(0, memcmp(&flowHeader, &packet::MAGIC, sizeof(packet::MAGIC)));
     // type
-    EXPECT_EQ(flowHeader.type(), packet::header::TYPE::FLOW);
+    EXPECT_EQ(flowHeader.type(), packet::TYPE::FLOW);
     // ctrl
-    EXPECT_EQ(flowHeader.ctrl(), packet::header::FLOW_CTRL::REGULAR);
+    EXPECT_EQ(flowHeader.ctrl(), packet::FLOW_CTRL::REGULAR);
     // sourceIp
     EXPECT_TRUE(flowHeader.sourceIp().s_addr == sourceSockAddrIn.sin_addr.s_addr);
     // destinationip
@@ -39,14 +39,14 @@ TEST(packet_Header, verify_FlowInitHeader) {
     net::ipv4::SockAddr_In sourceSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7777);
     net::ipv4::SockAddr_In destinationSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7778);
 
-    packet::header::FlowInitHeader flowInitHeader(sourceSockAddrIn, destinationSockAddrIn);
+    packet::FlowInitHeader flowInitHeader(sourceSockAddrIn, destinationSockAddrIn);
 
     // magic
-    EXPECT_EQ(0, memcmp(&flowInitHeader, &packet::header::MAGIC, sizeof(packet::header::MAGIC)));
+    EXPECT_EQ(0, memcmp(&flowInitHeader, &packet::MAGIC, sizeof(packet::MAGIC)));
     // type
-    EXPECT_EQ(flowInitHeader.type(), packet::header::TYPE::FLOW);
+    EXPECT_EQ(flowInitHeader.type(), packet::TYPE::FLOW);
     // ctrl
-    EXPECT_EQ(flowInitHeader.ctrl(), packet::header::FLOW_CTRL::INIT);
+    EXPECT_EQ(flowInitHeader.ctrl(), packet::FLOW_CTRL::INIT);
     // sourceIp
     EXPECT_TRUE(flowInitHeader.sourceIp().s_addr == sourceSockAddrIn.sin_addr.s_addr);
     // destinationip
@@ -66,14 +66,14 @@ TEST(packet_Header, verify_FlowCloseHeader) {
     net::ipv4::SockAddr_In destinationSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7778);
     uint16_t id = 7;
 
-    packet::header::FlowCloseHeader flowCloseHeader(sourceSockAddrIn, destinationSockAddrIn, id);
+    packet::FlowCloseHeader flowCloseHeader(sourceSockAddrIn, destinationSockAddrIn, id);
 
     // magic
-    EXPECT_EQ(0, memcmp(&flowCloseHeader, &packet::header::MAGIC, sizeof(packet::header::MAGIC)));
+    EXPECT_EQ(0, memcmp(&flowCloseHeader, &packet::MAGIC, sizeof(packet::MAGIC)));
     // type
-    EXPECT_EQ(flowCloseHeader.type(), packet::header::TYPE::FLOW);
+    EXPECT_EQ(flowCloseHeader.type(), packet::TYPE::FLOW);
     // ctrl
-    EXPECT_EQ(flowCloseHeader.ctrl(), packet::header::FLOW_CTRL::CLOSE);
+    EXPECT_EQ(flowCloseHeader.ctrl(), packet::FLOW_CTRL::CLOSE);
     // sourceIp
     EXPECT_TRUE(flowCloseHeader.sourceIp().s_addr == sourceSockAddrIn.sin_addr.s_addr);
     // destinationip

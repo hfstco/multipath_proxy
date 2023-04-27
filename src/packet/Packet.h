@@ -5,26 +5,27 @@
 #ifndef MULTIPATH_PROXY_PACKET_H
 #define MULTIPATH_PROXY_PACKET_H
 
-#include "base/Buffer.h"
-#include "header/Header.h"
+#include "Buffer.h"
 
 namespace packet {
 
+    class Header;
+
     struct Packet : public packet::Buffer {
     public:
-        packet::header::Header *header() {
-            return reinterpret_cast<packet::header::Header *>(packet::Buffer::data());
-        };
+        packet::Header *header();
+        unsigned char *data();
 
-        void resize(size_t size) {
-            assert(size >= sizeof(header::Header)); // TODO exception
-            packet::Buffer::resize(size);
-        }
+        uint16_t size();
+        void resize(size_t size);
+
+        std::string ToString();
+
+        ~Packet() override;
 
     protected:
-        Packet(size_t size) : packet::Buffer(size) {
-            assert(size >= sizeof(header::Header));
-        }
+        Packet(size_t size);
+        Packet();
     };
 
 } // packet

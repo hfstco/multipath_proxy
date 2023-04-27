@@ -7,6 +7,12 @@
 
 namespace net {
     namespace ipv4 {
+        TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In>(AF_INET, SOCK_STREAM, 0) {}
+        TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In>(sock_fd) {}
+
+        TcpSocket *TcpSocket::make() {
+            return new TcpSocket();
+        };
 
         void TcpSocket::Bind(net::ipv4::SockAddr_In addr) {
             Socket<TcpSocket, SockAddr_In>::Bind(addr);
@@ -52,12 +58,16 @@ namespace net {
             Socket::Close();
         }
 
-        TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In>(sock_fd) {}
-
     } // ipv4
 
 
     namespace ipv6 {
+        TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In6>(AF_INET6, SOCK_STREAM, 0) {}
+        TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In6>(sock_fd) {}
+
+        TcpSocket *TcpSocket::make() {
+            return new TcpSocket();
+        };
 
         void TcpSocket::Bind(SockAddr_In6 addr) {
             Socket<TcpSocket, SockAddr_In6>::Bind(addr);
@@ -102,8 +112,6 @@ namespace net {
         void TcpSocket::Close() {
             Socket::Close();
         }
-
-        TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In6>(sock_fd) {}
 
     } // ipv6
 } // net

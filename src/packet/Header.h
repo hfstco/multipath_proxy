@@ -5,8 +5,9 @@
 #ifndef MULTIPATH_PROXY_HEADER_H
 #define MULTIPATH_PROXY_HEADER_H
 
+#include <string>
+
 namespace packet {
-    namespace header {
 
         static const uint32_t MAGIC = 0xDEADBEEF;
 
@@ -17,19 +18,18 @@ namespace packet {
 
         struct __attribute__((packed)) Header {
         public:
-            TYPE type() const {
-                return type_;
-            }
+            TYPE type() const;
+
+            std::string ToString();
 
         protected:
-            Header(TYPE type) : type_(type) {}
+            Header(TYPE type);
 
         private:
             uint32_t magic_ = MAGIC;     // 4
             TYPE type_;                  // 8
         };
 
-    } // header
 } // packet
 
 #endif //MULTIPATH_PROXY_HEADER_H

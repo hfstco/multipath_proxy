@@ -49,11 +49,11 @@ namespace net {
         S *Accept() { // TODO merge with Accept(SA &sockaddr)
             int temp_fd = -1;
 
-            LOG(INFO) << "Accept() S[fd=" << this->fd_ << "]";
-
             if ((temp_fd = accept(this->fd_, NULL, NULL)) < 0) {
                 throw SocketErrorException("Accept failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
+
+            LOG(INFO) << "Accept() -> S[fd=" << temp_fd << "]; S[fd=" << this->fd_ << "]";
 
             S *s = new S(temp_fd);
             return s;
@@ -63,11 +63,11 @@ namespace net {
             int temp_fd = -1;
             socklen_t addrlen = sizeof(addr);
 
-            LOG(INFO) << "Accept() -> S[fd=" << temp_fd << "]; S[fd=" << this->fd_ << "]";
-
             if ((temp_fd = accept(this->fd_, (struct sockaddr *) &addr, &addrlen)) < 0) {
                 throw SocketErrorException("Accept failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
+
+            LOG(INFO) << "Accept() -> S[fd=" << temp_fd << "]; S[fd=" << this->fd_ << "]";
 
             return new S(temp_fd);
         };

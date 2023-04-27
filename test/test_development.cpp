@@ -6,7 +6,7 @@
 #include <glog/logging.h>
 #include <uuid/uuid.h>
 
-TEST(random_tests, std_string_to_std_vector_char) {
+TEST(development_tests, std_string_to_std_vector_char) {
     std::string str1("helloworld!");
     std::vector<char> vec1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
 
@@ -15,7 +15,7 @@ TEST(random_tests, std_string_to_std_vector_char) {
     EXPECT_EQ(0, strcmp(vec1.data(), vec2.data()));
 }
 
-TEST(random_tests, std__vector_char_to_std__string) {
+TEST(development_tests, std__vector_char_to_std__string) {
     std::string str1("helloworld!");
     std::vector<char> vec1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
 
@@ -30,7 +30,7 @@ struct X {
     short c;
 };
 
-TEST(random_tests, struct_to_buffer_vector) {
+TEST(development_tests, struct_to_buffer_vector) {
     X x = X();
     x.a = 1;
     x.b = 2;
@@ -63,7 +63,7 @@ public:
     }
 };
 
-TEST(random_tests, set_inherited_class) {
+TEST(development_tests, set_inherited_class) {
     B b1 = B<A>(0);
     A a1 = A(1);
     b1.set_a(a1);
@@ -71,7 +71,7 @@ TEST(random_tests, set_inherited_class) {
     EXPECT_EQ(1, b1.i_);
 }
 
-TEST(random_tests, get_inherited_class) {
+TEST(development_tests, get_inherited_class) {
     B b1 = B<A>(0);
     A a1 = A(1);
     b1.set_a(a1);
@@ -80,7 +80,7 @@ TEST(random_tests, get_inherited_class) {
     EXPECT_EQ(a1.i_, a2.i_);
 }
 
-TEST(random_tests, uuid) {
+TEST(development_tests, uuid) {
     uuid_t uuid;
     uuid_generate(uuid);
 

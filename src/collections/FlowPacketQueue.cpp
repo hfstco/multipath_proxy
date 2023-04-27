@@ -2,7 +2,12 @@
 // Created by Matthias Hofstätter on 16.04.23.
 //
 
+#include <glog/logging.h>
+
 #include "FlowPacketQueue.h"
+
+#include "../packet/FlowPacket.h"
+#include "../packet/FlowHeader.h"
 
 namespace collections {
 
@@ -18,10 +23,12 @@ namespace collections {
         return std::vector<packet::FlowPacket *>::size();
     }
 
-    void FlowPacketQueue::push(packet::FlowPacket *packet) {
+    void FlowPacketQueue::push(packet::FlowPacket *pFlowPacket) {
         const std::lock_guard lock(this->mutex_);
 
-        std::vector<packet::FlowPacket *>::push_back(packet);
+        std::vector<packet::FlowPacket *>::push_back(pFlowPacket);
+
+        LOG(INFO) << "push(" << pFlowPacket->ToString() << ")";
     }
 
     packet::FlowPacket *FlowPacketQueue::pop() {
@@ -38,12 +45,13 @@ namespace collections {
         }*/
 
         // iterate through whole vector to find package TODO
-        for(auto flowPacket = this->begin(); flowPacket < this->end(); flowPacket++) {
-            if((*flowPacket)->header()->id() == currentId_) {
+        for(auto itFlowPacket = this->begin(); itFlowPacket < this->end(); itFlowPacket++) {
+            if((*itFlowPacket)->header()->id() == currentId_) {
                 currentId_ += 1;
-                packet::FlowPacket *p = (*flowPacket);
-                this->erase(flowPacket);
-                return p;
+                packet::FlowPacket *pFlowPacket = (*itFlowPacket);
+                this->erase(itFlowPacket);
+                LOG(INFO) << "pop() -> " + pFlowPacket->ToString();
+                return pFlowPacket;
             }
         }
 
