@@ -7,7 +7,6 @@
 #include <iostream>
 #include "Gui.h"
 #include "glog/logging.h"
-#include "../log/Log.h"
 #include <fstream>
 
 namespace gui {
@@ -86,7 +85,7 @@ namespace gui {
 
     void display_log(int lines_max) {
         std::ifstream logfile;
-        logfile.open(log::FILE);
+        logfile.open("mpp.log");
 
         std::string log;
 
@@ -97,7 +96,7 @@ namespace gui {
             }
             logfile.close();
         } else {
-            LOG(ERROR) << "Couldn't open logfile " + log::FILE;
+            LOG(ERROR) << "Couldn't open logfile " << "mpp.log";
         }
 
         printw(log.c_str());

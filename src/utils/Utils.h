@@ -10,13 +10,6 @@
 
 namespace utils {
 
-    struct IpAndPort {
-        std::string ip;
-        int port;
-    };
-
-    IpAndPort splitIPandPort(std::string ipandport);
-
     std::string InAddrToString(in_addr &inAddr);
 
     std::string In6AddrToString(in6_addr &in6Addr);

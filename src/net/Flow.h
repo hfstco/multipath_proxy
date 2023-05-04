@@ -5,6 +5,9 @@
 #ifndef MULTIPATH_PROXY_FLOW_H
 #define MULTIPATH_PROXY_FLOW_H
 
+#include <atomic>
+#include <thread>
+
 #include "../collections/FlowPacketQueue.h"
 
 namespace packet {

@@ -2,16 +2,13 @@
 // Created by Matthias Hofstätter on 04.04.23.
 //
 
+#include <cstring>
+
 #include "Utils.h"
 
 #include "../exception/Exception.h"
 
 namespace utils {
-
-    IpAndPort splitIPandPort(std::string ipandport) {
-        int end = ipandport.find(':');
-        return {ipandport.substr(0, end), std::stoi(ipandport.substr(end + 1, ipandport.length() - end))};
-    }
 
     std::string InAddrToString(in_addr &inAddr) {
         int result;

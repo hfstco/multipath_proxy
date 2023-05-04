@@ -159,7 +159,7 @@ namespace net {
                 throw SocketErrorException("Poll failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
-            LOG(INFO) << "Poll(" << events << ", " << timeout << ") -> " << poll_fd[0].revents << ", S[fd=" << this->fd_ << "]";
+            //LOG(INFO) << "Poll(" << events << ", " << timeout << ") -> " << poll_fd[0].revents << ", S[fd=" << this->fd_ << "]";
 
             return poll_fd[0].revents;
         }
@@ -172,6 +172,8 @@ namespace net {
                 throw SocketErrorException("GetSockName failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
+            LOG(INFO) << "GetSockName() -> " << addr.ip() << ":" << addr.port();
+
             return addr;
         }
 
@@ -183,6 +185,8 @@ namespace net {
                 throw SocketErrorException("GetSockName failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
+            LOG(INFO) << "GetPeerName() -> " << addr.ip() << ":" << addr.port();
+
             return addr;
         }
 
@@ -191,6 +195,8 @@ namespace net {
             if (setsockopt(this->fd_, level, optname, (void *) &optval, sizeof(T)) < 0) {
                 throw SocketErrorException("SetSockOpt failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
+
+            LOG(INFO) << "SetSockOpt(" << level << ", " << optname << ", " << optval << ")";
         }
 
         void Close() {

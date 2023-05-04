@@ -9,7 +9,7 @@
 #define MULTIPATH_PROXY_SOCKADDR_H
 
 #include <arpa/inet.h>
-#include <string>
+#include <cstring>
 #include "../../exception/Exception.h"
 #include "../../utils/Utils.h"
 
@@ -24,10 +24,6 @@ namespace net {
         SockAddr(sa_family_t family) : SockAddr() {
             this->family(family);
         };
-
-        socklen_t length() {
-            return this->sa_len;
-        }
 
         sa_family_t family() {
             return this->sa_family;
@@ -56,10 +52,6 @@ namespace net {
                 this->sin_addr = sin6_addr;
                 this->sin_port = port;
             };
-
-            socklen_t length() {
-                return this->sin_len;
-            }
 
             sa_family_t family() {
                 return this->sin_family;
@@ -118,10 +110,6 @@ namespace net {
                 this->sin6_addr = sin6_addr;
                 this->sin6_port = port;
             };
-
-            socklen_t length() {
-                return this->sin6_len;
-            }
 
             sa_family_t family() {
                 return this->sin6_family;

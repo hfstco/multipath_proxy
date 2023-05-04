@@ -18,9 +18,6 @@ namespace net {
 
     Proxy::Proxy(net::ipv4::SockAddr_In sockAddrIn, collections::FlowMap *flows, net::Bond *pBond) : listener_(net::ipv4::TcpListener::make(sockAddrIn)), flows_(flows), bond_(pBond),
     stop_(false), acceptHandler_(new std::thread(&Proxy::AcceptFromConnection, this)) {
-#ifdef __linux__
-        listener_->SetSockOpt(IPPROTO_IP, IP_TRANSPARENT, 1);
-#endif
     }
 
     Proxy *Proxy::make(net::ipv4::SockAddr_In sockAddrIn, collections::FlowMap *pFlows, net::Bond *pBond) {

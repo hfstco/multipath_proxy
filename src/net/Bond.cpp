@@ -2,6 +2,8 @@
 // Created by Matthias Hofstätter on 18.04.23.
 //
 
+#include <cassert>
+
 #include "Bond.h"
 
 #include "../packet/FlowPacket.h"
@@ -59,8 +61,12 @@ namespace net {
                     connection->Recv(buffer->data(), sizeof(packet::Header), 0);
                 } catch (SocketClosedException e) {
                     // TODO
+                    stop_.store(true);
+                    continue;
                 } catch (SocketErrorException e) {
                     // TODO
+                    stop_.store(true);
+                    continue;
                 }
 
                 packet::Packet *packet = (packet::Packet *)buffer;
@@ -78,8 +84,12 @@ namespace net {
                     connection->Recv((unsigned char*)packet->header() + sizeof(packet::Header), sizeof(packet::FlowHeader) - sizeof(packet::Header), 0);
                 } catch (SocketClosedException e) {
                     // TODO
+                    stop_.store(true);
+                    continue;
                 } catch (SocketErrorException e) {
                     // TODO
+                    stop_.store(true);
+                    continue;
                 }
 
                 packet::FlowPacket *flowPacket = (packet::FlowPacket *)packet;
@@ -105,8 +115,12 @@ namespace net {
                     connection->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
                 } catch (SocketClosedException e) {
                     // TODO
+                    stop_.store(true);
+                    continue;
                 } catch (SocketErrorException e) {
                     // TODO
+                    stop_.store(true);
+                    continue;
                 }
                 flowPacket->resize(flowPacket->header()->size()); // TODO avoid resize if possible
 

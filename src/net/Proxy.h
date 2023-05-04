@@ -6,6 +6,7 @@
 #define MULTIPATH_PROXY_PROXY_H
 
 #include <atomic>
+#include <thread>
 
 namespace collections {
     class FlowMap;

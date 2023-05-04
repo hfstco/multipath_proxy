@@ -14,7 +14,7 @@ namespace base {
 
     class Remote : public Base {
     public:
-        Remote(net::ipv4::TcpListener ter, net::ipv4::TcpListener sat);
+        Remote(net::ipv4::TcpListener *ter, net::ipv4::TcpListener *sat);
 
         ~Remote() override;
     };

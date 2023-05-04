@@ -1,7 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+    <option name="confirmBeforeUploading" value="false" />
     <serverData>
+      <paths name="local (79731970-8668-4c9e-85b5-cc6f036654fe)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.sFwApxdRSj" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-local" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-remote" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
       <paths name="remote (4e67daba-bfea-4f02-9ae1-f77707eddc7e)">
         <serverdata>
           <mappings>
@@ -12,6 +25,7 @@
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-left" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-local" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-coverage" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-server1" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-remote" />

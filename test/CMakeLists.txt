@@ -4,7 +4,7 @@ project(test_multipath_proxy)
 find_package(GTest)
 
 # glog
-find_package(glog 0.6.0 REQUIRED)
+find_package(glog 0.4.0 REQUIRED)
 
 # curses
 find_package(Curses REQUIRED)
