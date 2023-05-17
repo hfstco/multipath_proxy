@@ -24,10 +24,18 @@ RUN apt-get update \
       tar \
       python3 \
       python3-dev \
+      wget \
+      vim \
+      linux-tools-common \
+      linux-tools-generic \
   && apt-get clean
 
+RUN ln -fs /usr/lib/linux-tools/*/perf /usr/bin/perf
+
 # mpp
-RUN apt install -y libgoogle-glog-dev libunwind-dev ncurses-dev libgtest-dev
+RUN apt install -y libgoogle-glog-dev libunwind-dev ncurses-dev libgtest-dev uuid-dev
+RUN echo /proc/sys/kernel/perf_event_paranoid
+RUN echo /proc/sys/kernel/kptr_restrict
 
 # entrypoint
 COPY docker/remote/config/entrypoint.sh /entrypoint.sh

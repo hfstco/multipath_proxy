@@ -106,9 +106,8 @@ TEST(net_Socket, ipv4_TcpSocket_recv_closed_socket) {
 
         // try to read local socket with closed remote socket
         std::vector<unsigned char> vector1(1024);
-        EXPECT_THROW({
-            pTcpSocket3->Recv(vector1.data(), vector1.size(), 0);
-        }, SocketClosedException);
+        int size = pTcpSocket3->Recv(vector1.data(), vector1.size(), 0);
+        EXPECT_EQ(0, size);
 
         // close local socket
         delete pTcpSocket3;

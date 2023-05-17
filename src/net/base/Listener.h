@@ -33,9 +33,6 @@ namespace net {
     protected:
         Listener() {
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
-#ifdef __linux__
-            S::SetSockOpt(IPPROTO_IP, IP_TRANSPARENT, 1);
-#endif
         }
 
         Listener(S socket) : S(socket) {}

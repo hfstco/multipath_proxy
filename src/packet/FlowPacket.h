@@ -11,17 +11,19 @@ namespace packet {
 
     class FlowHeader;
 
-    struct FlowPacket : public Packet {
+    struct FlowPacket : public packet::Packet {
     public:
+        FlowPacket() = delete;
+
         static FlowPacket *make(packet::FlowHeader header, uint16_t size);
         static FlowPacket *make(packet::FlowHeader header);
         static FlowPacket *make(packet::FlowHeader header, unsigned char *data, uint16_t size);
 
         packet::FlowHeader *header();
         unsigned char *data();
-
         uint16_t size();
-        void resize(size_t size);
+
+        void Resize(uint16_t size);
 
         std::string ToString();
 

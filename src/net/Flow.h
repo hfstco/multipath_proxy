@@ -9,9 +9,18 @@
 #include <thread>
 
 #include "../collections/FlowPacketQueue.h"
+#include "base/SockAddr.h"
 
 namespace packet {
     class FlowPacket;
+}
+
+namespace handler {
+    class FlowHandler;
+}
+
+namespace collections {
+    class FlowMap;
 }
 
 namespace net {
@@ -24,34 +33,31 @@ namespace net {
 
     class Flow {
     public:
-        static Flow *make(net::ipv4::TcpConnection *pTcpConnection, net::Bond *pBond);
+        static Flow *make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, collections::FlowMap *flows, net::Bond *bond);
+
+        uint64_t byteSize();
 
         void WriteToFlow(packet::FlowPacket *pFlowPacket);
+
+        void SendToBond();
+        void RecvFromConnection();
+        void SendToConnection();
 
         virtual ~Flow();
 
     protected:
-        Flow(net::ipv4::TcpConnection *pTcpConnection, net::Bond *pBond);
+        Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, collections::FlowMap *flows, net::Bond *bond);
 
     private:
         net::ipv4::TcpConnection *connection_;
-
-        collections::FlowPacketQueue tx_; // outgoing packages
-        collections::FlowPacketQueue rx_; // incoming packages
-
-        uint16_t rxId_;
-
-        std::atomic_bool stop_; // TODO implement Handler
-        std::thread *recvFromConnectionHandler_; // TODO implement Handler
-        std::thread *sendToConnectionHandler_; // TODO implement Handler
-        std::thread *sendToBondHandler_; // TODO implement Handler
-
+        net::ipv4::SockAddr_In source_;
+        net::ipv4::SockAddr_In destination_;
         net::Bond *bond_;
+        collections::FlowMap *flows_;
 
-        void RecvFromConnection();
-        void SendToConnection();
-
-        void SendToBond();
+        collections::FlowPacketQueue toConnectionQueue_;
+        collections::FlowPacketQueue toBondQueue_;
+        std::atomic<uint64_t> toBondId_;
     }; // Flow
 
 } // net

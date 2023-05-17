@@ -7,6 +7,7 @@
 #include "Utils.h"
 
 #include "../exception/Exception.h"
+#include "../net/base/SockAddr.h"
 
 namespace utils {
 
@@ -60,13 +61,8 @@ namespace utils {
         return in6Addr;
     }
 
-    std::string ConnectionString(std::string sourceIp, unsigned short sourcePort, std::string destinationIp, unsigned short destinationPort) {
-        return sourceIp + ":" + std::to_string(sourcePort) + "|" + destinationIp + ":" + std::to_string(destinationPort);
-    }
-
-    std::string ConnectionString(in_addr sourceIp, in_port_t sourcePort, in_addr destinationIp, in_port_t destinationPort) {
-        return ConnectionString(InAddrToString(sourceIp), ntohs(sourcePort),
-                                InAddrToString(destinationIp),ntohs(destinationPort));
+    std::string ConnectionString(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination) {
+        return source.ip() + ":" + std::to_string(source.port()) + "|" + destination.ip() + ":" + std::to_string(destination.port());
     }
 
 } // mpp::utils

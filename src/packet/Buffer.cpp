@@ -5,21 +5,23 @@
 #include <glog/logging.h>
 
 #include "Buffer.h"
+#include "../exception/Exception.h"
 
 namespace packet {
 
-    Buffer::Buffer(size_t size) : std::vector<unsigned char>(size) {}
+    Buffer::Buffer(uint16_t size) : data_((unsigned char *)malloc(size)), size_(size) {}
 
-    Buffer::Buffer(unsigned char *data, size_t size) : std::vector<unsigned char>(data, data + size) {}
+    Buffer::Buffer(unsigned char *data, uint16_t size) : Buffer(size) {
+        memcpy(data_, data, size);
+    }
 
-    Buffer::Buffer(std::vector<unsigned char> data) : std::vector<unsigned char>(data.data(),
-            data.data() + data.size()) {}
+    Buffer::Buffer(std::vector<unsigned char> data) : Buffer(data.data(), data.size()) {}
 
-    Buffer *Buffer::make(size_t size) {
+    Buffer *Buffer::make(uint16_t size) {
         return new Buffer(size);
     }
 
-    Buffer *Buffer::make(unsigned char *data, size_t size) {
+    Buffer *Buffer::make(unsigned char *data, uint16_t size) {
         return new Buffer(data, size);
     }
 
@@ -28,23 +30,28 @@ namespace packet {
     }
 
     unsigned char *Buffer::data() {
-        return std::vector<unsigned char>::data();
+        return (unsigned char *)data_;
     }
 
     uint16_t Buffer::size() {
-        return std::vector<unsigned char>::size();
+        return size_;
     }
 
-    void Buffer::resize(size_t size) {
-        std::vector<unsigned char>::resize(size);
+    void Buffer::Resize(uint16_t size) {
+        unsigned char *newDataPtr = (unsigned char *)realloc(data_, size);
+        if( !newDataPtr ) {
+            throw BufferReallocErrorException("Can't realloc(data_, " + std::to_string(size) + ".");
+        }
+        data_ = newDataPtr;
+        size_ = size;
     }
 
     std::string Buffer::ToString() {
-        return std::string("B[size=" + std::to_string(size()) + "]");
+        return std::string("Buffer[Size=" + std::to_string(size()) + "]");
     }
 
     Buffer::~Buffer() {
-        LOG(INFO) << "del " + ToString();
+        free(data_);
     }
 
 } // packet

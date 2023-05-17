@@ -12,6 +12,7 @@
 
 #include <mutex>
 #include <vector>
+#include <atomic>
 
 namespace packet {
     class FlowPacket;
@@ -21,21 +22,26 @@ namespace collections {
 
     class FlowPacketQueue : private std::vector<packet::FlowPacket *> {
     public:
-        FlowPacketQueue() : std::vector<packet::FlowPacket *>(), currentId_(0) {
-            std::vector<packet::FlowPacket *>().reserve(100);
-        }
+        FlowPacketQueue();
 
-        uint32_t currentId();
+        uint32_t CurrentId();
+        uint64_t byteSize();
 
-        bool empty();
-        size_t size();
+        bool Empty();
+        size_t Size();
 
-        void push(packet::FlowPacket *packet);
-        packet::FlowPacket *pop();
+        void Push(packet::FlowPacket *flowPacket);
+        packet::FlowPacket *Pop();
+
+        void Clear();
+
+        virtual ~FlowPacketQueue();
 
     private:
         std::mutex mutex_;
         uint32_t currentId_;
+
+        uint64_t byteSize_;
     };
 
 } // collections

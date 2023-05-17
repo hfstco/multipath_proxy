@@ -18,6 +18,8 @@ RUN openssl rand -out /var/www/html/file.700kbyte  700000
 RUN openssl rand -out /var/www/html/file.800kbyte  800000
 RUN openssl rand -out /var/www/html/file.900kbyte  900000
 RUN openssl rand -out /var/www/html/file.1Mbyte   1000000
+RUN openssl rand -out /var/www/html/file.10Mbyte   10000000
+RUN openssl rand -out /var/www/html/file.100Mbyte   100000000
 
 # entrypoint
 COPY docker/server1/config/entrypoint.sh /entrypoint.sh

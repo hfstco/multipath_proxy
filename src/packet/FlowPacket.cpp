@@ -38,20 +38,20 @@ namespace packet {
     }
 
     unsigned char *FlowPacket::data() {
-        return ((unsigned char *)Packet::header()) + sizeof(packet::FlowHeader);
+        return ((unsigned char *)packet::Packet::header()) + sizeof(packet::FlowHeader);
     }
 
     uint16_t FlowPacket::size() {
-        return packet::Buffer::size() - sizeof(packet::FlowHeader);
+        return packet::Buffer::size();
     }
 
-    void FlowPacket::resize(size_t size) {
-        Packet::resize((sizeof(packet::FlowHeader) - sizeof(packet::Header)) + size);
+    void FlowPacket::Resize(uint16_t size) {
+        packet::Packet::Resize((sizeof(packet::FlowHeader) - sizeof(packet::Header)) + size);
         this->header()->size(size);
     }
 
     std::string FlowPacket::ToString() {
-        return "FP[header=" + header()->ToString() + ",size=" + std::to_string(size()) + "]";
+        return "FlowPacket[header=" + header()->ToString() + ",Size=" + std::to_string(size()) + "]";
     }
 
     FlowPacket::~FlowPacket() {

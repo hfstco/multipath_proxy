@@ -78,4 +78,47 @@ public:
     UtilsException(std::string what_arg) : Exception(what_arg) {};
 };
 
+// flow exception
+
+class ConnectionClosedException : public Exception {
+public:
+    ConnectionClosedException(const char *what_arg) : Exception(what_arg) {};
+
+    ConnectionClosedException(std::string what_arg) : Exception(what_arg) {};
+};
+
+class GotClosePacketException : public Exception {
+public:
+    GotClosePacketException(const char *what_arg) : Exception(what_arg) {};
+
+    GotClosePacketException(std::string what_arg) : Exception(what_arg) {};
+};
+
+// listener exception
+
+class ListenerClosedException : public Exception {
+public:
+    ListenerClosedException(const char *what_arg) : Exception(what_arg) {};
+
+    ListenerClosedException(std::string what_arg) : Exception(what_arg) {};
+};
+
+// bond exception
+
+class SocketAlreadyConnectedException : public Exception {
+public:
+    SocketAlreadyConnectedException(const char *what_arg) : Exception(what_arg) {};
+
+    SocketAlreadyConnectedException(std::string what_arg) : Exception(what_arg) {};
+};
+
+// buffer exception
+
+class BufferReallocErrorException : public Exception {
+public:
+    BufferReallocErrorException(const char *what_arg) : Exception(what_arg) {};
+
+    BufferReallocErrorException(std::string what_arg) : Exception(what_arg) {};
+};
+
 #endif //MULTIPATH_PROXY_EXCEPTION_H

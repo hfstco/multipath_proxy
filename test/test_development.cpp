@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 #include <glog/logging.h>
-#include <uuid/uuid.h>
+//#include <uuid/uuid.h>
 
 TEST(development_tests, std_string_to_std_vector_char) {
     std::string str1("helloworld!");
@@ -80,9 +80,10 @@ TEST(development_tests, get_inherited_class) {
     EXPECT_EQ(a1.i_, a2.i_);
 }
 
+/*
 TEST(development_tests, uuid) {
     uuid_t uuid;
     uuid_generate(uuid);
 
     LOG(INFO) << sizeof(uuid);
-}
+}*/

@@ -10,25 +10,30 @@
 
 namespace packet {
 
-    struct Buffer : private std::vector<unsigned char> { // TODO unsigned char*
-        static Buffer *make(size_t size);
-        static Buffer *make(unsigned char *data, size_t size);
+    struct Buffer { // TODO unsigned char*
+        Buffer() = delete;
+
+        static Buffer *make(uint16_t size);
+        static Buffer *make(unsigned char *data, uint16_t size);
         static Buffer *make(std::vector<unsigned char> data);
 
         unsigned char *data();
-
         uint16_t size();
-        void resize(size_t size);
+
+        void Resize(uint16_t size);
 
         std::string ToString();
 
         virtual ~Buffer();
 
     protected:
-        Buffer(size_t size);
-        Buffer(unsigned char *data, size_t size);
+        Buffer(uint16_t size);
+        Buffer(unsigned char *data, uint16_t size);
         Buffer(std::vector<unsigned char> data);
 
+    private:
+        uint16_t size_;
+        unsigned char *data_;
     };
 
 } // packet

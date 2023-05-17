@@ -53,7 +53,8 @@ TEST(net_Connection, ipv4_TcpConnection) {
 TEST(net_Connection, ipv6_TcpConnection) {
     std::thread t1([&] {
         try {
-            net::ipv6::TcpListener *l1 = net::ipv6::TcpListener::make(net::ipv6::SockAddr_In6("::1", 2350));
+            net::ipv6::SockAddr_In6 sockAddrIn6 = net::ipv6::SockAddr_In6("::1", 2350);
+            net::ipv6::TcpListener *l1 = net::ipv6::TcpListener::make(sockAddrIn6);
             net::ipv6::TcpConnection *c1 = l1->Accept();
 
             std::vector<unsigned char> buffer1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
@@ -102,3 +103,5 @@ TEST(net_Connection, ipv6_TcpConnection) {
 
     t1.join();
 }
+
+// TODO test IsConnected()

@@ -4,12 +4,14 @@
 
 #include "FlowHeader.h"
 
+#include "../net/base/SockAddr.h"
+
 namespace packet {
-    FlowHeader::FlowHeader(FLOW_CTRL ctrl, net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, uint16_t id) : Header(TYPE::FLOW), ctrl_(ctrl), sourceIP_(source.sin_addr),
+    FlowHeader::FlowHeader(FLOW_CTRL ctrl, net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, uint64_t id) : Header(TYPE::FLOW), ctrl_(ctrl), sourceIP_(source.sin_addr),
     destinationIP_(destination.sin_addr), sourcePort_(source.sin_port),
     destinationPort_(destination.sin_port), id_(id), size_(0) {}
 
-    FlowHeader::FlowHeader(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, uint16_t id) : FlowHeader(FLOW_CTRL::REGULAR,
+    FlowHeader::FlowHeader(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, uint64_t id) : FlowHeader(FLOW_CTRL::REGULAR,
             source, destination, id) {}
 
     FLOW_CTRL FlowHeader::ctrl() const {
@@ -52,11 +54,11 @@ namespace packet {
         destinationPort_ = destinationPort;
     }
 
-    uint16_t FlowHeader::id() const {
+    uint64_t FlowHeader::id() const {
         return id_;
     }
 
-    void FlowHeader::id(uint16_t id) {
+    void FlowHeader::id(uint64_t id) {
         id_ = id;
     }
 
@@ -70,7 +72,7 @@ namespace packet {
 
     std::string FlowHeader::ToString() {
         std::stringstream stringStream;
-        stringStream << "FlowPacket[ctrl=";
+        stringStream << "FlowHeader[ctrl=";
         switch (ctrl_) {
             case FLOW_CTRL::INIT:
                 stringStream << "INIT";
@@ -82,8 +84,26 @@ namespace packet {
                 stringStream << "CLOSE";
                 break;
         }
-        stringStream << ", id=" << id() << ", size=" << size() << "]";
+        stringStream << ", source=" << source().ToString() << ", destination=" << destination().ToString() << ", id=" << id() << ", Size=" << size() << "]";
         return stringStream.str();
+    }
+
+    net::ipv4::SockAddr_In FlowHeader::source() const {
+        return net::ipv4::SockAddr_In(sourceIP_, sourcePort_);
+    }
+
+    void FlowHeader::source(net::ipv4::SockAddr_In sockAddrIn) {
+        sourceIP_ = sockAddrIn.sin_addr;
+        sourcePort_ = sockAddrIn.sin_port;
+    }
+
+    net::ipv4::SockAddr_In FlowHeader::destination() const {
+        return net::ipv4::SockAddr_In(destinationIP_, destinationPort_);
+    }
+
+    void FlowHeader::destination(net::ipv4::SockAddr_In sockAddrIn) {
+        destinationIP_ = sockAddrIn.sin_addr;
+        destinationPort_ = sockAddrIn.sin_port;
     };
 
 } // packet

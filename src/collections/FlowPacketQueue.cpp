@@ -10,48 +10,46 @@
 #include "../packet/FlowHeader.h"
 
 namespace collections {
+    FlowPacketQueue::FlowPacketQueue() : std::vector<packet::FlowPacket *>(), currentId_(0), byteSize_(0) {
+        std::vector<packet::FlowPacket *>().reserve(1024);
+    }
 
-    bool FlowPacketQueue::empty() {
-        const std::lock_guard lock(this->mutex_);
+    bool FlowPacketQueue::Empty() {
+        const std::lock_guard lock(mutex_);
 
         return std::vector<packet::FlowPacket *>::empty();
     }
 
-    size_t FlowPacketQueue::size() {
-        const std::lock_guard lock(this->mutex_);
+    size_t FlowPacketQueue::Size() {
+        const std::lock_guard lock(mutex_);
 
         return std::vector<packet::FlowPacket *>::size();
     }
 
-    void FlowPacketQueue::push(packet::FlowPacket *pFlowPacket) {
-        const std::lock_guard lock(this->mutex_);
+    void FlowPacketQueue::Push(packet::FlowPacket *flowPacket) {
+        const std::lock_guard lock(mutex_);
 
-        std::vector<packet::FlowPacket *>::push_back(pFlowPacket);
-
-        LOG(INFO) << "push(" << pFlowPacket->ToString() << ")";
+        byteSize_ += flowPacket->size();
+        std::vector<packet::FlowPacket *>::push_back(flowPacket);
     }
 
-    packet::FlowPacket *FlowPacketQueue::pop() {
-        const std::lock_guard lock(this->mutex_);
+    packet::FlowPacket *FlowPacketQueue::Pop() {
+        const std::lock_guard lock(mutex_);
 
-        if(std::vector<packet::FlowPacket *>::empty())
+        if(std::vector<packet::FlowPacket *>::empty()) {
             return nullptr;
-
-        // TODO optimize search algo, will not return if not found
-        /*FlowPacket *packet = reinterpret_cast<FlowPacket *>(PacketQueue::pop());
-        while (packet->header()->id() != currentId_) {
-            PacketQueue::push(packet);
-            packet = reinterpret_cast<FlowPacket *>(PacketQueue::pop());
-        }*/
+        }
 
         // iterate through whole vector to find package TODO
-        for(auto itFlowPacket = this->begin(); itFlowPacket < this->end(); itFlowPacket++) {
-            if((*itFlowPacket)->header()->id() == currentId_) {
+        for(auto flowPacketIterator = this->begin(); flowPacketIterator < this->end(); flowPacketIterator++) {
+            if((*flowPacketIterator)->header()->id() == currentId_) {
+                packet::FlowPacket *flowPacket = (*flowPacketIterator);
+                this->erase(flowPacketIterator);
+
                 currentId_ += 1;
-                packet::FlowPacket *pFlowPacket = (*itFlowPacket);
-                this->erase(itFlowPacket);
-                LOG(INFO) << "pop() -> " + pFlowPacket->ToString();
-                return pFlowPacket;
+                byteSize_ -= flowPacket->size();
+
+                return flowPacket;
             }
         }
 
@@ -59,10 +57,30 @@ namespace collections {
         return nullptr;
     }
 
-    uint32_t FlowPacketQueue::currentId() {
-        const std::lock_guard lock(this->mutex_);
+    void FlowPacketQueue::Clear() {
+        const std::lock_guard lock(mutex_);
+
+        for(auto &flowPacket : (*this)) {
+            delete flowPacket;
+        }
+    }
+
+    uint32_t FlowPacketQueue::CurrentId() {
+        const std::lock_guard lock(mutex_);
 
         return currentId_;
+    }
+
+    uint64_t FlowPacketQueue::byteSize() {
+        const std::lock_guard lock(mutex_);
+
+        return byteSize_;
+    }
+
+    FlowPacketQueue::~FlowPacketQueue() {
+        LOG(INFO) << "~FlowPacketQueue()";
+
+        Clear();
     }
 
 } // collections

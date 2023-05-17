@@ -4,6 +4,7 @@
 
 #include "gtest/gtest.h"
 #include "../src/net/base/SockAddr.h"
+#include <cstring>
 
 TEST(net_SockAddr, memcmp_net_SockAddr) {
     net::SockAddr sa1 = net::SockAddr();
@@ -44,7 +45,7 @@ TEST(net_SockAddr, memcmp_net_ipv6_SockAddr) {
     EXPECT_EQ(0, std::memcmp(&sai62, &sai62_orig, sizeof(::sockaddr_in6)));
 }
 
-TEST(net_SockAddr, net_ipv4_Sockaddr_get_set_ip) {
+TEST(net_SockAddr, net_ipv4_Sockaddr_ip) {
     std::string str1("127.0.0.1");
     net::ipv4::SockAddr_In sa1 = net::ipv4::SockAddr_In(str1, 1234);
     EXPECT_EQ(str1, sa1.ip());
@@ -54,7 +55,7 @@ TEST(net_SockAddr, net_ipv4_Sockaddr_get_set_ip) {
     EXPECT_EQ(s2, sa1.ip());
 }
 
-TEST(net_SockAddr, net_ipv6_Sockaddr_get_set_ip) {
+TEST(net_SockAddr, net_ipv6_SockAddr_ip) {
     std::string str1("::1");
     net::ipv6::SockAddr_In6 sa1 = net::ipv6::SockAddr_In6(str1, 1234);
     EXPECT_EQ(str1, sa1.ip());
@@ -65,7 +66,7 @@ TEST(net_SockAddr, net_ipv6_Sockaddr_get_set_ip) {
     EXPECT_EQ(s62, sa1.ip());
 }
 
-TEST(net_SockAddr, net_ipv4_Sockaddr_get_set_port) {
+TEST(net_SockAddr, net_ipv4_SockAddr_port) {
     unsigned short p1 = 1234;
     unsigned short p2 = 4321;
 
@@ -78,7 +79,7 @@ TEST(net_SockAddr, net_ipv4_Sockaddr_get_set_port) {
     EXPECT_EQ(p2, sa1.port());
 }
 
-TEST(net_SockAddr, net_ipv6_Sockaddr_get_set_port) {
+TEST(net_SockAddr, net_ipv6_SockAddr_port) {
     unsigned short p1 = 1234;
     unsigned short p2 = 4321;
 
@@ -89,12 +90,32 @@ TEST(net_SockAddr, net_ipv6_Sockaddr_get_set_port) {
     EXPECT_EQ(p2, sa1.port());
 }
 
-TEST(net_SockAddr, net_ipv4_Sockaddr_get_family) {
+TEST(net_SockAddr, net_ipv4_SockAddr_family) {
     net::ipv4::SockAddr_In sa1 = net::ipv4::SockAddr_In("127.0.0.1", 2227);
     EXPECT_EQ(AF_INET, sa1.family());
 }
 
-TEST(net_SockAddr, net_ipv6_Sockaddr_get_family) {
+TEST(net_SockAddr, net_ipv6_SockAddr_family) {
     net::ipv6::SockAddr_In6 sa1 = net::ipv6::SockAddr_In6("::1", 2228);
     EXPECT_EQ(AF_INET6, sa1.family());
+}
+
+TEST(net_SockAddr, net_ipv4_SockAddr_ToString) {
+    net::ipv4::SockAddr_In sa1 = net::ipv4::SockAddr_In("127.0.0.1", 2227);
+    EXPECT_EQ("127.0.0.1:2227", sa1.ToString());
+}
+
+TEST(net_SockAddr, net_ipv6_SockAddr_ToString) {
+    net::ipv6::SockAddr_In6 sa1 = net::ipv6::SockAddr_In6("::1", 2228);
+    EXPECT_EQ("::1:2228", sa1.ToString());
+}
+
+TEST(net_SockAddr, net_ipv4_SockAddr_ToRepresentation) {
+    net::ipv4::SockAddr_In sa1 = net::ipv4::SockAddr_In("127.0.0.1", 2227);
+    EXPECT_EQ("SA[127.0.0.1:2227]", sa1.ToRepresentation());
+}
+
+TEST(net_SockAddr, net_ipv6_SockAddr_ToRepresentation) {
+    net::ipv6::SockAddr_In6 sa1 = net::ipv6::SockAddr_In6("::1", 2228);
+    EXPECT_EQ("SA[::1:2228]", sa1.ToRepresentation());
 }

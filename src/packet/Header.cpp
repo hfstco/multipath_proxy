@@ -17,6 +17,8 @@ namespace packet {
                 return "H[type=FLOW]";
             case TYPE::HEARTBEAT:
                 return "H[type=HEARTBEAT]";
+            default:
+                return "";
         }
     }
 

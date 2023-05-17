@@ -38,6 +38,10 @@ namespace net {
             return new Socket(domain, type, protocol);
         }
 
+        int fd() const {
+            return fd_;
+        }
+
         void Bind(SA addr) {
             if (bind(this->fd_, (struct sockaddr *) &addr, sizeof(SA)) < 0) {
                 throw SocketErrorException("Bind failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
@@ -74,7 +78,7 @@ namespace net {
 
         void Listen(int backlog = SOMAXCONN) {
             if (listen(this->fd_, backlog) < 0) {
-                throw SocketErrorException("Listen failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                throw SocketErrorException("Listen() failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
             LOG(INFO) << "Listen(); S[fd=" << this->fd_ << "]";
@@ -82,7 +86,7 @@ namespace net {
 
         void Connect(SA addr) {
             if (connect(this->fd_, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-                throw SocketErrorException("Connect failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                throw SocketErrorException("Connect() failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
             LOG(INFO) << "Connect(); S[fd=" << this->fd_ << "] to (" << addr.ip() << ":" << addr.port()
@@ -93,10 +97,10 @@ namespace net {
             ssize_t bytes_sent = 0;
 
             if((bytes_sent = send(this->fd_, buf, size - bytes_sent, flags)) < 0) { // TODO check bytes written
-                throw SocketErrorException("Send error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                throw SocketErrorException("Send() error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
-            LOG(INFO) << "Send() -> " << bytes_sent << "bytes; S[fd=" << this->fd_ << "]";
+            //LOG(INFO) << "Send() -> " << bytes_sent << "bytes; S[fd=" << this->fd_ << "]";
 
             return bytes_sent;
         }
@@ -105,16 +109,10 @@ namespace net {
             ssize_t bytes_read = 0;
 
             if ((bytes_read = recv(this->fd_, buf, size, flags)) < 0) { // TODO buffer size
-                throw SocketErrorException("Recv error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                throw SocketErrorException("Recv() error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
-            // socket shutdown
-            if (bytes_read == 0) {
-                throw SocketClosedException("Socket closed.");
-                // TODO delete this; ?
-            }
-
-            LOG(INFO) << "Recv() -> " << bytes_read << "bytes; S[fd=" << this->fd_ << "]";
+            //LOG(INFO) << "Recv() -> " << bytes_read << "bytes; S[fd=" << this->fd_ << "]";
 
             return bytes_read;
         }
@@ -123,7 +121,7 @@ namespace net {
             ssize_t bytes_sent = 0;
 
             if ((bytes_sent = sendto(this->fd_, buf, size - bytes_sent, flags, (struct sockaddr *) &dest_addr, sizeof(dest_addr))) < 0) { // TODO check bytes written
-                throw SocketErrorException("SendTo error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                throw SocketErrorException("SendTo() error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
             }
 
             LOG(INFO) << "SendTo() S[fd=" << this->fd_ << "]";
@@ -137,12 +135,6 @@ namespace net {
 
             if ((bytes_read = recvfrom(this->fd_, buf, size, flags, (struct sockaddr *) &src_addr, &socklen)) < 0) { // TODO check bytes written
                 throw SocketErrorException("RecvFrom error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
-            }
-
-            // socket shutdown
-            if (bytes_read == 0) {
-                throw SocketClosedException("Socket closed.");
-                // TODO delete this; ?
             }
 
             LOG(INFO) << "RecvFrom() S[fd=" << this->fd_ << "]";

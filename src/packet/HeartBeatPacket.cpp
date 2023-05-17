@@ -10,7 +10,7 @@
 
 namespace packet {
 
-    HeartBeatPacket::HeartBeatPacket() : Packet() {
+    HeartBeatPacket::HeartBeatPacket() : Packet(0) {
         packet::HeartBeatHeader heartBeatHeader = packet::HeartBeatHeader();
         memcpy(this->header(), &heartBeatHeader, sizeof(packet::HeartBeatHeader));
     }
@@ -24,11 +24,11 @@ namespace packet {
     }
 
     uint16_t HeartBeatPacket::size() {
-        return 0;
+        return sizeof(packet::HeartBeatHeader);
     }
 
     std::string HeartBeatPacket::ToString() {
-        return "HBP[header=" + header()->ToString() + ",size=" + std::to_string(size()) + "]";
+        return "HBP[header=" + header()->ToString() + ",Size=" + std::to_string(size()) + "]";
     }
 
     HeartBeatPacket::~HeartBeatPacket() {

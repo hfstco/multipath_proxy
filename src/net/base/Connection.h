@@ -5,6 +5,9 @@
 #ifndef MULTIPATH_PROXY_CONNECTION_H
 #define MULTIPATH_PROXY_CONNECTION_H
 
+#include <sys/ioctl.h>
+#include <mutex>
+
 #include "TcpSocket.h"
 
 namespace net {
@@ -22,7 +25,7 @@ namespace net {
         };
 
         ssize_t Send(unsigned char *data, size_t size, int flags) {
-            return S::Send(data, size, flags);
+            return S::Send(data, size, flags | MSG_NOSIGNAL);
         };
 
         short Poll(short events, int timeout = 0) {
@@ -34,7 +37,35 @@ namespace net {
         }
 
         SA GetPeerName() {
-            return S::GetSockName();
+            return S::GetPeerName();
+        }
+
+        bool IsConnected() {
+            return S::Poll(POLLHUP, 0) == 0;
+        }
+
+        size_t GetOutQueueSize() {
+            size_t queueSize = 0;
+
+            if( ioctl(S::fd(), TIOCOUTQ, &queueSize) < 0 ) {
+                throw SocketErrorException("ioctl(); errno=" + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+            }
+
+            return queueSize;
+        }
+
+        size_t GetInQueueSize() {
+            size_t queueSize = 0;
+
+            if( ioctl(S::fd(), FIONREAD, &queueSize) < 0 ) {
+                throw SocketErrorException("ioctl(); errno=" + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+            }
+
+            return queueSize;
+        }
+
+        std::string ToString() {
+            return "Connection[fd=" + std::to_string(S::fd()) + "]";
         }
 
         void Close() {

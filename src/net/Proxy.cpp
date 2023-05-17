@@ -13,42 +13,46 @@
 #include "base/TcpListener.h"
 #include "Flow.h"
 #include "../collections/FlowMap.h"
+#include "Bond.h"
+#include "../handler/FlowHandler.h"
 
 namespace net {
 
-    Proxy::Proxy(net::ipv4::SockAddr_In sockAddrIn, collections::FlowMap *flows, net::Bond *pBond) : listener_(net::ipv4::TcpListener::make(sockAddrIn)), flows_(flows), bond_(pBond),
-    stop_(false), acceptHandler_(new std::thread(&Proxy::AcceptFromConnection, this)) {
+    Proxy::Proxy(net::ipv4::SockAddr_In sockAddrIn) : listener_(net::ipv4::TcpListener::make(sockAddrIn))
+    {
+#ifdef __linux__
+        listener_->SetSockOpt(IPPROTO_IP, IP_TRANSPARENT, 1);
+#endif
+        LOG(INFO) << "Proxy(" << sockAddrIn.ToString() << ")";
     }
 
-    Proxy *Proxy::make(net::ipv4::SockAddr_In sockAddrIn, collections::FlowMap *pFlows, net::Bond *pBond) {
-        return new Proxy(sockAddrIn, pFlows, pBond);
+    Proxy *Proxy::make(net::ipv4::SockAddr_In sockAddrIn) {
+        return new Proxy(sockAddrIn);
     }
 
     Proxy::~Proxy() {
-        stop_.store(true);
-
-        acceptHandler_->join();
-        delete acceptHandler_;
+        delete listener_;
     }
 
-    void Proxy::AcceptFromConnection() {
-        LOG(INFO) << "Starting AcceptFromConnection loop...";
+    void Proxy::Accept(collections::FlowMap *flows, net::Bond *bond) {
+        short events = listener_->Poll(POLLIN, 100); // TODO timeout?
 
-        while (!stop_.load()) {
-            short events = listener_->Poll(POLLIN, 100); // TODO timeout?
+        if (events & POLLIN) {
+            // accept incoming connection and get source SockAddr
+            net::ipv4::SockAddr_In source;
+            net::ipv4::TcpConnection *tcpConnection = listener_->Accept(source);
 
-            if (events & POLLIN) {
-                net::ipv4::SockAddr_In destinationSockAddrIn;
-                net::ipv4::TcpConnection *pTcpConnection = listener_->Accept(destinationSockAddrIn);
-                net::Flow *pFlow = net::Flow::make(pTcpConnection, bond_);
+            // get destination SockAddr
+            ipv4::SockAddr_In destination = tcpConnection->GetSockName();
 
-                flows_->insert(utils::ConnectionString(pTcpConnection->GetSockName().ip(), pTcpConnection->GetSockName().port(), destinationSockAddrIn.ip(), destinationSockAddrIn.port()), pFlow);
+            // create new Flow for connection
+            net::Flow *flow = net::Flow::make(source, destination, tcpConnection, flows, bond);
 
-                LOG(INFO) << "Accepted connection " << pTcpConnection->GetPeerName().ip() << ":" << pTcpConnection->GetPeerName().port() << "|" << destinationSockAddrIn.ip() << ":" << destinationSockAddrIn.port() << ".";
-            }
+            // add Flow to FlowMap
+            flows->Insert(source, destination, flow);
+
+            LOG(INFO) << "Accepted connection " << source.ToString() << "|" << destination.ToString() << ".";
         }
-
-        LOG(INFO) << "Stopping AcceptFromConnection loop...";
     }
 
 } // net

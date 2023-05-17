@@ -9,7 +9,7 @@
 #define MULTIPATH_PROXY_SOCKADDR_H
 
 #include <arpa/inet.h>
-#include <cstring>
+#include <string.h>
 #include "../../exception/Exception.h"
 #include "../../utils/Utils.h"
 
@@ -32,6 +32,14 @@ namespace net {
         void family(sa_family_t family) {
             this->sa_family = family;
         };
+
+        std::string ToString() {
+            return "";
+        }
+
+        std::string ToRepresentation() {
+            return "SA[" + ToString() + "]";
+        }
     };
 
     namespace ipv4 {
@@ -58,18 +66,22 @@ namespace net {
             };
 
             std::string ip() {
-                try {
-                    return utils::InAddrToString(this->sin_addr);
-                } catch (UtilsException e) {
-                    throw SockAddrErrorException(e.what());
+                char ip[INET_ADDRSTRLEN];
+
+                if (!inet_ntop(AF_INET, &sin_addr, ip, INET_ADDRSTRLEN)) {
+                    throw SockAddrErrorException("inet_ntop() failed. errno=" + std::string(strerror(errno)));
                 }
+
+                return std::string(ip);
             }
 
             void ip(std::string ip) {
-                try {
-                    this->sin_addr = utils::StringToInAddr(ip);
-                } catch (UtilsException e) {
-                    throw SockAddrErrorException(e.what());
+                int result;
+                if ((result = inet_pton(AF_INET, ip.c_str(), &sin_addr)) <= 0) {
+                    if (result == 0) {
+                        throw SockAddrErrorException("not a valid ipv4 address.");
+                    }
+                    throw SockAddrErrorException("inet_pton() failed. errno=" + std::string(strerror(errno)));
                 }
             }
 
@@ -83,6 +95,14 @@ namespace net {
 
             void port(uint16_t port) {
                 this->sin_port = htons(port);
+            }
+
+            std::string ToString() {
+                return ip() + ":" + std::to_string(port());
+            }
+
+            std::string ToRepresentation() {
+                return "SA[" + ToString() + "]";
             }
 
         private:
@@ -116,18 +136,22 @@ namespace net {
             };
 
             std::string ip() {
-                try {
-                    return utils::In6AddrToString(this->sin6_addr);
-                } catch (UtilsException e) {
-                    throw SockAddrErrorException(e.what());
+                char ip[INET6_ADDRSTRLEN];
+
+                if (!inet_ntop(AF_INET6, &sin6_addr, ip, INET6_ADDRSTRLEN)) {
+                    throw SockAddrErrorException("inet_ntop() failed. errno=" + std::string(strerror(errno)));
                 }
+
+                return std::string(ip);
             }
 
             void ip(std::string ip) {
-                try {
-                    this->sin6_addr = utils::StringToIn6Addr(ip);
-                } catch (UtilsException e) {
-                    throw SockAddrErrorException(e.what());
+                int result;
+                if ((result = inet_pton(AF_INET6, ip.c_str(), &sin6_addr)) <= 0) {
+                    if (result == 0) {
+                        throw SockAddrErrorException("not a valid ipv6 address.");
+                    }
+                    throw SockAddrErrorException("inet_pton() failed. errno=" + std::string(strerror(errno)));
                 }
             }
 
@@ -137,6 +161,14 @@ namespace net {
 
             void port(uint16_t port) {
                 this->sin6_port = htons(port);
+            }
+
+            std::string ToString() {
+                return ip() + ":" + std::to_string(port());
+            }
+
+            std::string ToRepresentation() {
+                return "SA[" + ToString() + "]";
             }
 
         private:

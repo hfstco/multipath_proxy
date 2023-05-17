@@ -9,6 +9,9 @@
             <mapping deploy="/tmp/tmp.sFwApxdRSj" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-local" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-remote" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-local" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-remote" />
@@ -21,9 +24,11 @@
             <mapping deploy="/tmp/tmp.6vYPKPMW6I" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-local" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-client1" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-left" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-remote" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-local" />
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-coverage" />

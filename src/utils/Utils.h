@@ -8,6 +8,12 @@
 #include <string>
 #include <arpa/inet.h>
 
+namespace net {
+    namespace ipv4 {
+        struct SockAddr_In;
+    }
+}
+
 namespace utils {
 
     std::string InAddrToString(in_addr &inAddr);
@@ -18,9 +24,7 @@ namespace utils {
 
     in6_addr StringToIn6Addr(std::string ip);
 
-    std::string ConnectionString(std::string sourceIp, unsigned short sourcePort, std::string destinationIp, unsigned short destinationPort);
-
-    std::string ConnectionString(in_addr sourceIp, in_port_t sourcePort, in_addr destinationIp, in_port_t destinationPort);
+    std::string ConnectionString(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination);
 
 } // mpp::utils
 

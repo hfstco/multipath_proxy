@@ -13,19 +13,20 @@ namespace packet {
 
     struct Packet : public packet::Buffer {
     public:
+        Packet() = delete;
+
         packet::Header *header();
         unsigned char *data();
-
         uint16_t size();
-        void resize(size_t size);
+
+        void Resize(uint16_t size);
 
         std::string ToString();
 
         ~Packet() override;
 
     protected:
-        Packet(size_t size);
-        Packet();
+        Packet(uint16_t size);
     };
 
 } // packet

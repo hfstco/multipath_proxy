@@ -10,8 +10,7 @@
 #include "Header.h"
 
 namespace packet {
-    Packet::Packet(size_t size) : packet::Buffer(size + sizeof(packet::Header)) {}
-    Packet::Packet() : Packet(0) {}
+    Packet::Packet(uint16_t size) : packet::Buffer(size + sizeof(packet::Header)) {}
 
 
     packet::Header *Packet::header() {
@@ -23,15 +22,15 @@ namespace packet {
     }
 
     uint16_t Packet::size() {
-        return packet::Buffer::size() - sizeof(packet::Header);
+        return packet::Buffer::size();
     }
 
-    void Packet::resize(size_t size) {
-        packet::Buffer::resize(sizeof(packet::Header) + size);
+    void Packet::Resize(uint16_t size) {
+        packet::Buffer::Resize(sizeof(packet::Header) + size);
     }
 
     std::string Packet::ToString() {
-        return "P[header=" + header()->ToString() + ",size=" + std::to_string(size()) + "]";
+        return "Packet[header=" + header()->ToString() + ",Size=" + std::to_string(size()) + "]";
     }
 
     Packet::~Packet() {

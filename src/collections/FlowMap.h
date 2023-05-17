@@ -7,26 +7,36 @@
 
 #include <unordered_map>
 #include <string>
+#include <mutex>
+#include <atomic>
 
 namespace net {
     class Flow;
+
+    namespace ipv4 {
+        struct SockAddr_In;
+    }
 }
 
 namespace collections {
 
-    class FlowMap : public std::unordered_map<std::string, net::Flow *> { // TODO private unordered_map
+    class FlowMap : private std::unordered_map<std::string, net::Flow *> { // TODO private unordered_map
     public:
         FlowMap();
 
-        int size();
+        const uint64_t byteSize() const;
 
-        bool contains(std::string key);
+        int Size();
 
-        void insert(std::string key, net::Flow *flow);
+        bool Contains(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination);
+        void Insert(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::Flow *flow);
+        net::Flow *Find(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination);
+        void Erase(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination);
 
-        net::Flow *find(std::string key);
+        std::string ToString();
 
-        //erase
+    private:
+        std::mutex mutex_;
     };
 
 } // collections
