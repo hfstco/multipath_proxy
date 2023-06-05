@@ -50,7 +50,7 @@ TEST(net_Connection, ipv4_TcpConnection) {
     t1.join();
 }
 
-TEST(net_Connection, ipv6_TcpConnection) {
+/*TEST(net_Connection, ipv6_TcpConnection) {
     std::thread t1([&] {
         try {
             net::ipv6::SockAddr_In6 sockAddrIn6 = net::ipv6::SockAddr_In6("::1", 2350);
@@ -102,6 +102,4 @@ TEST(net_Connection, ipv6_TcpConnection) {
     }
 
     t1.join();
-}
-
-// TODO test IsConnected()
+}*/

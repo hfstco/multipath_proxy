@@ -44,63 +44,89 @@ namespace net {
 
         void Bind(SA addr) {
             if (bind(this->fd_, (struct sockaddr *) &addr, sizeof(SA)) < 0) {
-                throw SocketErrorException("Bind failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".Bind(" << addr.ToString() << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "Bind() S[fd=" << this->fd_ << "] to (" << addr.ip() << ":" << addr.port() << ")";
+            VLOG(3) << ToString() << ".Bind(" << addr.ToString() << ")";
         }
 
         S *Accept() { // TODO merge with Accept(SA &sockaddr)
-            int temp_fd = -1;
+            int fd = -1;
 
-            if ((temp_fd = accept(this->fd_, NULL, NULL)) < 0) {
-                throw SocketErrorException("Accept failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+            if ((fd = accept(this->fd_, NULL, NULL)) < 0) {
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".Accept() ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "Accept() -> S[fd=" << temp_fd << "]; S[fd=" << this->fd_ << "]";
+            S *s = new S(fd);
 
-            S *s = new S(temp_fd);
+            VLOG(3) << ToString() << ".Accept() -> " << s->ToString();
+
             return s;
         };
 
         S *Accept(SA &addr) {
-            int temp_fd = -1;
+            int fd = -1;
             socklen_t addrlen = sizeof(addr);
 
-            if ((temp_fd = accept(this->fd_, (struct sockaddr *) &addr, &addrlen)) < 0) {
-                throw SocketErrorException("Accept failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+            if ((fd = accept(this->fd_, (struct sockaddr *) &addr, &addrlen)) < 0) {
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".Accept(" << addr.ToString() << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "Accept() -> S[fd=" << temp_fd << "]; S[fd=" << this->fd_ << "]";
+            S* s = new S(fd);
 
-            return new S(temp_fd);
+            VLOG(3) << ToString() << ".Accept(" << addr.ToString() << ") -> " << s->ToString();
+
+            return s;
         };
 
         void Listen(int backlog = SOMAXCONN) {
             if (listen(this->fd_, backlog) < 0) {
-                throw SocketErrorException("Listen() failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".Listen() ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "Listen(); S[fd=" << this->fd_ << "]";
+            VLOG(3) << ToString() << ".Listen()";
         }
 
         void Connect(SA addr) {
             if (connect(this->fd_, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-                throw SocketErrorException("Connect() failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".Connect(" << addr.ToString() << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "Connect(); S[fd=" << this->fd_ << "] to (" << addr.ip() << ":" << addr.port()
-                      << ")";
+            VLOG(3) << ToString() << ".Connect(" << addr.ToString() << ")";
         }
 
         ssize_t Send(unsigned char *buf, size_t size, int flags) { // TODO merge with SendTo()
             ssize_t bytes_sent = 0;
 
             if((bytes_sent = send(this->fd_, buf, size - bytes_sent, flags)) < 0) { // TODO check bytes written
-                throw SocketErrorException("Send() error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".Send(buf=" << buf << ", size=" << size << ", flags=" << flags << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            //LOG(INFO) << "Send() -> " << bytes_sent << "bytes; S[fd=" << this->fd_ << "]";
+            VLOG(3) << ToString() << ".Send(buf=" << buf << ", size=" << size << ", flags=" << flags << ") -> " << bytes_sent << "bytes";
 
             return bytes_sent;
         }
@@ -109,10 +135,14 @@ namespace net {
             ssize_t bytes_read = 0;
 
             if ((bytes_read = recv(this->fd_, buf, size, flags)) < 0) { // TODO buffer size
-                throw SocketErrorException("Recv() error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".Recv(buf=" << buf << ", size=" << size << ", flags=" << flags << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            //LOG(INFO) << "Recv() -> " << bytes_read << "bytes; S[fd=" << this->fd_ << "]";
+            VLOG(3) << ToString() << ".Recv(buf=" << buf << ", size=" << size << ", flags=" << flags << ") -> " << bytes_read << "bytes";
 
             return bytes_read;
         }
@@ -121,10 +151,14 @@ namespace net {
             ssize_t bytes_sent = 0;
 
             if ((bytes_sent = sendto(this->fd_, buf, size - bytes_sent, flags, (struct sockaddr *) &dest_addr, sizeof(dest_addr))) < 0) { // TODO check bytes written
-                throw SocketErrorException("SendTo() error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".SendTo(buf=" << buf << ", size=" << size << ", flags=" << flags << ", SA=" << dest_addr.ToString() << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "SendTo() S[fd=" << this->fd_ << "]";
+            VLOG(3) << ToString() << ".SendTo(buf=" << buf << ", size=" << size << ", flags=" << flags << ", SA=" << dest_addr.ToString() << ") -> " << bytes_sent << "bytes";
 
             return bytes_sent;
         }
@@ -134,26 +168,44 @@ namespace net {
             socklen_t socklen = sizeof(sockaddr);
 
             if ((bytes_read = recvfrom(this->fd_, buf, size, flags, (struct sockaddr *) &src_addr, &socklen)) < 0) { // TODO check bytes written
-                throw SocketErrorException("RecvFrom error." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".RecvFrom(buf=" << buf << ", size=" << size << ", flags=" << flags << ", SA=" << src_addr.ToString() << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "RecvFrom() S[fd=" << this->fd_ << "]";
+            VLOG(3) << ToString() << ".RecvFrom(buf=" << buf << ", size=" << size << ", flags=" << flags << ", SA=" << src_addr.ToString() << ") -> " << bytes_read << "bytes";
 
             return bytes_read;
         }
 
         short Poll(short events, int timeout = 0) {
-            pollfd poll_fd[1];
-            poll_fd[0].fd = this->fd_;
-            poll_fd[0].events = events;
+            pollfd fds[1];
+            fds[0].fd = fd_;
+            fds[0].events = events;
 
-            if (poll(poll_fd, 1, timeout) < 0) {
-                throw SocketErrorException("Poll failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+            try {
+                Socket::Poll(fds, 1, timeout);
+            } catch (Exception e) {
+
             }
 
-            //LOG(INFO) << "Poll(" << events << ", " << timeout << ") -> " << poll_fd[0].revents << ", S[fd=" << this->fd_ << "]";
+            VLOG(3) << ToString() << ".Poll(" << events << ", " << timeout << ") -> " << fds[0].revents;
 
-            return poll_fd[0].revents;
+            return fds[0].revents;
+        }
+
+        static void Poll(pollfd *fds, int nfds, int timeout = 0) {
+            if (poll(fds, nfds, timeout) < 0) {
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << "Socket::Poll(fds=" << fds << ", nfds=" << nfds << ", timeout=" << timeout << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
+            }
+
+            VLOG(3) << "Socket::Poll(fds=" << fds << ", nfds=" << nfds << ", timeout=" << timeout << ")";
         }
 
         SA GetSockName() {
@@ -161,10 +213,14 @@ namespace net {
             socklen_t addrlen = sizeof(addr);
 
             if (getsockname(this->fd_, (struct ::sockaddr *) &addr, &addrlen) < 0) {
-                throw SocketErrorException("GetSockName failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".GetSockName() ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "GetSockName() -> " << addr.ip() << ":" << addr.port();
+            VLOG(3) << ToString() << ".GetSockName() -> " << addr.ToString();
 
             return addr;
         }
@@ -174,10 +230,14 @@ namespace net {
             socklen_t addrlen = sizeof(addr);
 
             if (getpeername(this->fd_, (struct ::sockaddr *) &addr, &addrlen) < 0) {
-                throw SocketErrorException("GetSockName failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException("GetSockName failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+
+                VLOG(3) << ToString() << ".GetPeerName() ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "GetPeerName() -> " << addr.ip() << ":" << addr.port();
+            VLOG(3) << ToString() << ".GetPeerName() -> " << addr.ToString();
 
             return addr;
         }
@@ -185,43 +245,108 @@ namespace net {
         template<typename T>
         void SetSockOpt(int level, int optname, T optval) {
             if (setsockopt(this->fd_, level, optname, (void *) &optval, sizeof(T)) < 0) {
-                throw SocketErrorException("SetSockOpt failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".SetSockOpt(level=" << level << ", optname=" << optname << ", optval=" << optval << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "SetSockOpt(" << level << ", " << optname << ", " << optval << ")";
+            VLOG(3) << ToString() << ".SetSockOpt(level=" << level << ", optname=" << optname << ", optval=" << optval << ")";
+        }
+
+        template<typename T>
+        T GetSockOpt(int level, int optname) {
+            T optval;
+            socklen_t optlen = sizeof(T);
+            if (getsockopt(this->fd_, level, optname, (void *) &optval, &optlen) < 0) {
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".GetSockOpt(level=" << level << ", optname=" << optname << ", optval=" << optval << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
+            }
+
+            VLOG(3) << ToString() << ".GetSockOpt(level=" << level << ", optname=" << optname << ", optval=" << optval << ") -> " << optval;
+
+            return optval;
         }
 
         void Close() {
-            close(this->fd_);
+            if (close(fd_) == -1) {
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
 
-            LOG(INFO) << "Close() S[fd=" << this->fd_ << "]";
+                VLOG(3) << ToString() << ".Close() ! " << socketErrorException.ToString();
+            }
+
+            VLOG(3) << ToString() << ".Close()";
+        }
+
+        void Shutdown(int how) {
+            std::stringstream stringStream;
+            stringStream << ToString() << ".Shutdown(";
+            switch (how) {
+                case SHUT_RD:
+                    stringStream << "SHUT_RD";
+                    break;
+                case SHUT_WR:
+                    stringStream << "SHUT_WR";
+                    break;
+                case SHUT_RDWR:
+                    stringStream << "SHUT_RDWR";
+                    break;
+            }
+            stringStream << ")";
+
+            if (shutdown(fd_, how) == -1) {
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << stringStream.str() << " ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
+            }
+
+            VLOG(3) << stringStream.str(); // TODO log
+        }
+
+        std::string ToString() {
+            return "Socket[fd=" + std::to_string(fd()) + "]";
+        }
+
+        std::string ToRepresentation() {
+            return "S[fd=" + std::to_string(fd()) + "]";
         }
 
         virtual ~Socket() {
             this->Close();
+
+            DLOG(INFO) << ToString() << ".~Socket()";
         }
 
     protected:
         Socket(int domain, int type, int protocol) {
             if ((this->fd_ = socket(domain, type, protocol)) < 0) {
-                throw SocketErrorException("Connect failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+                SocketErrorException socketErrorException = SocketErrorException("Connect failed." + std::string(" errno=") + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
+
+                VLOG(3) << "Socket(domain=" << domain << ", type=" << type << ", protocol=" << protocol << ") ! " + socketErrorException.ToString();
+
+                throw socketErrorException;
             }
 
-            LOG(INFO) << "socket(domain=" << domain << ", type=" << type << ", protocol=" << protocol << ")" << " S[fd="
-                      << this->fd_ << "]";
+            DLOG(INFO) << "Socket(domain=" << domain << ", type=" << type << ", protocol=" << protocol << ") * " + ToString();
         }
 
         Socket(int fd) {
-            this->fd_ = fd;
+            fd_ = fd;
 
-            LOG(INFO) << "socket(sockfd=" << fd << ")" << " S[fd=" << this->fd_ << "]";
+            DLOG(INFO) << "Socket(fd=" << fd << ") * " << ToString();
         }
 
     private:
-        int fd_ = -1;
+        int fd_;
         //std::mutex sendMutex_, recvMutex_;
 
-        Socket() {}
+        Socket() : fd_(-1) {}
     };
 
 } // net

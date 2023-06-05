@@ -10,9 +10,9 @@
 
 namespace packet {
 
-    HeartBeatPacket::HeartBeatPacket() : Packet(0) {
-        packet::HeartBeatHeader heartBeatHeader = packet::HeartBeatHeader();
-        memcpy(this->header(), &heartBeatHeader, sizeof(packet::HeartBeatHeader));
+    HeartBeatPacket::HeartBeatPacket() : Packet(sizeof(HeartBeatHeader)) {
+        HeartBeatHeader heartBeatHeader = HeartBeatHeader();
+        memcpy(header(), &heartBeatHeader, sizeof(HeartBeatHeader));
     }
 
     HeartBeatPacket *HeartBeatPacket::make() {
@@ -20,19 +20,19 @@ namespace packet {
     }
 
     packet::HeartBeatHeader *HeartBeatPacket::header() {
-        return reinterpret_cast<packet::HeartBeatHeader *>(Packet::header());
+        return reinterpret_cast<HeartBeatHeader *>(Packet::header());
     }
 
     uint16_t HeartBeatPacket::size() {
-        return sizeof(packet::HeartBeatHeader);
+        return sizeof(HeartBeatHeader);
     }
 
     std::string HeartBeatPacket::ToString() {
-        return "HBP[header=" + header()->ToString() + ",Size=" + std::to_string(size()) + "]";
+        return "HeartBeatPacket[header=" + header()->ToString() + ",Size=" + std::to_string(size()) + "]";
     }
 
     HeartBeatPacket::~HeartBeatPacket() {
-        LOG(INFO) << "del " + ToString();
+        VLOG(4) << ToString() << ".~HeartBeatPacket()";
     }
 
 } // packet

@@ -1,10 +1,17 @@
 project(test_multipath_proxy)
 
-# gtest
-find_package(GTest)
-
 # glog
-find_package(glog 0.4.0 REQUIRED)
+find_package(glog 0.6.0 REQUIRED)
+
+# gtest
+#[[include(FetchContent)
+FetchContent_Declare(
+        GTest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.13.0
+)
+FetchContent_MakeAvailable(GTest)]]
+find_package(GTest 1.13.0 REQUIRED)
 
 # uuid
 # find_package(uuid REQUIRED)

@@ -73,7 +73,8 @@ TEST(packet_Packet, Packet_data) {
     net::ipv4::SockAddr_In sa2 = net::ipv4::SockAddr_In("127.0.0.1", 2346);
     packet::FlowHeader fh1 = packet::FlowHeader(sa1, sa2, 999);
 
-    packet::FlowPacket *fp1 = packet::FlowPacket::make(fh1, d1.data(), d1.size());
+    packet::FlowPacket *fp1 = packet::FlowPacket::make(fh1, d1.size());
+    memcpy(fp1->data(), d1.data(), d1.size());
 
     packet::Buffer *b4 = fp1;
 

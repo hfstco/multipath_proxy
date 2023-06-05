@@ -18,25 +18,43 @@ namespace net {
     }
 }
 
+namespace packet {
+    struct FlowPacket;
+}
+
 namespace collections {
 
     class FlowMap : private std::unordered_map<std::string, net::Flow *> { // TODO private unordered_map
     public:
         FlowMap();
 
-        const uint64_t byteSize() const;
+        std::mutex &mutex();
+
+        void addByteSize(uint64_t bytes) {
+            byteSize_.fetch_add(bytes,std::memory_order_relaxed);
+        }
+
+        void subByteSize(uint64_t bytes) {
+            byteSize_.fetch_sub(bytes,std::memory_order_relaxed);
+        }
+
+        uint64_t getByteSize() {
+            return byteSize_.load(std::memory_order_relaxed);
+        }
 
         int Size();
 
-        bool Contains(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination);
         void Insert(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::Flow *flow);
         net::Flow *Find(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination);
         void Erase(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination);
 
         std::string ToString();
 
+        virtual ~FlowMap();
+
     private:
         std::mutex mutex_;
+        std::atomic<uint64_t> byteSize_;
     };
 
 } // collections

@@ -9,6 +9,7 @@
 #include <thread>
 
 #include "../net/base/SockAddr.h"
+#include "../worker/Looper.h"
 
 namespace packet {
     class Packet;
@@ -17,6 +18,14 @@ namespace packet {
 
 namespace collections {
     class FlowMap;
+}
+
+namespace task {
+    class ThreadPool;
+}
+
+namespace context {
+    class Context;
 }
 
 namespace net {
@@ -29,36 +38,32 @@ namespace net {
 
     class Bond {
     public:
-        static Bond *make(net::ipv4::TcpConnection *terConnection, net::ipv4::TcpConnection *satConnection, collections::FlowMap *flows);
+        Bond(net::ipv4::TcpConnection *terConnection, net::ipv4::TcpConnection *satConnection, context::Context *context);
 
-        void WriteToTer(packet::FlowPacket *flowPacket);
-        void WriteToSat(packet::FlowPacket *flowPacket);
-        void WriteHeartBeatPacket();
-
-        void ReadFromTerConnection();
-        void ReadFromSatConnection();
-
-        void CheckBondBuffers();
+        void SendToTer(packet::FlowPacket *flowPacket);
+        void SentToSat(packet::FlowPacket *flowPacket);
 
         std::string ToString();
 
         virtual ~Bond();
 
     private:
-        std::mutex createFlowMutex_;
-        std::mutex writeSatMutex_;
-        std::mutex writeTerMutex_;
+        std::mutex sendTerMutex_;
+        std::mutex sendSatMutex_;
 
         net::ipv4::SockAddr_In terSockAddr_, satSockAddr_;
         net::ipv4::TcpConnection *terConnection_, *satConnection_;
-        std::atomic<bool> useSatConnection;
 
-        collections::FlowMap *flows_;
+        context::Context *context_;
 
-        Bond(net::ipv4::TcpConnection *terConnection, net::ipv4::TcpConnection *satConnection, collections::FlowMap *flows);
+        void RecvFromConnection(net::ipv4::TcpConnection *connection);
+        void SendToConnection(net::ipv4::TcpConnection *connection, packet::Packet *packet);
 
-        void ReadFromConnection(net::ipv4::TcpConnection *connection);
-        void WriteToConnection(net::ipv4::TcpConnection *connection, packet::Packet *packet);
+        void WriteHeartBeatPacket();
+
+        worker::Looper readFromTerLooper_;
+        worker::Looper readFromSatLooper_;
+        worker::Looper heartbeatLooper_;
     };
 
 } // net

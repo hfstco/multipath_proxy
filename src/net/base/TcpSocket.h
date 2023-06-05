@@ -36,7 +36,12 @@ namespace net {
 
             template<typename T>
             void SetSockOpt(int level, int optname, T optval) {
-                Socket<TcpSocket, SockAddr_In>::SetSockOpt(level, optname, optval);
+                Socket<TcpSocket, SockAddr_In>::SetSockOpt<T>(level, optname, optval);
+            }
+
+            template<typename T>
+            T GetSockOpt(int level, int optname) {
+                return Socket<TcpSocket, SockAddr_In>::GetSockOpt<T>(level, optname);
             }
 
             void Close();
@@ -74,6 +79,11 @@ namespace net {
             template<typename T>
             void SetSockOpt(int level, int optname, T optval) {
                 Socket<TcpSocket, SockAddr_In6>::SetSockOpt(level, optname, optval);
+            }
+
+            template<typename T>
+            void GetSockOpt(int level, int optname, T optval) {
+                Socket<TcpSocket, SockAddr_In6>::GetSockOpt(level, optname, optval);
             }
 
             void Close();

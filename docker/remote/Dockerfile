@@ -37,6 +37,16 @@ RUN apt install -y libgoogle-glog-dev libunwind-dev ncurses-dev libgtest-dev uui
 RUN echo /proc/sys/kernel/perf_event_paranoid
 RUN echo /proc/sys/kernel/kptr_restrict
 
+# glog
+RUN apt install -y libunwind-dev
+
+WORKDIR /root
+RUN git clone https://github.com/google/glog.git
+WORKDIR /root/glog
+RUN cmake -S . -B build -G "Unix Makefiles"
+RUN cmake --build build
+RUN cmake --build build --target install
+
 # entrypoint
 COPY docker/remote/config/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

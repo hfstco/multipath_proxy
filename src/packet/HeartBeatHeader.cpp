@@ -9,7 +9,7 @@ namespace packet {
     HeartBeatHeader::HeartBeatHeader() : Header(TYPE::HEARTBEAT) {}
 
     std::string HeartBeatHeader::ToString() {
-        return "HBH[]";
+        return "HeartBeatHeader[]";
     }
 
 }

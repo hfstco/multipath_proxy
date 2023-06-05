@@ -7,6 +7,7 @@
 
 #include <sys/ioctl.h>
 #include <mutex>
+#include <glog/logging.h>
 
 #include "TcpSocket.h"
 
@@ -40,10 +41,6 @@ namespace net {
             return S::GetPeerName();
         }
 
-        bool IsConnected() {
-            return S::Poll(POLLHUP, 0) == 0;
-        }
-
         size_t GetOutQueueSize() {
             size_t queueSize = 0;
 
@@ -65,6 +62,21 @@ namespace net {
         }
 
         std::string ToString() {
+            /*std::stringstream stringStream;
+            stringStream << "Connection[fd=" << std::to_string(S::fd()) << ", sockName=";
+            try {
+                stringStream << S::GetSockName().ToString();
+            } catch (SocketErrorException e) {
+                stringStream << e.ToString();
+            }
+            stringStream << ", peerAddr=";
+            try {
+                stringStream << S::GetPeerName().ToString();
+            } catch (SocketErrorException e) {
+                stringStream << e.ToString();
+            }
+            stringStream << "]";
+            return stringStream.str();*/
             return "Connection[fd=" + std::to_string(S::fd()) + "]";
         }
 
@@ -72,14 +84,30 @@ namespace net {
             S::Close();
         }
 
+        void Shutdown(int how) {
+            S::Shutdown(how);
+        }
+
+        virtual ~Connection() {
+            DLOG(INFO) << ToString() << ".~Connection()";
+        }
+
     protected:
-        Connection(S socket) : S(socket) {}
+        Connection(S socket) : S(socket) {
+            DLOG(INFO) << "Connection(socket=" << S::ToString() << ") * " << ToString();
+
+            S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
+        }
 
         Connection(SA peeraddr) : Connection() {
+            DLOG(INFO) << "Connection(peeraddr=" << peeraddr.ToString() << ") * " << ToString();
+
             S::Connect(peeraddr);
         }
 
         Connection(SA peeraddr, SA sockaddr) : Connection() {
+            DLOG(INFO) << "Connection(peeraddr=" << peeraddr.ToString() << ", sockaddr=" << sockaddr.ToString() << ") * " << ToString();
+
             S::Bind(peeraddr);
             S::Connect(peeraddr);
         };

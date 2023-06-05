@@ -10,8 +10,9 @@
 
 #include <arpa/inet.h>
 #include <string.h>
+#include <sstream>
+
 #include "../../exception/Exception.h"
-#include "../../utils/Utils.h"
 
 namespace net {
 
@@ -34,11 +35,23 @@ namespace net {
         };
 
         std::string ToString() {
-            return "";
-        }
+            std::stringstream stringStream;
 
-        std::string ToRepresentation() {
-            return "SA[" + ToString() + "]";
+            stringStream << "SA[family=";
+            switch( family() ) {
+                case AF_UNIX:
+                    stringStream << "AF_UNIX";
+                    break;
+                case AF_INET:
+                    stringStream << "AF_INET";
+                    break;
+                case AF_INET6:
+                    stringStream << "AF_INET6";
+                    break;
+            }
+            stringStream << "]";
+
+            return stringStream.str();
         }
     };
 
@@ -55,6 +68,12 @@ namespace net {
                 this->ip(ip);
                 this->port(port);
             };
+
+            SockAddr_In(std::string endpoint) : SockAddr_In() {
+                int colon = endpoint.find(':');
+                ip(endpoint.substr(0, colon));
+                port(std::stoi(endpoint.substr(colon + 1, endpoint.length() - colon)));
+            }
 
             SockAddr_In(in_addr sin6_addr, in_port_t port) : SockAddr_In() {
                 this->sin_addr = sin6_addr;
@@ -101,10 +120,6 @@ namespace net {
                 return ip() + ":" + std::to_string(port());
             }
 
-            std::string ToRepresentation() {
-                return "SA[" + ToString() + "]";
-            }
-
         private:
             void family(sa_family_t family) {
                 this->sin_family = family;
@@ -125,6 +140,12 @@ namespace net {
                 this->ip(ip);
                 this->port(port);
             };
+
+            SockAddr_In6(std::string endpoint) : SockAddr_In6() {
+                int colon = endpoint.find(':');
+                ip(endpoint.substr(0, colon));
+                port(std::stoi(endpoint.substr(colon + 1, endpoint.length() - colon)));
+            }
 
             SockAddr_In6(in6_addr sin6_addr, in_port_t port) : SockAddr_In6() {
                 this->sin6_addr = sin6_addr;
@@ -165,10 +186,6 @@ namespace net {
 
             std::string ToString() {
                 return ip() + ":" + std::to_string(port());
-            }
-
-            std::string ToRepresentation() {
-                return "SA[" + ToString() + "]";
             }
 
         private:

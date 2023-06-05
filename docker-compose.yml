@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   client1:
-    container_name: client1
+    container_name: mpp-client1
     build:
       context: .
       dockerfile: docker/client1/Dockerfile
@@ -11,12 +11,12 @@ services:
     ports:
       - "2201:22"
     networks:
-      internet:
-      clients:
+      mpp-internet:
+      mpp-clients:
         ipv4_address: 172.30.10.1
 
   local:
-    container_name: local
+    container_name: mpp-local
     build:
       context: .
       dockerfile: docker/local/Dockerfile
@@ -27,16 +27,16 @@ services:
     cap_add:
       - ALL
     networks:
-      internet:
-      clients:
+      mpp-internet:
+      mpp-clients:
         ipv4_address: 172.30.10.2
-      satl:
+      mpp-satl:
         ipv4_address: 172.30.20.1
-      terl:
+      mpp-terl:
         ipv4_address: 172.30.30.1
 
   satcon:
-    container_name: satcon
+    container_name: mpp-satcon
     build:
       context: .
       dockerfile: docker/satcon/Dockerfile
@@ -45,16 +45,16 @@ services:
     ports:
       - "2203:22"
     networks:
-      satl:
+      mpp-satl:
         ipv4_address: 172.30.20.2
-      satr:
+      mpp-satr:
         ipv4_address: 172.30.21.1
-      internet:
+      mpp-internet:
     cap_add:
       - ALL
 
   tercon:
-    container_name: tercon
+    container_name: mpp-tercon
     build:
       context: .
       dockerfile: docker/tercon/Dockerfile
@@ -63,16 +63,16 @@ services:
     ports:
       - "2204:22"
     networks:
-      terl:
+      mpp-terl:
         ipv4_address: 172.30.30.2
-      terr:
+      mpp-terr:
         ipv4_address: 172.30.31.1
-      internet:
+      mpp-internet:
     cap_add:
       - ALL
 
   remote:
-    container_name: remote
+    container_name: mpp-remote
     build:
       context: .
       dockerfile: docker/remote/Dockerfile
@@ -83,16 +83,16 @@ services:
     cap_add:
       - ALL
     networks:
-      servers:
+      mpp-servers:
         ipv4_address: 172.30.40.1
-      satr:
+      mpp-satr:
         ipv4_address: 172.30.21.2
-      terr:
+      mpp-terr:
         ipv4_address: 172.30.31.2
-      internet:
+      mpp-internet:
 
   server1:
-    container_name: server1
+    container_name: mpp-server1
     build:
       context: .
       dockerfile: docker/server1/Dockerfile
@@ -103,13 +103,13 @@ services:
     cap_add:
       - ALL
     networks:
-      servers:
+      mpp-servers:
         ipv4_address: 172.30.40.2
-      internet:
+      mpp-internet:
 
 networks:
-  internet:
-    name: internet
+  mpp-internet:
+    name: mpp-internet
     driver_opts:
       com.docker.network.bridge.name: internet
       com.docker.network.container_iface_prefix: internet
@@ -118,8 +118,8 @@ networks:
         - subnet: 172.30.254.0/24
           gateway: 172.30.254.254
 
-  clients:
-    name: clients
+  mpp-clients:
+    name: mpp-clients
     driver_opts:
       com.docker.network.bridge.name: clients
       com.docker.network.container_iface_prefix: clients
@@ -128,8 +128,8 @@ networks:
         - subnet: 172.30.10.0/24
           gateway: 172.30.10.254
 
-  satl:
-    name: satl
+  mpp-satl:
+    name: mpp-satl
     driver_opts:
       com.docker.network.bridge.name: satl
       com.docker.network.container_iface_prefix: satl
@@ -138,8 +138,8 @@ networks:
         - subnet: 172.30.20.0/24
           gateway: 172.30.20.254
 
-  satr:
-    name: satr
+  mpp-satr:
+    name: mpp-satr
     driver_opts:
       com.docker.network.bridge.name: satr
       com.docker.network.container_iface_prefix: satr
@@ -148,8 +148,8 @@ networks:
         - subnet: 172.30.21.0/24
           gateway: 172.30.21.254
 
-  terl:
-    name: terl
+  mpp-terl:
+    name: mpp-terl
     driver_opts:
       com.docker.network.bridge.name: terl
       com.docker.network.container_iface_prefix: terl
@@ -158,8 +158,8 @@ networks:
         - subnet: 172.30.30.0/24
           gateway: 172.30.30.254
 
-  terr:
-    name: terr
+  mpp-terr:
+    name: mpp-terr
     driver_opts:
       com.docker.network.bridge.name: terr
       com.docker.network.container_iface_prefix: terr
@@ -168,8 +168,8 @@ networks:
         - subnet: 172.30.31.0/24
           gateway: 172.30.31.254
 
-  servers:
-    name: servers
+  mpp-servers:
+    name: mpp-servers
     driver_opts:
       com.docker.network.bridge.name: servers
       com.docker.network.container_iface_prefix: servers

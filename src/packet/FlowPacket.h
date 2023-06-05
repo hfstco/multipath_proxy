@@ -9,17 +9,16 @@
 
 namespace packet {
 
-    class FlowHeader;
+    struct FlowHeader;
 
     struct FlowPacket : public packet::Packet {
     public:
         FlowPacket() = delete;
 
-        static FlowPacket *make(packet::FlowHeader header, uint16_t size);
-        static FlowPacket *make(packet::FlowHeader header);
-        static FlowPacket *make(packet::FlowHeader header, unsigned char *data, uint16_t size);
+        static FlowPacket *make(FlowHeader header, uint16_t size);
+        static FlowPacket *make(FlowHeader header);
 
-        packet::FlowHeader *header();
+        FlowHeader *header();
         unsigned char *data();
         uint16_t size();
 
@@ -27,12 +26,13 @@ namespace packet {
 
         std::string ToString();
 
+        //static uint64_t CalcChecksum(FlowPacket *flowPacket);
+
         ~FlowPacket() override;
 
     protected:
-        FlowPacket(packet::FlowHeader header, uint16_t size);
-        FlowPacket(packet::FlowHeader header);
-        FlowPacket(packet::FlowHeader header, unsigned char *data, uint16_t size);
+        FlowPacket(FlowHeader flowHeader, uint16_t size);
+        FlowPacket(FlowHeader flowHeader);
     }; // packet::FlowPacket
 
 } // packet

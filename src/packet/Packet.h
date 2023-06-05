@@ -11,19 +11,13 @@ namespace packet {
 
     class Header;
 
-    struct Packet : public packet::Buffer {
+    struct Packet : public Buffer {
     public:
-        Packet() = delete;
-
         packet::Header *header();
-        unsigned char *data();
+
         uint16_t size();
 
-        void Resize(uint16_t size);
-
         std::string ToString();
-
-        ~Packet() override;
 
     protected:
         Packet(uint16_t size);

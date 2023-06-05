@@ -1,5 +1,5 @@
 # glog
-find_package(glog 0.4.0 REQUIRED)
+find_package(glog 0.6.0 REQUIRED)
 
 # curses
 find_package(Curses REQUIRED)
@@ -24,6 +24,6 @@ include_directories(${CURSES_INCLUDE_DIR})
 # include_directories(${UUID_INCLUDE_DIRS})
 
 file(GLOB_RECURSE SRCS "*.cpp" "*.h")
-add_executable(mpp ${SRCS})
+add_executable(mpp ${SRCS} context/Context.h collections/BlockingFlowPacketQueue.cpp collections/BlockingFlowPacketQueue.h)
 target_link_libraries(mpp glog::glog ${CURSES_LIBRARIES})
 # target_link_libraries(test_multipath_proxy ${UUID_LIBRARIES})

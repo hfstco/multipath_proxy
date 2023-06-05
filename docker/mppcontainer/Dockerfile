@@ -5,7 +5,7 @@ RUN apt update -y
 RUN apt upgrade -y
 
 # ssh
-RUN apt install -y openssh-server
+RUN apt install -y openssh-server vim
 
 RUN echo "root:root" | chpasswd
 

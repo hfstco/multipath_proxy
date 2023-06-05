@@ -40,7 +40,11 @@ namespace packet {
     void Buffer::Resize(uint16_t size) {
         unsigned char *newDataPtr = (unsigned char *)realloc(data_, size);
         if( !newDataPtr ) {
-            throw BufferReallocErrorException("Can't realloc(data_, " + std::to_string(size) + ".");
+            BufferReallocError bufferReallocError = BufferReallocError("Can't realloc(data_, " + std::to_string(size) + ".");
+
+            LOG(INFO) << ToString() << " ~> " << bufferReallocError.ToString();
+
+            throw bufferReallocError;
         }
         data_ = newDataPtr;
         size_ = size;
@@ -51,6 +55,7 @@ namespace packet {
     }
 
     Buffer::~Buffer() {
+        //LOG(INFO) << "~" << ToString();
         free(data_);
     }
 

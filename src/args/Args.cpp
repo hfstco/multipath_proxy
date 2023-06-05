@@ -4,7 +4,6 @@
 
 #include <getopt.h>
 #include "Args.h"
-#include "../gui/Gui.h"
 #include <glog/logging.h>
 
 namespace args {
@@ -62,10 +61,6 @@ namespace args {
                     opt = (struct option *)&(long_opts[index]);
                     SAT = optarg;
                     LOG(INFO) << "SAT=" + SAT;
-                    break;
-
-                case 'g':
-                    gui::ENABLED = true;                                                                             DLOG(INFO) << "Gui Flag set";
                     break;
 
                 case 0:

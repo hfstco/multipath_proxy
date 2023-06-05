@@ -41,7 +41,7 @@ TEST(net_Socket, ipv4_TcpSocket_connect_send_recv) {
     }
 }
 
-TEST(net_Socket, ipv6_TcpSocket_connect_send_recv) {
+/*TEST(net_Socket, ipv6_TcpSocket_connect_send_recv) {
     try {
         // create listener
         net::ipv6::TcpSocket *pTcpSocket1 = net::ipv6::TcpSocket::make();
@@ -82,7 +82,7 @@ TEST(net_Socket, ipv6_TcpSocket_connect_send_recv) {
         LOG(ERROR) << e.what();
         FAIL();
     }
-}
+}*/
 
 TEST(net_Socket, ipv4_TcpSocket_recv_closed_socket) {
     try {

@@ -3,6 +3,8 @@
 //
 
 #include <cassert>
+#include <functional>
+#include <future>
 
 #include "Bond.h"
 
@@ -11,145 +13,226 @@
 #include "base/TcpConnection.h"
 #include "Flow.h"
 #include "../collections/FlowMap.h"
-#include "../handler/FlowHandler.h"
 #include "../packet/HeartBeatPacket.h"
-#include "../handler/BondHandler.h"
+#include "../task/ThreadPool.h"
+#include "../context/Context.h"
 
 namespace net {
-    Bond::Bond(net::ipv4::TcpConnection *terConnection, net::ipv4::TcpConnection *satConnection, collections::FlowMap *flows) : flows_(flows), terConnection_(terConnection), satConnection_(satConnection) {
+    Bond::Bond(net::ipv4::TcpConnection *terConnection, net::ipv4::TcpConnection *satConnection, context::Context *context) : terConnection_(terConnection), satConnection_(satConnection),
+    readFromTerLooper_(worker::Looper(std::bind(&Bond::RecvFromConnection, this, terConnection))),
+    readFromSatLooper_(worker::Looper(std::bind(&Bond::RecvFromConnection, this, satConnection))),
+                                                                                                                              heartbeatLooper_(worker::Looper(std::bind(&Bond::WriteHeartBeatPacket, this))),
+    context_(context) {
+        DLOG(INFO) << "Bond(ter=" << terConnection->ToString() << ", sat=" << satConnection->ToString() << ") * " << ToString();
     }
 
-    Bond *Bond::make(net::ipv4::TcpConnection *terConnection, net::ipv4::TcpConnection *satConnection, collections::FlowMap *flows) {
-        net::Bond *bond = new Bond(terConnection, satConnection, flows);
-        handler::BondHandler::make(bond);
-        return bond;
-    }
+    void Bond::RecvFromConnection(net::ipv4::TcpConnection *connection) {
+        // create buffer
+        packet::Buffer *buffer = packet::Buffer::make(1024 + sizeof(packet::FlowHeader));
+        packet::FlowPacket *flowPacket = nullptr;
+        int bytes_read = 0;
 
-    void Bond::ReadFromConnection(net::ipv4::TcpConnection *connection) {
-        if( connection->Poll(POLLIN, 100) == POLLIN ) {
-            // create buffer
-            packet::Buffer *buffer = packet::Buffer::make(1472);
+        // read Packet from Connection
+        try {
+            //std::lock_guard lock(connection->recvLock());
 
             // read Header
-            int bytes_read = 0;
-            while( bytes_read < sizeof(packet::Header) ) {
+            while (bytes_read < sizeof(packet::Header)) {
                 bytes_read += connection->Recv(buffer->data() + bytes_read, sizeof(packet::Header) - bytes_read, 0);
+
+                if (bytes_read == 0) {
+                    delete buffer;
+
+                    return;
+                }
+
+                DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
             }
+            assert(bytes_read == sizeof(packet::Header));
 
-            assert( bytes_read == sizeof(packet::Header) );
+            packet::Packet *packet = (packet::Packet *) buffer;
 
-            packet::Packet *packet = (packet::Packet *)buffer;
-
-            // skip HeartBeatHeader
-            if( packet->header()->type() == packet::TYPE::HEARTBEAT ) {
+            // skip if HeartBeatHeader
+            if (packet->header()->type() == packet::TYPE::HEARTBEAT) {
+                LOG(INFO) << connection->ToString() << " -> " << ((packet::HeartBeatPacket *)packet)->ToString();
                 delete buffer;
-                return ReadFromConnection(connection); // skip
-            }
 
-            assert( packet->header()->type() == packet::TYPE::FLOW );
+                return;
+            }
+            assert(packet->header()->type() == packet::TYPE::FLOW);
 
             // read FlowHeader
-            while( bytes_read < sizeof(packet::FlowHeader) ) {
-                bytes_read += connection->Recv((unsigned char*)packet->header() + bytes_read, sizeof(packet::FlowHeader) - bytes_read, 0);
+            bytes_read = 0;
+            while (bytes_read < (sizeof(packet::FlowHeader) - sizeof(packet::Header))) {
+                bytes_read += connection->Recv((unsigned char *) packet->header() + sizeof(packet::Header) + bytes_read,
+                                               (sizeof(packet::FlowHeader) - sizeof(packet::Header)) - bytes_read, 0);
+
+                if (bytes_read == 0) {
+                    delete buffer;
+
+                    terConnection_->Shutdown(SHUT_RDWR);
+                    satConnection_->Shutdown(SHUT_RDWR);
+                    readFromTerLooper_.Stop();
+                    readFromSatLooper_.Stop();
+                    heartbeatLooper_.Stop();
+                    std::thread([this] {
+                        delete this;
+                    }).detach();
+
+                    return;
+                }
+
+                DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
             }
+            assert(bytes_read == (sizeof(packet::FlowHeader) - sizeof(packet::Header)));
 
-            assert( bytes_read == sizeof(packet::FlowHeader) );
-
-            packet::FlowPacket *flowPacket = (packet::FlowPacket *)packet;
-
-            flowPacket->Resize(flowPacket->header()->size()); // TODO avoid resize if possible
+            flowPacket = (packet::FlowPacket *) packet;
 
             // read packet data from socket
-            while(bytes_read < sizeof(packet::FlowHeader) + flowPacket->header()->size() ) {
-                bytes_read += connection->Recv(flowPacket->data(), sizeof(packet::FlowHeader) + flowPacket->header()->size() - bytes_read, 0);
+            bytes_read = 0;
+            while (bytes_read < flowPacket->header()->size()) {
+                bytes_read += connection->Recv(flowPacket->data() + bytes_read,
+                                               flowPacket->header()->size() - bytes_read,
+                                               0);
+
+                if (bytes_read == 0) {
+                    delete buffer;
+
+                    terConnection_->Shutdown(SHUT_RDWR);
+                    satConnection_->Shutdown(SHUT_RDWR);
+                    readFromTerLooper_.Stop();
+                    readFromSatLooper_.Stop();
+                    heartbeatLooper_.Stop();
+                    std::thread([this] {
+                        delete this;
+                    }).detach();
+
+                    return;
+                }
+
+                DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
             }
+            assert(bytes_read == flowPacket->header()->size());
+        } catch (Exception e) {
+            // something goes wrong -> quit?!
+            LOG(ERROR) << e.what();
 
-            assert(bytes_read == sizeof(packet::FlowHeader) + flowPacket->header()->size());
+            terConnection_->Shutdown(SHUT_RDWR);
+            satConnection_->Shutdown(SHUT_RDWR);
+            readFromTerLooper_.Stop();
+            readFromSatLooper_.Stop();
+            heartbeatLooper_.Stop();
+            std::thread([this] {
+                delete this;
+            }).detach();
+        }
 
-            if(flowPacket->header()->size() == 0)
-                LOG(INFO) << "ReadFromConnection(" << connection->ToString() << ") -> " << flowPacket->ToString();
+        // process FlowPacket
+        flowPacket->Resize(flowPacket->header()->size());
 
-            createFlowMutex_.lock();
-            // check if flow already created
-            if ( !flows_->Contains(flowPacket->header()->source(), flowPacket->header()->destination()) ) {
+        DLOG(INFO) << connection->ToString() << " -> " + flowPacket->ToString();
+
+        // expect more data to read?
+        /*if (flowPacket->header()->size() == 1024) {
+            // read on
+        } else {
+            //
+            std::thread(&Bond::WaitForData, this, connection).detach();
+        }*/
+
+        // write FlowPacket to corresponding Flow
+        net::Flow *flow = nullptr;
+        {
+            std::lock_guard lock(context_->flows()->mutex());
+
+            // check if flow already exists
+            if (!(flow = context_->flows()->Find(flowPacket->header()->source(), flowPacket->header()->destination()))) {
                 // create flow
                 try {
                     net::ipv4::TcpConnection *flowConnection = net::ipv4::TcpConnection::make(flowPacket->header()->destination());
-                    net::Flow *flow = net::Flow::make(flowPacket->header()->source(), flowPacket->header()->destination(), flowConnection, flows_, this);
+                    flow = net::Flow::make(flowPacket->header()->source(), flowPacket->header()->destination(), flowConnection, this, context_);
 
-                    flows_->Insert(flowPacket->header()->source(), flowPacket->header()->destination(), flow);
+                    context_->flows()->Insert(flowPacket->header()->source(), flowPacket->header()->destination(), flow);
                 } catch (Exception e) {
                     LOG(INFO) << e.what();
                 }
             }
-            createFlowMutex_.unlock();
-
-            // find flow
-            net::Flow *pFlow = flows_->Find(flowPacket->header()->source(), flowPacket->header()->destination());
-            pFlow->WriteToFlow(flowPacket);
         }
+
+        // find flow
+        flow->WriteToFlow(flowPacket);
     }
 
     Bond::~Bond() {
+        DLOG(INFO) << ToString() << ".~Bond()";
     }
 
     std::string Bond::ToString() {
-        return "Bond[ter=" + terSockAddr_.ToString() + ", sat=" + satSockAddr_.ToString() + ", " + flows_->ToString() + "]";
-    }
-
-    void Bond::ReadFromTerConnection() {
-        ReadFromConnection(terConnection_);
-    }
-
-    void Bond::ReadFromSatConnection() {
-        ReadFromConnection(satConnection_);
+        return "Bond[ter=" + terConnection_->ToString() + ", sat=" + satConnection_->ToString() + "]";
     }
 
     void Bond::WriteHeartBeatPacket() {
-        writeSatMutex_.lock();
-        WriteToConnection(satConnection_, packet::HeartBeatPacket::make());
-        writeSatMutex_.unlock();
+        packet::HeartBeatPacket *heartBeatPacket = packet::HeartBeatPacket::make();
+
+        DLOG(INFO) << heartBeatPacket->ToString() << " -> " << satConnection_->ToString();
+
+        sendSatMutex_.lock();
+        SendToConnection(satConnection_, heartBeatPacket);
+        sendSatMutex_.unlock();
+
+        delete heartBeatPacket;
+
+        usleep(100000); // 100ms
     }
 
-    void Bond::WriteToConnection(net::ipv4::TcpConnection *connection, packet::Packet *packet) {
+    void Bond::SendToConnection(net::ipv4::TcpConnection *connection, packet::Packet *packet) {
         packet::Buffer *buffer = packet;
 
         try {
             int bytes_written = 0;
             while (bytes_written < buffer->size()) {
-                bytes_written += connection->Send(buffer->data() + bytes_written, buffer->size() - bytes_written, 0);
+                bytes_written += connection->Send(buffer->data() + bytes_written, buffer->size() - bytes_written,0);
+
+                DLOG(INFO) << "Write " << bytes_written << "bytes -> " << connection->ToString();
             }
 
             assert(bytes_written == buffer->size());
         } catch (Exception e) {
             LOG(INFO) << e.what();
+
+            delete buffer;
+
+            terConnection_->Shutdown(SHUT_RDWR);
+            satConnection_->Shutdown(SHUT_RDWR);
+            readFromTerLooper_.Stop();
+            readFromSatLooper_.Stop();
+            heartbeatLooper_.Stop();
+            std::thread([this] {
+                delete this;
+            }).detach();
+
+            return;
         }
     }
 
-    void Bond::CheckBondBuffers() {
+    void Bond::SendToTer(packet::FlowPacket *flowPacket) {
+        DLOG(INFO) << flowPacket->ToString() << " -> " << terConnection_->ToString();
 
+        sendTerMutex_.lock();
+        SendToConnection(terConnection_, flowPacket);
+        sendTerMutex_.unlock();
+
+        delete flowPacket;
     }
 
-    void Bond::WriteToTer(packet::FlowPacket *flowPacket) {
-        LOG(INFO) << flowPacket->ToString() << " -> TER";
+    void Bond::SentToSat(packet::FlowPacket *flowPacket) {
+        DLOG(INFO) << flowPacket->ToString() << " -> " << satConnection_->ToString();
 
-        assert(flowPacket->header()->ctrl() == packet::FLOW_CTRL::REGULAR);
-        assert(flowPacket->size() == flowPacket->header()->size() + sizeof(packet::FlowHeader));
+        sendSatMutex_.lock();
+        SendToConnection(satConnection_, flowPacket);
+        sendSatMutex_.unlock();
 
-        writeTerMutex_.lock();
-        WriteToConnection(terConnection_, flowPacket);
-        writeTerMutex_.unlock();
-    }
-
-    void Bond::WriteToSat(packet::FlowPacket *flowPacket) {
-        LOG(INFO) << flowPacket->ToString() << " -> SAT";
-
-        assert(flowPacket->header()->ctrl() == packet::FLOW_CTRL::REGULAR);
-        assert(flowPacket->size() == flowPacket->header()->size() + sizeof(packet::FlowHeader));
-
-        writeSatMutex_.lock();
-        WriteToConnection(satConnection_, flowPacket);
-        writeSatMutex_.unlock();
+        delete flowPacket;
     }
 
 } // net

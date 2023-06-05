@@ -19,25 +19,39 @@ namespace net {
 
     public:
         Connection<S, SA> *Accept(SA &addr) {
-            return (Connection<S, SA> *)S::Accept(addr);
+            return (Connection<S, SA> *)(S::Accept(addr));
         }
 
         Connection<S, SA> *Accept() {
-            return (Connection<S, SA> *)S::Accept();
+            return (Connection<S, SA> *)(S::Accept());
+        }
+
+        std::string ToString() {
+            return "Listener[fd=" + std::to_string(S::fd()) + ", sockName=" + S::GetSockName().ToString() + "]";
         }
 
         void Close() {
             S::Close();
         }
 
+        virtual ~Listener() {
+            DLOG(INFO) << ToString() << ".~Listener()";
+        }
+
     protected:
         Listener() {
+            DLOG(INFO) << "Listener() * " << ToString();
+
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
         }
 
-        Listener(S socket) : S(socket) {}
+        Listener(S socket) : S(socket) {
+            DLOG(INFO) << "Listener(socket=" << S::ToString() << ") * " << ToString();
+        }
 
         Listener(SA sockaddr) : Listener() {
+            DLOG(INFO) << "Listener(sockaddr=" << sockaddr.ToString() << ") * " << ToString();
+
             S::Bind(sockaddr);
             S::Listen();
         }

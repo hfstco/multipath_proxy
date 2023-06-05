@@ -3,6 +3,7 @@
 //
 
 #include <glog/logging.h>
+#include <cassert>
 
 #include "Packet.h"
 
@@ -10,30 +11,21 @@
 #include "Header.h"
 
 namespace packet {
-    Packet::Packet(uint16_t size) : packet::Buffer(size + sizeof(packet::Header)) {}
 
+    Packet::Packet(uint16_t size) : Buffer(size) {
+        assert(size >= sizeof(Header));
+    }
 
     packet::Header *Packet::header() {
-        return reinterpret_cast<packet::Header *>(packet::Buffer::data());
-    };
-
-    unsigned char *Packet::data() {
-        return packet::Buffer::data() + sizeof(packet::Header);
+        return (packet::Header *)Buffer::data();
     }
 
     uint16_t Packet::size() {
-        return packet::Buffer::size();
-    }
-
-    void Packet::Resize(uint16_t size) {
-        packet::Buffer::Resize(sizeof(packet::Header) + size);
+        return Buffer::size();
     }
 
     std::string Packet::ToString() {
-        return "Packet[header=" + header()->ToString() + ",Size=" + std::to_string(size()) + "]";
+        return Buffer::ToString();
     }
 
-    Packet::~Packet() {
-        LOG(INFO) << "del " + ToString();
-    }
 }

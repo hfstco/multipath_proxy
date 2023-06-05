@@ -49,6 +49,9 @@ namespace packet {
             uint16_t size() const;
             void size(uint16_t size);
 
+            /*uint64_t checksum() const;
+            void checksum(uint64_t checksum);*/
+
             net::ipv4::SockAddr_In source() const;
             void source(net::ipv4::SockAddr_In sockAddrIn);
 
@@ -61,7 +64,6 @@ namespace packet {
             FlowHeader(FLOW_CTRL ctrl, net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, uint64_t id);
 
         private:
-            // uint32_t magic = MAGIC;          // 4
             // TYPE type;                       // 8
             FLOW_CTRL ctrl_;                    // 10
             struct in_addr sourceIP_;           // 14
@@ -70,6 +72,7 @@ namespace packet {
             in_port_t destinationPort_;         // 22
             uint64_t id_;                       // 24
             uint16_t size_;                     // 26
+            //uint64_t checksum_;
         };
 
 } // packet

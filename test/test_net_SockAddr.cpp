@@ -109,13 +109,3 @@ TEST(net_SockAddr, net_ipv6_SockAddr_ToString) {
     net::ipv6::SockAddr_In6 sa1 = net::ipv6::SockAddr_In6("::1", 2228);
     EXPECT_EQ("::1:2228", sa1.ToString());
 }
-
-TEST(net_SockAddr, net_ipv4_SockAddr_ToRepresentation) {
-    net::ipv4::SockAddr_In sa1 = net::ipv4::SockAddr_In("127.0.0.1", 2227);
-    EXPECT_EQ("SA[127.0.0.1:2227]", sa1.ToRepresentation());
-}
-
-TEST(net_SockAddr, net_ipv6_SockAddr_ToRepresentation) {
-    net::ipv6::SockAddr_In6 sa1 = net::ipv6::SockAddr_In6("::1", 2228);
-    EXPECT_EQ("SA[::1:2228]", sa1.ToRepresentation());
-}

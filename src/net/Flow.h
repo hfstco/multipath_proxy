@@ -8,8 +8,9 @@
 #include <atomic>
 #include <thread>
 
-#include "../collections/FlowPacketQueue.h"
+#include "../collections/BlockingFlowPacketQueue.h"
 #include "base/SockAddr.h"
+#include "../worker/Looper.h"
 
 namespace packet {
     class FlowPacket;
@@ -23,6 +24,14 @@ namespace collections {
     class FlowMap;
 }
 
+namespace context {
+    class Context;
+}
+
+namespace task {
+    class ThreadPool;
+}
+
 namespace net {
 
     namespace ipv4 {
@@ -33,7 +42,7 @@ namespace net {
 
     class Flow {
     public:
-        static Flow *make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, collections::FlowMap *flows, net::Bond *bond);
+        static Flow *make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, net::Bond *bond, context::Context *context);
 
         uint64_t byteSize();
 
@@ -43,21 +52,30 @@ namespace net {
         void RecvFromConnection();
         void SendToConnection();
 
+        std::string ToString();
+
         virtual ~Flow();
 
     protected:
-        Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, collections::FlowMap *flows, net::Bond *bond);
+        Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcpConnection, net::Bond *bond, context::Context *context);
 
     private:
         net::ipv4::TcpConnection *connection_;
         net::ipv4::SockAddr_In source_;
         net::ipv4::SockAddr_In destination_;
         net::Bond *bond_;
-        collections::FlowMap *flows_;
+        context::Context *context_;
 
-        collections::FlowPacketQueue toConnectionQueue_;
-        collections::FlowPacketQueue toBondQueue_;
+        collections::BlockingFlowPacketQueue toConnectionQueue_;
+
+        collections::BlockingFlowPacketQueue toBondQueue_;
         std::atomic<uint64_t> toBondId_;
+
+        std::atomic<bool> closed_;
+
+        worker::Looper recvFromConnectionLooper_;
+        worker::Looper sendToConnectionLooper_;
+        worker::Looper sendToBondLooper_;
     }; // Flow
 
 } // net

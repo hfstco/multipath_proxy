@@ -15,7 +15,7 @@ namespace packet {
     public:
         static HeartBeatPacket *make();
 
-        packet::HeartBeatHeader *header();
+        HeartBeatHeader *header();
 
         uint16_t size();
 

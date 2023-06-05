@@ -25,11 +25,21 @@ namespace net {
                 return new TcpConnection(peeraddr, sockaddr);
             }
 
-        protected:
-            TcpConnection(SockAddr_In peeraddr) : Connection<TcpSocket, SockAddr_In>(peeraddr) {}
-            TcpConnection(SockAddr_In peeraddr, SockAddr_In sockaddr) : Connection<TcpSocket, SockAddr_In>(peeraddr, sockaddr) {}
+            std::string ToString() {
+                return "TcpConnection[fd=" + std::to_string(Connection<TcpSocket, SockAddr_In>::fd()) + "]";
+            }
 
-            TcpConnection(TcpSocket socket) : Connection<TcpSocket, SockAddr_In>(socket) {}
+        protected:
+            TcpConnection(SockAddr_In peeraddr) : Connection<TcpSocket, SockAddr_In>(peeraddr) {
+                DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.ToString() << ") * " << ToString();
+            }
+            TcpConnection(SockAddr_In peeraddr, SockAddr_In sockaddr) : Connection<TcpSocket, SockAddr_In>(peeraddr, sockaddr) {
+                DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.ToString() << ", sockaddr=" + sockaddr.ToString() + ") * " << ToString();
+            }
+
+            TcpConnection(TcpSocket socket) : Connection<TcpSocket, SockAddr_In>(socket) {
+                DLOG(INFO) << "TcpConnection(socket=" << socket.ToString() << ") * " << ToString();
+            }
         };
 
     } // ipv4

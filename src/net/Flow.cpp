@@ -4,6 +4,7 @@
 
 #include <thread>
 #include <assert.h>
+#include <future>
 
 #include "Flow.h"
 
@@ -11,105 +12,112 @@
 #include "../packet/FlowPacket.h"
 #include "../packet/FlowHeader.h"
 #include "Bond.h"
-#include "../handler/FlowHandler.h"
 #include "../collections/FlowMap.h"
+#include "../task/ThreadPool.h"
+#include "../context/Context.h"
 
 namespace net {
 
-    Flow::Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, collections::FlowMap *flows, net::Bond *bond) :   source_(source),
-                                                                                                                                destination_(destination),
-                                                                                                                                connection_(pTcpConnection),
-                                                                                                                                bond_(bond),
-                                                                                                                                flows_(flows),
-                                                                                                                                toBondId_(0),
-                                                                                                                                toConnectionQueue_(collections::FlowPacketQueue()),
-                                                                                                                                toBondQueue_(collections::FlowPacketQueue()) { // currentId = 1, init packet = 0
-        handler::FlowHandler::make(this);
-        LOG(INFO) << "Flow(" << source_.ToString() << "|" << destination_.ToString() << ", " << pTcpConnection->ToString() << ")";
+    Flow::Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcpConnection, net::Bond *bond, context::Context *context) : source_(source),
+                                                                                                                                                                         destination_(destination),
+                                                                                                                                                                         connection_(tcpConnection),
+                                                                                                                                                                         bond_(bond),
+                                                                                                                                                                         toBondId_(0),
+                                                                                                                                                                         toConnectionQueue_(collections::BlockingFlowPacketQueue()),
+                                                                                                                                                                         toBondQueue_(collections::BlockingFlowPacketQueue()),
+                                                                                                                                                                         context_(context),
+                                                                                                                                                                         recvFromConnectionLooper_(std::bind(&Flow::RecvFromConnection, this)),
+                                                                                                                                                                         sendToConnectionLooper_(std::bind(&Flow::SendToConnection, this)),
+                                                                                                                                                                         sendToBondLooper_(std::bind(&Flow::SendToBond, this)) {
+        LOG(INFO) << "Flow(" << source_.ToString() << "|" << destination_.ToString() << ", " << tcpConnection->ToString() << ")";
     }
 
-    Flow *Flow::make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, collections::FlowMap *flows, net::Bond *bond) {
-        return new Flow(source, destination, pTcpConnection, flows, bond);
+    Flow *Flow::make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, net::Bond *bond, context::Context *context) {
+        return new Flow(source, destination, pTcpConnection, bond, context);
     }
 
     void Flow::WriteToFlow(packet::FlowPacket *pFlowPacket) {
-        toConnectionQueue_.Push(pFlowPacket);
+        toConnectionQueue_.Insert(pFlowPacket);
     }
 
     void Flow::RecvFromConnection() {
-        short events = connection_->Poll(POLLIN | POLLHUP | POLLNVAL, 100);
+        // create packet
+        packet::FlowHeader flowHeader = packet::FlowHeader(source_, destination_, toBondId_++); // TODO GetSock/PeerName local variable?
+        packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 1024); // TODO BUFFER_SIZE;
 
-        if (events & POLLIN) {
-            // create packet
-            packet::FlowHeader flowHeader = packet::FlowHeader(source_, destination_, toBondId_++); // TODO GetSock/PeerName local variable?
-            packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 1472 - sizeof(packet::FlowHeader)); // TODO reserve()
+        // read data from connection
+        ssize_t bytes_read = 0;
+        try {
+            //std::lock_guard lock(connection_->recvLock());
 
-            // read data from connection
-            ssize_t bytes_read = 0;
-            try {
-                LOG(INFO) << "CLIENT -> " << flowPacket->ToString();
-                bytes_read = connection_->Recv(flowPacket->data(), 1472 - sizeof(packet::FlowHeader), 0);
-            } catch (Exception e) {
-                delete flowPacket;
-                LOG(INFO) << e.what();
-                throw e;
-            }
-
-            // resize packet to fit data
-            flowPacket->Resize(bytes_read); // TODO avoid resize if possible
-
-            assert(bytes_read == flowPacket->header()->size());
-            assert(bytes_read == flowPacket->size() - sizeof(packet::FlowHeader));
-
-            // write package to toBond_ queue
-            toBondQueue_.Push(flowPacket);
-
-            // stop handler
-            if(bytes_read == 0) {
-                throw ConnectionClosedException(flowPacket->ToString());
-            }
+            bytes_read = connection_->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
+            // DLOG(INFO) << connection_->ToString() << " -> READ " << bytes_read << "bytes";
+        } catch (Exception e) {
+            LOG(INFO) << e.what();
         }
 
-        //socket closed
-        if( events & POLLNVAL ) {
-            packet::FlowHeader flowHeader = packet::FlowHeader(source_, destination_, toBondId_++); // TODO GetSock/PeerName local variable?
-            packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 0); // TODO reserve()
-
-            toBondQueue_.Push(flowPacket);
-
-            assert( flowPacket->header()->size() == 0 );
-            assert( flowPacket->size() == sizeof(packet::FlowHeader) );
-
-            throw ConnectionClosedException("POLLNVAL received.");
+        // socket closed
+        if (bytes_read == 0) {
+            recvFromConnectionLooper_.Stop();
         }
+
+        // resize packet to fit data
+        flowPacket->Resize(bytes_read);
+
+        assert(bytes_read == flowPacket->header()->size());
+        assert(bytes_read == flowPacket->size() - sizeof(packet::FlowHeader));
+
+        DLOG(INFO) << connection_->ToString() << " -> " << flowPacket->ToString();
+
+        // update metrics
+        //context_->flows()->
+
+        // write package to toBond_ queue
+        toBondQueue_.Insert(flowPacket);
+        context_->flows()->addByteSize(flowPacket->header()->size());
     }
 
     void Flow::SendToConnection() {
         // try to get next package
         packet::FlowPacket *flowPacket = toConnectionQueue_.Pop();
 
-        // if next package is not available
-        if (!flowPacket) {
-            usleep(10000);
+        // if next package is not available try again
+        /*if (!flowPacket) {
+            usleep(40);
             return;
-        }
+        }*/
 
         // close packet
         if (flowPacket->header()->size() == 0) {
             delete flowPacket;
-            //toBondQueue_.Clear();
-            connection_->Close();
-            throw GotClosePacketException("");
+
+            sendToConnectionLooper_.Stop();
+
+            if (closed_) {
+                std::thread([this] {
+                    delete this;
+                }).detach();
+            } else {
+                // TODO empty toBond queue
+                closed_ = true;
+                connection_->Shutdown(SHUT_RDWR);
+            }
+
+            return;
         }
 
         // send packet to connection
+        int bytes_sent = 0;
         try {
-            LOG(INFO) << flowPacket->ToString() << " -> CLIENT";
-
-            connection_->Send(flowPacket->data(), flowPacket->header()->size(), 0);
+            bytes_sent = connection_->Send(flowPacket->data(), flowPacket->header()->size(), 0);
+            //DLOG(INFO) << "SENT " << bytes_sent << "bytes -> " << connection_->ToString();
+        } catch (SocketErrorException e) {
+            // socket closed waiting for close package
         } catch (Exception e) {
-            LOG(INFO) << e.what();
+            LOG(ERROR) << e.ToString();
         }
+
+        DLOG(INFO) << flowPacket->ToString() << " -> " << connection_->ToString();
 
         // delete package
         delete flowPacket;
@@ -119,36 +127,55 @@ namespace net {
         // try to get next package
         packet::FlowPacket *flowPacket = toBondQueue_.Pop();
 
-        // if next package is not available
-        if( !flowPacket ) {
-            usleep(10000);
+        // if next package is not available try again
+        /*if( !flowPacket ) {
+            usleep(40);
             return;
-        }
+        }*/
 
         // close packet
         if( flowPacket->header()->size() == 0 ) {
-            bond_->WriteToTer(flowPacket);
-            throw GotClosePacketException(flowPacket->ToString());
+            bond_->SendToTer(flowPacket);
+
+            sendToBondLooper_.Stop();
+
+            if (closed_) {
+                std::thread([this] {
+                    delete this;
+                }).detach();
+            } else {
+                closed_ = true;
+                connection_->Shutdown(SHUT_RDWR);
+            }
+
+            return;
         }
 
+        DLOG(INFO) << "flow byteSize: " << byteSize() << ", flows byteSize: " << context_->flows()->getByteSize();
+
         // write packet
-        if( toBondQueue_.byteSize() < 2000 || flows_->byteSize() < 74219 ) { // TODO dynamic TMC_THRESHOLDSMALLFLOW, TMC_THRESHOLDTERSAT
-            bond_->WriteToTer(flowPacket);
+        if( byteSize() < 2000 || context_->flows()->getByteSize() < 74219 ) { // TODO dynamic TMC_THRESHOLDSMALLFLOW, TMC_THRESHOLDTERSAT, first packet?
+            bond_->SendToTer(flowPacket);
         } else {
-            bond_->WriteToSat(flowPacket);
+            bond_->SentToSat(flowPacket);
         }
+
+        context_->flows()->subByteSize(flowPacket->header()->size());
     }
 
     Flow::~Flow() {
-        LOG(INFO) << "~Flow()";
-        // close and delete connection
-        delete connection_; // TODO take care if multiple threads handle flow
+        LOG(INFO) << ToString() << ".~Flow()";
 
-        flows_->Erase(source_, destination_);
+        // close and delete connection
+        delete connection_;
     }
 
     uint64_t Flow::byteSize() {
         return toBondQueue_.byteSize();
+    }
+
+    std::string Flow::ToString() {
+        return "Flow[source=" + source_.ToString() + ", destination=" + destination_.ToString() + "]";
     }
 
 } // net

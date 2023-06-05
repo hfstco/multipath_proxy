@@ -9,7 +9,7 @@
 namespace packet {
     FlowHeader::FlowHeader(FLOW_CTRL ctrl, net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, uint64_t id) : Header(TYPE::FLOW), ctrl_(ctrl), sourceIP_(source.sin_addr),
     destinationIP_(destination.sin_addr), sourcePort_(source.sin_port),
-    destinationPort_(destination.sin_port), id_(id), size_(0) {}
+    destinationPort_(destination.sin_port), id_(id), size_(0)/*, checksum_(0)*/ {}
 
     FlowHeader::FlowHeader(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, uint64_t id) : FlowHeader(FLOW_CTRL::REGULAR,
             source, destination, id) {}
@@ -85,6 +85,7 @@ namespace packet {
                 break;
         }
         stringStream << ", source=" << source().ToString() << ", destination=" << destination().ToString() << ", id=" << id() << ", Size=" << size() << "]";
+
         return stringStream.str();
     }
 
@@ -104,6 +105,14 @@ namespace packet {
     void FlowHeader::destination(net::ipv4::SockAddr_In sockAddrIn) {
         destinationIP_ = sockAddrIn.sin_addr;
         destinationPort_ = sockAddrIn.sin_port;
-    };
+    }
+
+    /*uint64_t FlowHeader::checksum() const {
+        return checksum_;
+    }
+
+    void FlowHeader::checksum(uint64_t checksum) {
+        checksum_ = checksum;
+    };*/
 
 } // packet
