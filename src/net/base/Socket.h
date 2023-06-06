@@ -244,7 +244,7 @@ namespace net {
 
         template<typename T>
         void SetSockOpt(int level, int optname, T optval) {
-            if (setsockopt(this->fd_, level, optname, (void *) &optval, sizeof(T)) < 0) {
+            if (setsockopt(this->fd_, level, optname, &optval, sizeof(T)) < 0) {
                 SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
 
                 VLOG(3) << ToString() << ".SetSockOpt(level=" << level << ", optname=" << optname << ", optval=" << optval << ") ! " << socketErrorException.ToString();
@@ -259,15 +259,15 @@ namespace net {
         T GetSockOpt(int level, int optname) {
             T optval;
             socklen_t optlen = sizeof(T);
-            if (getsockopt(this->fd_, level, optname, (void *) &optval, &optlen) < 0) {
+            if (getsockopt(this->fd_, level, optname, &optval, &optlen) < 0) {
                 SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
 
-                VLOG(3) << ToString() << ".GetSockOpt(level=" << level << ", optname=" << optname << ", optval=" << optval << ") ! " << socketErrorException.ToString();
+                VLOG(3) << ToString() << ".GetSockOpt(level=" << level << ", optname=" << optname << ") ! " << socketErrorException.ToString();
 
                 throw socketErrorException;
             }
 
-            VLOG(3) << ToString() << ".GetSockOpt(level=" << level << ", optname=" << optname << ", optval=" << optval << ") -> " << optval;
+            VLOG(3) << ToString() << ".GetSockOpt(level=" << level << ", optname=" << optname << ") -> " << optval;
 
             return optval;
         }

@@ -21,6 +21,10 @@ namespace net {
         friend Listener<S, SA>;
 
     public:
+        int fd() {
+            S::fd();
+        }
+
         ssize_t Recv(unsigned char *data, size_t size, int flags) {
             return S::Recv(data, size, flags);
         };

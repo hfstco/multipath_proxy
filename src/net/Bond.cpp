@@ -22,6 +22,7 @@ namespace net {
     readFromTerLooper_(worker::Looper(std::bind(&Bond::RecvFromConnection, this, terConnection))),
     readFromSatLooper_(worker::Looper(std::bind(&Bond::RecvFromConnection, this, satConnection))),
                                                                                                                               heartbeatLooper_(worker::Looper(std::bind(&Bond::WriteHeartBeatPacket, this))),
+                                                                                                                              checkBondBuffersLooper_(worker::Looper(std::bind(&Bond::CheckBondBuffers, this))),
     context_(context) {
         DLOG(INFO) << "Bond(ter=" << terConnection->ToString() << ", sat=" << satConnection->ToString() << ") * " << ToString();
     }
@@ -54,7 +55,7 @@ namespace net {
 
             // skip if HeartBeatHeader
             if (packet->header()->type() == packet::TYPE::HEARTBEAT) {
-                LOG(INFO) << connection->ToString() << " -> " << ((packet::HeartBeatPacket *)packet)->ToString();
+                DLOG(INFO) << connection->ToString() << " -> " << ((packet::HeartBeatPacket *)packet)->ToString();
                 delete buffer;
 
                 return;
@@ -219,6 +220,7 @@ namespace net {
         DLOG(INFO) << flowPacket->ToString() << " -> " << terConnection_->ToString();
 
         sendTerMutex_.lock();
+        context_->flows()->subByteSize(flowPacket->header()->size());
         SendToConnection(terConnection_, flowPacket);
         sendTerMutex_.unlock();
 
@@ -229,10 +231,47 @@ namespace net {
         DLOG(INFO) << flowPacket->ToString() << " -> " << satConnection_->ToString();
 
         sendSatMutex_.lock();
+        context_->flows()->subByteSize(flowPacket->header()->size());
         SendToConnection(satConnection_, flowPacket);
         sendSatMutex_.unlock();
 
         delete flowPacket;
+    }
+
+    void Bond::CheckBondBuffers() {
+        size_t terRecvQueueSize = 0;
+        size_t terSendQueueSize = 0;
+        size_t satRecvQueueSize = 0;
+        size_t satSendQueueSize = 0;
+
+        int ret = 0;
+        if((ret = ioctl(terConnection_->fd(), FIONREAD, &terRecvQueueSize)) == -1) {
+            LOG(ERROR) << "ioctl fail.";
+        }
+        if((ret = ioctl(terConnection_->fd(), TIOCOUTQ, &terSendQueueSize)) == -1) {
+            LOG(ERROR) << "ioctl fail.";
+        }
+        if((ret = ioctl(satConnection_->fd(), FIONREAD, &satRecvQueueSize)) == -1) {
+            LOG(ERROR) << "ioctl fail.";
+        }
+        if((ret = ioctl(satConnection_->fd(), TIOCOUTQ, &satSendQueueSize)) == -1) {
+            LOG(ERROR) << "ioctl fail.";
+        }
+
+        size_t maxSatQueueSize = 0;
+        do {
+            maxSatQueueSize = context_->metrics()->maxSatSendQueueSize.load();
+
+            if (satSendQueueSize <= maxSatQueueSize) {
+                break;
+            }
+        } while(!context_->metrics()->maxSatSendQueueSize.compare_exchange_weak(maxSatQueueSize, satSendQueueSize));
+
+        // TODO avg
+
+        DLOG(INFO) << "TER: readq: " << terRecvQueueSize << " writeq: " << terSendQueueSize << ", SAT: readq: " << satRecvQueueSize << " writeq: " << satSendQueueSize << " max: " << context_->metrics()->maxSatSendQueueSize.load();
+
+        usleep(10000);
     }
 
 } // net

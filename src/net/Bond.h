@@ -61,9 +61,12 @@ namespace net {
 
         void WriteHeartBeatPacket();
 
+        void CheckBondBuffers();
+
         worker::Looper readFromTerLooper_;
         worker::Looper readFromSatLooper_;
         worker::Looper heartbeatLooper_;
+        worker::Looper checkBondBuffersLooper_;
     };
 
 } // net

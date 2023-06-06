@@ -9,6 +9,7 @@
 #include "../collections/FlowMap.h"
 #include "../net/Bond.h"
 #include "../task/ThreadPool.h"
+#include "../metrics/Metrics.h"
 
 namespace context {
 
@@ -19,6 +20,10 @@ namespace context {
 
         collections::FlowMap *flows() const {
             return flows_;
+        }
+
+        metrics::Metrics *metrics() const {
+            return metrics_;
         }
 
         /*task::ThreadPool *threadPool() const {
@@ -33,13 +38,15 @@ namespace context {
         virtual ~Context() {
             delete flows_;
             //delete threadPool_;
+            delete metrics_;
         }
 
     private:
         collections::FlowMap *flows_;
         //task::ThreadPool *threadPool_;
+        metrics::Metrics *metrics_;
 
-        Context() : flows_(new collections::FlowMap())/*, threadPool_(new task::ThreadPool())*/ {}
+        Context() : flows_(new collections::FlowMap()), metrics_(new metrics::Metrics())/*, threadPool_(new task::ThreadPool())*/ {}
     };
 
 } // context

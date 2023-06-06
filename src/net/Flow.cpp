@@ -159,8 +159,6 @@ namespace net {
         } else {
             bond_->SentToSat(flowPacket);
         }
-
-        context_->flows()->subByteSize(flowPacket->header()->size());
     }
 
     Flow::~Flow() {
