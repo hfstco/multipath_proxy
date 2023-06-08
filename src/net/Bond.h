@@ -66,7 +66,7 @@ namespace net {
         worker::Looper readFromTerLooper_;
         worker::Looper readFromSatLooper_;
         worker::Looper heartbeatLooper_;
-        worker::Looper checkBondBuffersLooper_;
+        //worker::Looper checkBondBuffersLooper_;
     };
 
 } // net

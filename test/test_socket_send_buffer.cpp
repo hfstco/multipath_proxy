@@ -166,3 +166,54 @@ TEST(development_tests, write_buffer_set) {
         FAIL();
     }
 }
+
+TEST(development_tests, get_ioctl) {
+    try {
+        // create listener
+        net::ipv4::TcpSocket *listeningSocket = net::ipv4::TcpSocket::make();
+        listeningSocket->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
+        listeningSocket->Bind(net::ipv4::SockAddr_In("127.0.0.1", 7001));
+        listeningSocket->Listen();
+
+        // create remote connection
+        net::ipv4::TcpSocket *writeSocket = net::ipv4::TcpSocket::make();
+
+        // set sock queue size
+        // https://man7.org/linux/man-pages/man7/socket.7.html
+//        The default value is set by the
+//        /proc/sys/net/core/rmem_default file, and the maximum
+//        allowed value is set by the /proc/sys/net/core/rmem_max !!!
+//        file.  The minimum (doubled) value for this option is 256.
+        writeSocket->SetSockOpt<int>(SOL_SOCKET, SO_SNDBUF, 10000);
+        writeSocket->GetSockOpt<int>(SOL_SOCKET, SO_SNDBUF); // LOG only
+        /*int sockbuf = 21000;
+        socklen_t socklen = sizeof(sockbuf);
+        setsockopt(writeSocket->fd(), SOL_SOCKET, SO_SNDBUF, &sockbuf, socklen);
+        sockbuf = 0;
+        getsockopt(writeSocket->fd(), SOL_SOCKET, SO_SNDBUF, &sockbuf, &socklen);*/
+        writeSocket->Connect(net::ipv4::SockAddr_In("127.0.0.1", 7001));
+
+        // accept remote connection on local side
+        net::ipv4::TcpSocket *readSocket = listeningSocket->Accept();
+
+        int ret = 0, bytes_written;
+        size_t queueSize;
+        unsigned char buffer[1024];
+        do {
+            bytes_written = 0;
+            bytes_written = writeSocket->Send(buffer, 1024, 0);
+
+            queueSize = writeSocket->IoCtl<int>(TIOCOUTQ);
+
+            LOG(INFO) << "bytes_written: " << bytes_written << ", queueSize: " << queueSize;
+        } while (bytes_written == 1024);
+
+        // close sockets
+        delete listeningSocket;
+        delete writeSocket;
+        delete readSocket;
+    } catch (Exception e) {
+        LOG(ERROR) << e.what();
+        FAIL();
+    }
+}

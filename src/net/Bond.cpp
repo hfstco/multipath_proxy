@@ -5,6 +5,7 @@
 #include <cassert>
 #include <functional>
 #include <future>
+#include <fstream>
 
 #include "Bond.h"
 
@@ -22,7 +23,7 @@ namespace net {
     readFromTerLooper_(worker::Looper(std::bind(&Bond::RecvFromConnection, this, terConnection))),
     readFromSatLooper_(worker::Looper(std::bind(&Bond::RecvFromConnection, this, satConnection))),
                                                                                                                               heartbeatLooper_(worker::Looper(std::bind(&Bond::WriteHeartBeatPacket, this))),
-                                                                                                                              checkBondBuffersLooper_(worker::Looper(std::bind(&Bond::CheckBondBuffers, this))),
+                                                                                                                              //checkBondBuffersLooper_(worker::Looper(std::bind(&Bond::CheckBondBuffers, this))),
     context_(context) {
         DLOG(INFO) << "Bond(ter=" << terConnection->ToString() << ", sat=" << satConnection->ToString() << ") * " << ToString();
     }
@@ -219,6 +220,11 @@ namespace net {
     void Bond::SendToTer(packet::FlowPacket *flowPacket) {
         DLOG(INFO) << flowPacket->ToString() << " -> " << terConnection_->ToString();
 
+        LOG(INFO) << "ter queue: " << satConnection_->IoCtl<int>(TIOCOUTQ);
+        while(satConnection_->IoCtl<int>(TIOCOUTQ) > 10000) {
+            usleep(10);
+        }
+
         sendTerMutex_.lock();
         context_->flows()->subByteSize(flowPacket->header()->size());
         SendToConnection(terConnection_, flowPacket);
@@ -229,6 +235,11 @@ namespace net {
 
     void Bond::SentToSat(packet::FlowPacket *flowPacket) {
         DLOG(INFO) << flowPacket->ToString() << " -> " << satConnection_->ToString();
+
+        LOG(INFO) << "sat queue: " << satConnection_->IoCtl<int>(TIOCOUTQ);
+        while(satConnection_->IoCtl<int>(TIOCOUTQ) > 3750000) {
+            usleep(10);
+        }
 
         sendSatMutex_.lock();
         context_->flows()->subByteSize(flowPacket->header()->size());
@@ -268,6 +279,12 @@ namespace net {
         } while(!context_->metrics()->maxSatSendQueueSize.compare_exchange_weak(maxSatQueueSize, satSendQueueSize));
 
         // TODO avg
+
+        std::ofstream file("queues.csv", std::ios::app);
+
+        file << terRecvQueueSize << ", " << terSendQueueSize << ", " << satRecvQueueSize << ", " << satSendQueueSize << std::endl;
+
+        file.close();
 
         DLOG(INFO) << "TER: readq: " << terRecvQueueSize << " writeq: " << terSendQueueSize << ", SAT: readq: " << satRecvQueueSize << " writeq: " << satSendQueueSize << " max: " << context_->metrics()->maxSatSendQueueSize.load();
 

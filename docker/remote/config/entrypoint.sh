@@ -7,6 +7,9 @@ ip route add 172.30.10.0/24 via 172.30.31.1 #servers
 ip route add 172.30.20.0/24 via 172.30.21.1 #satr
 ip route add 172.30.30.0/24 via 172.30.31.1 #terr
 
+echo "8192 2100000 8400000" > /proc/sys/net/ipv4/tcp_rmem
+echo "8192 2100000 8400000" > /proc/sys/net/ipv4/tcp_wmem
+
 # start iperf
 iperf3 -s -D
 

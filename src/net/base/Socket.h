@@ -272,6 +272,20 @@ namespace net {
             return optval;
         }
 
+        template<typename T>
+        T IoCtl(unsigned long request) {
+            T value;
+            if (ioctl(fd_, request, &value) == -1) {
+                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+
+                VLOG(3) << ToString() << ".IoCtl(request=" << request << ") ! " << socketErrorException.ToString();
+
+                throw socketErrorException;
+            }
+
+            return value;
+        }
+
         void Close() {
             if (close(fd_) == -1) {
                 SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));

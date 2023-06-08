@@ -45,24 +45,17 @@ namespace net {
             return S::GetPeerName();
         }
 
-        size_t GetOutQueueSize() {
-            size_t queueSize = 0;
-
-            if( ioctl(S::fd(), TIOCOUTQ, &queueSize) < 0 ) {
-                throw SocketErrorException("ioctl(); errno=" + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
-            }
-
-            return queueSize;
+        template<typename T>
+        T IoCtl(unsigned long request) {
+            return S::template IoCtl<T>(request);
         }
 
-        size_t GetInQueueSize() {
-            size_t queueSize = 0;
+        int GetOutQueueSize() {
+            return IoCtl<int>(TIOCOUTQ);
+        }
 
-            if( ioctl(S::fd(), FIONREAD, &queueSize) < 0 ) {
-                throw SocketErrorException("ioctl(); errno=" + std::to_string(errno) + " (" + std::string(strerror(errno)) + ")");
-            }
-
-            return queueSize;
+        int GetInQueueSize() {
+            return IoCtl<int>(FIONREAD);
         }
 
         std::string ToString() {
