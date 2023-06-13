@@ -37,8 +37,8 @@ namespace net {
                 DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.ToString() << ", sockaddr=" + sockaddr.ToString() + ") * " << ToString();
             }
 
-            TcpConnection(TcpSocket socket) : Connection<TcpSocket, SockAddr_In>(socket) {
-                DLOG(INFO) << "TcpConnection(socket=" << socket.ToString() << ") * " << ToString();
+            TcpConnection(TcpSocket *socket) : Connection<TcpSocket, SockAddr_In>(socket) {
+                DLOG(INFO) << "TcpConnection(socket=" << socket->ToString() << ") * " << ToString();
             }
         };
 
@@ -64,7 +64,7 @@ namespace net {
             TcpConnection(SockAddr_In6 sockaddr) : Connection<TcpSocket, SockAddr_In6>(sockaddr) {};
             TcpConnection(SockAddr_In6 peeraddr, SockAddr_In6 sockaddr) : Connection<TcpSocket, SockAddr_In6>(peeraddr, sockaddr) {}
 
-            TcpConnection(TcpSocket socket) : Connection<TcpSocket, SockAddr_In6>(socket) {}
+            TcpConnection(TcpSocket *socket) : Connection<TcpSocket, SockAddr_In6>(socket) {}
         };
 
     } // ipv6

@@ -38,6 +38,9 @@ namespace net {
             // get destination SockAddr
             ipv4::SockAddr_In destination = tcpConnection->GetSockName();
 
+            // metrics
+            context_->metrics()->addConnection(tcpConnection->fd());
+
             // create new Flow for connection
             net::Flow *flow = net::Flow::make(source, destination, tcpConnection, bond_, context_);
 

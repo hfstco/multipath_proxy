@@ -23,7 +23,6 @@ namespace net {
     readFromTerLooper_(worker::Looper(std::bind(&Bond::RecvFromConnection, this, terConnection))),
     readFromSatLooper_(worker::Looper(std::bind(&Bond::RecvFromConnection, this, satConnection))),
                                                                                                                               heartbeatLooper_(worker::Looper(std::bind(&Bond::WriteHeartBeatPacket, this))),
-                                                                                                                              //checkBondBuffersLooper_(worker::Looper(std::bind(&Bond::CheckBondBuffers, this))),
     context_(context) {
         DLOG(INFO) << "Bond(ter=" << terConnection->ToString() << ", sat=" << satConnection->ToString() << ") * " << ToString();
     }
@@ -48,7 +47,7 @@ namespace net {
                     return;
                 }
 
-                DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
+                //DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
             }
             assert(bytes_read == sizeof(packet::Header));
 
@@ -56,8 +55,11 @@ namespace net {
 
             // skip if HeartBeatHeader
             if (packet->header()->type() == packet::TYPE::HEARTBEAT) {
-                DLOG(INFO) << connection->ToString() << " -> " << ((packet::HeartBeatPacket *)packet)->ToString();
+                //DLOG(INFO) << connection->ToString() << " -> " << ((packet::HeartBeatPacket *)packet)->ToString();
                 delete buffer;
+
+                // metrics
+                context_->metrics()->getConnection(connection->fd())->AddRecvBytes(bytes_read);
 
                 return;
             }
@@ -84,7 +86,7 @@ namespace net {
                     return;
                 }
 
-                DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
+                //DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
             }
             assert(bytes_read == (sizeof(packet::FlowHeader) - sizeof(packet::Header)));
 
@@ -112,7 +114,7 @@ namespace net {
                     return;
                 }
 
-                DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
+                //DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "recvBytes";
             }
             assert(bytes_read == flowPacket->header()->size());
         } catch (Exception e) {
@@ -132,7 +134,7 @@ namespace net {
         // process FlowPacket
         flowPacket->Resize(flowPacket->header()->size());
 
-        DLOG(INFO) << connection->ToString() << " -> " + flowPacket->ToString();
+        //DLOG(INFO) << connection->ToString() << " -> " + flowPacket->ToString();
 
         // expect more data to read?
         /*if (flowPacket->header()->size() == 1024) {
@@ -152,6 +154,10 @@ namespace net {
                 // create flow
                 try {
                     net::ipv4::TcpConnection *flowConnection = net::ipv4::TcpConnection::make(flowPacket->header()->destination());
+
+                    // metrics
+                    context_->metrics()->addConnection(flowConnection->fd());
+
                     flow = net::Flow::make(flowPacket->header()->source(), flowPacket->header()->destination(), flowConnection, this, context_);
 
                     context_->flows()->Insert(flowPacket->header()->source(), flowPacket->header()->destination(), flow);
@@ -160,6 +166,9 @@ namespace net {
                 }
             }
         }
+
+        // metrics
+        context_->metrics()->getConnection(connection->fd())->AddRecvBytes(bytes_read);
 
         // find flow
         flow->WriteToFlow(flowPacket);
@@ -176,7 +185,7 @@ namespace net {
     void Bond::WriteHeartBeatPacket() {
         packet::HeartBeatPacket *heartBeatPacket = packet::HeartBeatPacket::make();
 
-        DLOG(INFO) << heartBeatPacket->ToString() << " -> " << satConnection_->ToString();
+        //DLOG(INFO) << heartBeatPacket->ToString() << " -> " << satConnection_->ToString();
 
         sendSatMutex_.lock();
         SendToConnection(satConnection_, heartBeatPacket);
@@ -195,8 +204,10 @@ namespace net {
             while (bytes_written < buffer->size()) {
                 bytes_written += connection->Send(buffer->data() + bytes_written, buffer->size() - bytes_written,0);
 
-                DLOG(INFO) << "Write " << bytes_written << "bytes -> " << connection->ToString();
+                //DLOG(INFO) << "Write " << bytes_written << "bytes -> " << connection->ToString();
             }
+
+            context_->metrics()->getConnection(connection->fd())->AddSendBytes(bytes_written);
 
             assert(bytes_written == buffer->size());
         } catch (Exception e) {
@@ -218,11 +229,11 @@ namespace net {
     }
 
     void Bond::SendToTer(packet::FlowPacket *flowPacket) {
-        DLOG(INFO) << flowPacket->ToString() << " -> " << terConnection_->ToString();
+        //DLOG(INFO) << flowPacket->ToString() << " -> " << terConnection_->ToString();
 
-        LOG(INFO) << "ter queue: " << satConnection_->IoCtl<int>(TIOCOUTQ);
-        while(satConnection_->IoCtl<int>(TIOCOUTQ) > 10000) {
-            usleep(10);
+        //LOG(INFO) << "ter queue: " << satConnection_->IoCtl<int>(TIOCOUTQ);
+        while(terConnection_->IoCtl<int>(TIOCOUTQ) > 10000) {
+            usleep(5);
         }
 
         sendTerMutex_.lock();
@@ -234,11 +245,11 @@ namespace net {
     }
 
     void Bond::SentToSat(packet::FlowPacket *flowPacket) {
-        DLOG(INFO) << flowPacket->ToString() << " -> " << satConnection_->ToString();
+        //DLOG(INFO) << flowPacket->ToString() << " -> " << satConnection_->ToString();
 
-        LOG(INFO) << "sat queue: " << satConnection_->IoCtl<int>(TIOCOUTQ);
+        //LOG(INFO) << "sat queue: " << satConnection_->IoCtl<int>(TIOCOUTQ);
         while(satConnection_->IoCtl<int>(TIOCOUTQ) > 3750000) {
-            usleep(10);
+            usleep(5);
         }
 
         sendSatMutex_.lock();
@@ -247,48 +258,6 @@ namespace net {
         sendSatMutex_.unlock();
 
         delete flowPacket;
-    }
-
-    void Bond::CheckBondBuffers() {
-        size_t terRecvQueueSize = 0;
-        size_t terSendQueueSize = 0;
-        size_t satRecvQueueSize = 0;
-        size_t satSendQueueSize = 0;
-
-        int ret = 0;
-        if((ret = ioctl(terConnection_->fd(), FIONREAD, &terRecvQueueSize)) == -1) {
-            LOG(ERROR) << "ioctl fail.";
-        }
-        if((ret = ioctl(terConnection_->fd(), TIOCOUTQ, &terSendQueueSize)) == -1) {
-            LOG(ERROR) << "ioctl fail.";
-        }
-        if((ret = ioctl(satConnection_->fd(), FIONREAD, &satRecvQueueSize)) == -1) {
-            LOG(ERROR) << "ioctl fail.";
-        }
-        if((ret = ioctl(satConnection_->fd(), TIOCOUTQ, &satSendQueueSize)) == -1) {
-            LOG(ERROR) << "ioctl fail.";
-        }
-
-        size_t maxSatQueueSize = 0;
-        do {
-            maxSatQueueSize = context_->metrics()->maxSatSendQueueSize.load();
-
-            if (satSendQueueSize <= maxSatQueueSize) {
-                break;
-            }
-        } while(!context_->metrics()->maxSatSendQueueSize.compare_exchange_weak(maxSatQueueSize, satSendQueueSize));
-
-        // TODO avg
-
-        std::ofstream file("queues.csv", std::ios::app);
-
-        file << terRecvQueueSize << ", " << terSendQueueSize << ", " << satRecvQueueSize << ", " << satSendQueueSize << std::endl;
-
-        file.close();
-
-        DLOG(INFO) << "TER: readq: " << terRecvQueueSize << " writeq: " << terSendQueueSize << ", SAT: readq: " << satRecvQueueSize << " writeq: " << satSendQueueSize << " max: " << context_->metrics()->maxSatSendQueueSize.load();
-
-        usleep(10000);
     }
 
 } // net

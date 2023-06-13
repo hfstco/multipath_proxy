@@ -9,6 +9,7 @@
 #include <atomic>
 #include <condition_variable>
 #include <assert.h>
+#include <glog/logging.h>
 
 #include "../packet/FlowPacket.h"
 #include "../packet/FlowHeader.h"
@@ -28,16 +29,26 @@ namespace collections {
             return byteSize_.load(std::memory_order_relaxed);
         }
 
+        const uint64_t currentId() const {
+            return currentId_.load(std::memory_order_relaxed);
+        }
+
         void Insert(packet::FlowPacket *flowPacket) {
             std::lock_guard lock(mutex_);
 
-            if (deque_.empty() || flowPacket->header()->id() == currentId_) { // if deque is empty or packet is currentId_
+            //DLOG(INFO) << ToString() << ".Insert(" << flowPacket->ToString() << ")";
+
+            if (deque_.empty()) { // if deque is empty
+                //LOG(INFO) << "PUSH EMPTY";
+                deque_.push_front(flowPacket);
+            } else if (flowPacket->header()->id() < deque_.front()->header()->id()) {
+                //LOG(INFO) << "PUSH FRONT";
                 deque_.push_front(flowPacket);
             } else {
                 for (auto it = deque_.crbegin(); it != deque_.crend(); ++it) {
                     if ((*it)->header()->id() < flowPacket->header()->id()) {
+                        //LOG(INFO) << "PUSH " << flowPacket->header()->id() << " BEFORE " << (*it)->header()->id();
                         deque_.insert(it.base(), flowPacket);
-
                         break;
                     }
                 }
@@ -46,7 +57,7 @@ namespace collections {
             size_ += 1;
             byteSize_ += flowPacket->header()->size();
 
-            if (flowPacket->header()->id() == currentId_) {
+            if (deque_.front()->header()->id() == currentId_.load()) {
                 nextAvailable_ = true;
                 conditionVariable_.notify_one();
             }
@@ -56,18 +67,20 @@ namespace collections {
             std::unique_lock lock(mutex_);
             conditionVariable_.wait(lock, [this] { return nextAvailable_; });
 
+            //DLOG(INFO) << ToString() << ".Pop()";
+
             packet::FlowPacket *flowPacket = std::move(deque_.front());
-            assert(flowPacket->header()->id() == currentId_);
+            assert(flowPacket->header()->id() == currentId_.load(std::memory_order_relaxed));
             deque_.pop_front();
 
-            currentId_ += 1;
+            currentId_.fetch_add(1);
             size_ -= 1;
-            byteSize_ -= flowPacket->header()->size();
+            byteSize_.fetch_sub(flowPacket->header()->size());
 
-            if (deque_.empty() || deque_.front()->header()->id() != currentId_) {
+            if (deque_.empty() || deque_.front()->header()->id() != currentId_.load(std::memory_order_relaxed)) {
                 nextAvailable_ = false;
             } else {
-                assert(deque_.front()->header()->id() == currentId_);
+                assert(deque_.front()->header()->id() == currentId_.load(std::memory_order_relaxed));
                 conditionVariable_.notify_one();
             }
 
@@ -76,15 +89,44 @@ namespace collections {
             return flowPacket;
         }
 
+        bool Empty() {
+            std::unique_lock lock(mutex_);
+
+            return deque_.empty();
+        }
+
+        void Clear() {
+            DLOG(INFO) << ToString() << ".Clear()";
+
+            std::unique_lock lock(mutex_);
+
+            size_ = 0;
+            deque_.clear();
+            nextAvailable_ = false;
+        }
+
+        std::string Print() {
+            std::stringstream stringStream;
+            for (auto it = deque_.cbegin(); it != deque_.cend(); ++it) {
+                LOG(INFO) << (*it)->ToString();
+            }
+
+            return stringStream.str();
+        }
+
+        std::string ToString() {
+            return "BlockingFlowPacketQueue[size=" + std::to_string(size_) + ", currentId=" + std::to_string(currentId_) + ", byteSize=" + std::to_string(byteSize_) + "]";
+        }
+
     private:
-        std::mutex mutex_;
+        mutable std::mutex mutex_;
         bool nextAvailable_ = false;
         std::condition_variable conditionVariable_;
 
         std::deque<packet::FlowPacket *> deque_;
 
         uint64_t size_;
-        uint64_t currentId_;
+        std::atomic<uint64_t> currentId_;
         std::atomic<uint64_t> byteSize_;
     };
 

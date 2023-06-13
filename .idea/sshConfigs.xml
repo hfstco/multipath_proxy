@@ -6,6 +6,9 @@
       <sshConfig authType="PASSWORD" host="10.11.12.172" id="ecda9f8b-04b0-460c-822c-62d0b2c65af9" port="2205" customName="root@10.11.12.172:2205" nameFormat="CUSTOM" username="root" useOpenSSHConfig="true">
         <option name="customName" value="root@10.11.12.172:2205" />
       </sshConfig>
+      <sshConfig authType="PASSWORD" host="10.11.12.172" id="e1a1adbe-e75c-476d-a1c2-51a929175fb2" port="2201" customName="root@10.11.12.172:2201" nameFormat="CUSTOM" username="root" useOpenSSHConfig="true">
+        <option name="customName" value="root@10.11.12.172:2201" />
+      </sshConfig>
     </configs>
   </component>
 </project>

@@ -24,6 +24,6 @@ include_directories(${CURSES_INCLUDE_DIR})
 # include_directories(${UUID_INCLUDE_DIRS})
 
 file(GLOB_RECURSE SRCS "*.cpp" "*.h")
-add_executable(mpp ${SRCS} context/Context.h collections/BlockingFlowPacketQueue.cpp collections/BlockingFlowPacketQueue.h)
+add_executable(mpp ${SRCS})
 target_link_libraries(mpp glog::glog ${CURSES_LIBRARIES})
 # target_link_libraries(test_multipath_proxy ${UUID_LIBRARIES})

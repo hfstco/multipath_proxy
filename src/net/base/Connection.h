@@ -16,13 +16,21 @@ namespace net {
     template <IsSocket S, IsSockAddr SA>
     class Listener;
 
+    namespace ipv4 {
+        class TcpConnection;
+    }
+
+    namespace ipv6 {
+        class TcpConnection;
+    }
+
     template <IsSocket S, IsSockAddr SA>
-    class Connection : protected S {
+    class Connection : public S {
         friend Listener<S, SA>;
 
     public:
         int fd() {
-            S::fd();
+            return S::fd();
         }
 
         ssize_t Recv(unsigned char *data, size_t size, int flags) {
@@ -90,11 +98,13 @@ namespace net {
         }
 
     protected:
-        Connection(S socket) : S(socket) {
+        Connection(S *socket) : S(socket) {}
+
+        /*explicit Connection(S socket) : S(socket) {
             DLOG(INFO) << "Connection(socket=" << S::ToString() << ") * " << ToString();
 
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
-        }
+        }*/
 
         Connection(SA peeraddr) : Connection() {
             DLOG(INFO) << "Connection(peeraddr=" << peeraddr.ToString() << ") * " << ToString();
@@ -110,6 +120,8 @@ namespace net {
         };
 
     private:
+        int test = 6;
+
         Connection() {
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
         };

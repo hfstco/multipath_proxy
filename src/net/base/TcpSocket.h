@@ -8,10 +8,8 @@
 #include "Socket.h"
 #include "SockAddr.h"
 
-
 namespace net {
     namespace ipv4 {
-
 
         class TcpSocket : public Socket<TcpSocket, SockAddr_In> {
             friend Socket<TcpSocket, SockAddr_In>; // S Accept()
@@ -46,16 +44,25 @@ namespace net {
 
             void Close();
 
-        protected:
+            std::string ToString() {
+                return "TcpSocket[fd=" + std::to_string(fd()) + "]";
+            }
+
+            ~TcpSocket() override;
+
+            //protected:
             TcpSocket();
             TcpSocket(int sock_fd);
+            TcpSocket(TcpSocket *tcpSocket) : Socket<TcpSocket, SockAddr_In>(tcpSocket) {
+                DLOG(INFO) << "TcpSocket(tcpSocket=" + tcpSocket->ToString() + ") * " + ToString();
+            }
         };
 
     } // ipv4
 
     namespace ipv6 {
 
-        class TcpSocket : protected Socket<TcpSocket, SockAddr_In6> {
+        class TcpSocket : public Socket<TcpSocket, SockAddr_In6> {
             friend Socket<TcpSocket, SockAddr_In6>; // S Accept()
 
         public:
@@ -88,9 +95,18 @@ namespace net {
 
             void Close();
 
+            std::string ToString() {
+                return "TcpSocket[fd=" + std::to_string(fd()) + "]";
+            }
+
+            ~TcpSocket() override;
+
         protected:
             TcpSocket();
             TcpSocket(int sock_fd);
+            TcpSocket(TcpSocket *tcpSocket) : Socket<TcpSocket, SockAddr_In6>(tcpSocket) {
+                DLOG(INFO) << "TcpSocket(tcpSocket=" + tcpSocket->ToString() + ") * " + ToString();
+            }
         };
 
     } // ipv6

@@ -7,6 +7,10 @@
 
 #include <stdlib.h>
 #include <atomic>
+#include <map>
+
+#include "ConnectionMetric.h"
+#include "../worker/Looper.h"
 
 namespace metrics {
 
@@ -14,14 +18,24 @@ namespace metrics {
     public:
         Metrics();
 
-        std::atomic<size_t> avgSatSendQueueSize;
-        std::atomic<size_t> maxSatSendQueueSize;
+        void addConnection(int fd);
+        void removeConnection(int fd);
+
+        ConnectionMetric *getConnection(int fd);
 
         void PrintMetrics();
 
         std::string ToString();
 
         virtual ~Metrics();
+    private:
+        std::map<int, ConnectionMetric *> connectionMetrics_;
+
+        std::ofstream *file_;
+
+        worker::Looper metricsLooper_;
+
+        void WriteMetricsToDisk();
     };
 
 } // metrics

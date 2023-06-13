@@ -21,7 +21,7 @@ namespace collections {
     }
 
     void FlowMap::Insert(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::Flow *flow) {
-        LOG(ERROR) << ToString() <<  ".Insert(" << source.ToString() + ", " + destination.ToString() << ")";
+        //LOG(ERROR) << ToString() <<  ".Insert(" << source.ToString() + ", " + destination.ToString() << ")";
 
         std::unordered_map<std::string, net::Flow *>::insert(std::pair<std::string, net::Flow *>(source.ToString() + "|" + destination.ToString(), flow));
     }

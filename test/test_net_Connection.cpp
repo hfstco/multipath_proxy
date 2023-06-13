@@ -9,6 +9,10 @@
 #include "../src/net/base/TcpListener.h"
 #include "../src/packet/Buffer.h"
 
+TEST(net_Connection, ipv4_TcpListener) {
+
+}
+
 TEST(net_Connection, ipv4_TcpConnection) {
     std::thread t1([&] {
         try {

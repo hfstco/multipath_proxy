@@ -23,7 +23,7 @@ namespace net {
         }
 
         TcpSocket *TcpSocket::Accept() {
-            return (TcpSocket *)Socket<TcpSocket, SockAddr_In>::Accept();
+            return Socket<TcpSocket, SockAddr_In>::Accept();
         }
 
         TcpSocket *TcpSocket::Accept(SockAddr_In &addr) {
@@ -56,6 +56,10 @@ namespace net {
 
         void TcpSocket::Close() {
             Socket::Close();
+        }
+
+        TcpSocket::~TcpSocket() {
+            DLOG(INFO) << ToString() << ".~TcpSocket()";
         }
 
     } // ipv4
@@ -111,6 +115,10 @@ namespace net {
 
         void TcpSocket::Close() {
             Socket::Close();
+        }
+
+        TcpSocket::~TcpSocket() {
+            DLOG(INFO) << ToString() << ".~TcpSocket()";
         }
 
     } // ipv6

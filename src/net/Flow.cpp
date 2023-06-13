@@ -61,13 +61,20 @@ namespace net {
             recvFromConnectionLooper_.Stop();
         }
 
+        if (closed_) {
+            flowPacket->header()->id(toBondId_);
+        }
+
         // resize packet to fit data
         flowPacket->Resize(bytes_read);
 
         assert(bytes_read == flowPacket->header()->size());
         assert(bytes_read == flowPacket->size() - sizeof(packet::FlowHeader));
 
-        DLOG(INFO) << connection_->ToString() << " -> " << flowPacket->ToString();
+        //DLOG(INFO) << connection_->ToString() << " -> " << flowPacket->ToString();
+
+        // metrics
+        context_->metrics()->getConnection(connection_->fd())->AddRecvBytes(bytes_read);
 
         // update metrics
         //context_->flows()->
@@ -91,15 +98,19 @@ namespace net {
         if (flowPacket->header()->size() == 0) {
             delete flowPacket;
 
+            assert(toConnectionQueue_.Empty());
+
             sendToConnectionLooper_.Stop();
 
             if (closed_) {
+                context_->flows()->Erase(source_, destination_);
                 std::thread([this] {
                     delete this;
                 }).detach();
             } else {
-                // TODO empty toBond queue
                 closed_ = true;
+                toBondId_ = toBondQueue_.currentId();
+                toBondQueue_.Clear();
                 connection_->Shutdown(SHUT_RDWR);
             }
 
@@ -117,7 +128,9 @@ namespace net {
             LOG(ERROR) << e.ToString();
         }
 
-        DLOG(INFO) << flowPacket->ToString() << " -> " << connection_->ToString();
+        context_->metrics()->getConnection(connection_->fd())->AddSendBytes(bytes_sent);
+
+        //DLOG(INFO) << flowPacket->ToString() << " -> " << connection_->ToString();
 
         // delete package
         delete flowPacket;
@@ -140,10 +153,13 @@ namespace net {
             sendToBondLooper_.Stop();
 
             if (closed_) {
+                context_->flows()->Erase(source_, destination_);
                 std::thread([this] {
                     delete this;
                 }).detach();
             } else {
+                assert(toBondQueue_.Empty());
+
                 closed_ = true;
                 connection_->Shutdown(SHUT_RDWR);
             }
@@ -151,9 +167,11 @@ namespace net {
             return;
         }
 
-        DLOG(INFO) << "flow byteSize: " << byteSize() << ", flows byteSize: " << context_->flows()->getByteSize();
+        //DLOG(INFO) << "flow byteSize: " << byteSize() << ", flows byteSize: " << context_->flows()->getByteSize();
 
         // write packet
+        // context_->flows()->getByteSize() total backlog
+        // byteSize() backlog of flow
         if( byteSize() < 2000 || context_->flows()->getByteSize() < 74219 ) { // TODO dynamic TMC_THRESHOLDSMALLFLOW, TMC_THRESHOLDTERSAT, first packet?
             bond_->SendToTer(flowPacket);
         } else {
@@ -162,10 +180,11 @@ namespace net {
     }
 
     Flow::~Flow() {
-        LOG(INFO) << ToString() << ".~Flow()";
-
         // close and delete connection
+        connection_->Close();
         delete connection_;
+
+        LOG(INFO) << ToString() << ".~Flow()";
     }
 
     uint64_t Flow::byteSize() {

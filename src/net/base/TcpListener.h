@@ -20,11 +20,17 @@ namespace net {
             }
 
             TcpConnection *Accept() { // to keep TcpConnection(SA) constructor protected
-                return (TcpConnection *)Listener<TcpSocket, SockAddr_In>::Accept();
+                TcpSocket *tcpSocket = Listener<TcpSocket, SockAddr_In>::Accept();
+                TcpConnection *tcpConnection = new TcpConnection(tcpSocket);
+                delete tcpSocket;
+                return tcpConnection;
             }
 
             TcpConnection *Accept(SockAddr_In &addr) { // to keep TcpConnection(SA) constructor protected
-                return (TcpConnection *)Listener<TcpSocket, SockAddr_In>::Accept(addr);
+                TcpSocket *tcpSocket = Listener<TcpSocket, SockAddr_In>::Accept(addr);
+                TcpConnection *tcpConnection = new TcpConnection(tcpSocket);
+                delete tcpSocket;
+                return tcpConnection;
             }
 
         protected:
@@ -44,11 +50,11 @@ namespace net {
             }
 
             TcpConnection *Accept() { // to keep TcpConnection(SA) constructor protected
-                return (TcpConnection *)Listener<TcpSocket, SockAddr_In6>::Accept();
+                return new TcpConnection(Listener<TcpSocket, SockAddr_In6>::Accept());
             }
 
             TcpConnection *Accept(SockAddr_In6 &addr) { // to keep TcpConnection(SA) constructor protected
-                return (TcpConnection *)Listener<TcpSocket, SockAddr_In6>::Accept(addr);
+                return new TcpConnection(Listener<TcpSocket, SockAddr_In6>::Accept(addr));
             }
 
         protected:

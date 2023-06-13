@@ -6,10 +6,10 @@
 #define MULTIPATH_PROXY_LISTENER_H
 
 #include <netinet/in.h>
+
 #include "Socket.h"
 #include "SockAddr.h"
 #include "Connection.h"
-
 
 namespace net {
 
@@ -19,11 +19,17 @@ namespace net {
 
     public:
         Connection<S, SA> *Accept(SA &addr) {
-            return (Connection<S, SA> *)(S::Accept(addr));
+            S *s = S::Accept(addr);
+            Connection<S, SA> *c = new Connection<S, SA>(s);
+            delete s;
+            return c;
         }
 
         Connection<S, SA> *Accept() {
-            return (Connection<S, SA> *)(S::Accept());
+            S *s = S::Accept();
+            Connection<S, SA> *c = new Connection<S, SA>(s);
+            delete s;
+            return c;
         }
 
         std::string ToString() {
@@ -45,8 +51,8 @@ namespace net {
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
         }
 
-        Listener(S socket) : S(socket) {
-            DLOG(INFO) << "Listener(socket=" << S::ToString() << ") * " << ToString();
+        Listener(S *socket) : S(socket) {
+            DLOG(INFO) << "Listener(socket=" << socket->ToString() << ") * " << ToString();
         }
 
         Listener(SA sockaddr) : Listener() {

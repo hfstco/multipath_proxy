@@ -34,18 +34,32 @@ int main(int argc, char *argv[]) {
                     net::ipv4::SockAddr_In(sat.ip(), sat.port()));
             //base::Remote remote = base::Remote(pTcpListenerTer, pTcpListenerSat);
 
+            net::ipv4::TcpConnection *terConnection = terListener->Accept();
+            net::ipv4::TcpConnection *satConnection = satListener->Accept();
+
+            // metrics
+            context::Context::GetDefaultContext().metrics()->addConnection(terConnection->fd());
+            context::Context::GetDefaultContext().metrics()->addConnection(satConnection->fd());
+
             // create Bond
-            net::Bond bond = net::Bond(terListener->Accept(), satListener->Accept(), &context::Context::GetDefaultContext());
+            net::Bond bond = net::Bond(terConnection, satConnection, &context::Context::GetDefaultContext());
 
             while(true) {
-                usleep(100000);
+                usleep(1000000);
             }
+
+            context::Context::GetDefaultContext().metrics()->removeConnection(terConnection->fd());
+            context::Context::GetDefaultContext().metrics()->removeConnection(satConnection->fd());
         } else {
             // create connections
             net::ipv4::TcpConnection *terConnection = net::ipv4::TcpConnection::make(
                     net::ipv4::SockAddr_In(ter.ip(), ter.port()));
             net::ipv4::TcpConnection *satConnection = net::ipv4::TcpConnection::make(
                     net::ipv4::SockAddr_In(sat.ip(), sat.port()));
+
+            // metrics
+            context::Context::GetDefaultContext().metrics()->addConnection(terConnection->fd());
+            context::Context::GetDefaultContext().metrics()->addConnection(satConnection->fd());
 
             // create Bond
             net::Bond bond = net::Bond(terConnection, satConnection, &context::Context::GetDefaultContext());
@@ -56,6 +70,9 @@ int main(int argc, char *argv[]) {
             while(true) {
                 usleep(100000);
             }
+
+            context::Context::GetDefaultContext().metrics()->removeConnection(terConnection->fd());
+            context::Context::GetDefaultContext().metrics()->removeConnection(satConnection->fd());
         }
     } catch (Exception e) {
         LOG(ERROR) << e.what();
