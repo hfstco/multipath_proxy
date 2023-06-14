@@ -8,6 +8,8 @@ RUN sed -i 's+# include snippets/snakeoil.conf;+include snippets/snakeoil.conf;+
 
 RUN openssl req -newkey rsa:4096 -x509 -sha256 -days 3650 -nodes -out /etc/ssl/certs/example.crt -keyout /etc/ssl/private/example.key -subj "/O=tmc-multipath-proxy"
 
+RUN openssl rand -out /var/www/html/file.10kbyte  10000
+RUN openssl rand -out /var/www/html/file.50kbyte  50000
 RUN openssl rand -out /var/www/html/file.100kbyte  100000
 RUN openssl rand -out /var/www/html/file.200kbyte  200000
 RUN openssl rand -out /var/www/html/file.300kbyte  300000

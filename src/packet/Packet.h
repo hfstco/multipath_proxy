@@ -15,6 +15,7 @@ namespace packet {
     public:
         packet::Header *header();
 
+
         uint16_t size();
 
         std::string ToString();

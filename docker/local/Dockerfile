@@ -51,4 +51,7 @@ RUN cmake --build build --target install
 COPY docker/local/config/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+# wireshark/tcpdump
+RUN apt install -y tcpdump
+
 ENTRYPOINT ["/entrypoint.sh"]

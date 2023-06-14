@@ -41,6 +41,8 @@ namespace metrics {
                 int sendBufferFillLevel = 0;
                 ioctl(it->first, FIONREAD, &recvBufferFillLevel);
                 ioctl(it->first, TIOCOUTQ, &sendBufferFillLevel);
+                int recvDataRate = connectionMetric->recvDataRate();
+                int sendDataRate = connectionMetric->sendDataRate();
 
                 // timestamp
                 *file_ << std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -51,18 +53,18 @@ namespace metrics {
 
                 // data
                 *file_ << connectionMetric->recvBytes() << "," << connectionMetric->recvPackets() << ","
-                       << connectionMetric->recvDataRate() << "," << recvBufferFillLevel << "," <<
-                       connectionMetric->sendBytes() << "," << connectionMetric->sendPackets() << ","
+                       << connectionMetric->recvDataRate() << "," << recvBufferFillLevel << ","
+                       << connectionMetric->sendBytes() << "," << connectionMetric->sendPackets() << ","
                        << connectionMetric->sendDataRate() << "," << sendBufferFillLevel;
 
-                //LOG(INFO) << "METRIC: fd[" << it->first << "] sDataRate: " << connectionMetric->sendDataRate() << ", sBufferLevel: " << sendBufferFillLevel;
+                //LOG(INFO) << "METRIC: fd[" << it->first << "] sDataRate: " << sendDataRate << ", sBufferLevel: " << sendBufferFillLevel << ", rDataRate: " << recvDataRate << ", rBufferFillLevel: " << recvBufferFillLevel;
 
                 // endl;
                 *file_ << std::endl;
             }
         }
 
-        usleep(10000);
+        usleep(10);
     }
 
     std::string Metrics::ToString() {

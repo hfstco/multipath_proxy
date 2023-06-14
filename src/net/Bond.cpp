@@ -33,6 +33,11 @@ namespace net {
         packet::FlowPacket *flowPacket = nullptr;
         int bytes_read = 0;
 
+        // performance
+        std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+        std::chrono::time_point<std::chrono::system_clock> now;
+        uint64_t duration;
+
         // read Packet from Connection
         try {
             //std::lock_guard lock(connection->recvLock());
@@ -41,14 +46,20 @@ namespace net {
             while (bytes_read < sizeof(packet::Header)) {
                 bytes_read += connection->Recv(buffer->data() + bytes_read, sizeof(packet::Header) - bytes_read, 0);
 
+                now = std::chrono::system_clock::now();
+                duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
+                LOG_IF(INFO, duration > 100) << "RecvFromConnection() read header " << std::to_string(duration) << " microseconds";
+                start = now;
+
                 if (bytes_read == 0) {
                     delete buffer;
 
                     return;
                 }
 
-                //DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
+                //LOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
             }
+
             assert(bytes_read == sizeof(packet::Header));
 
             packet::Packet *packet = (packet::Packet *) buffer;
@@ -71,6 +82,11 @@ namespace net {
                 bytes_read += connection->Recv((unsigned char *) packet->header() + sizeof(packet::Header) + bytes_read,
                                                (sizeof(packet::FlowHeader) - sizeof(packet::Header)) - bytes_read, 0);
 
+                now = std::chrono::system_clock::now();
+                duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
+                LOG_IF(INFO, duration > 100) << "RecvFromConnection() read flow header " << std::to_string(duration) << " microseconds";
+                start = now;
+
                 if (bytes_read == 0) {
                     delete buffer;
 
@@ -86,7 +102,7 @@ namespace net {
                     return;
                 }
 
-                //DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
+                //LOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
             }
             assert(bytes_read == (sizeof(packet::FlowHeader) - sizeof(packet::Header)));
 
@@ -95,9 +111,19 @@ namespace net {
             // read packet data from socket
             bytes_read = 0;
             while (bytes_read < flowPacket->header()->size()) {
-                bytes_read += connection->Recv(flowPacket->data() + bytes_read,
-                                               flowPacket->header()->size() - bytes_read,
-                                               0);
+                try {
+                    bytes_read += connection->Recv(flowPacket->data() + bytes_read,
+                                                   flowPacket->header()->size() - bytes_read,
+                                                   0);
+
+                    now = std::chrono::system_clock::now();
+                    duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
+                    LOG_IF(INFO, duration > 100) << "RecvFromConnection() read data " << std::to_string(duration) << " microseconds";
+                    start = now;
+
+                } catch (Exception e) {
+                    LOG(INFO) << e.what();
+                }
 
                 if (bytes_read == 0) {
                     delete buffer;
@@ -114,7 +140,7 @@ namespace net {
                     return;
                 }
 
-                //DLOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "recvBytes";
+               // LOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
             }
             assert(bytes_read == flowPacket->header()->size());
         } catch (Exception e) {
@@ -134,6 +160,11 @@ namespace net {
         // process FlowPacket
         flowPacket->Resize(flowPacket->header()->size());
 
+        now = std::chrono::system_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
+        LOG_IF(INFO, duration > 100) << "RecvFromConnection() resize " << std::to_string(duration) << " microseconds";
+        start = now;
+
         //DLOG(INFO) << connection->ToString() << " -> " + flowPacket->ToString();
 
         // expect more data to read?
@@ -147,7 +178,7 @@ namespace net {
         // write FlowPacket to corresponding Flow
         net::Flow *flow = nullptr;
         {
-            std::lock_guard lock(context_->flows()->mutex());
+            //std::lock_guard lock(context_->flows()->mutex());
 
             // check if flow already exists
             if (!(flow = context_->flows()->Find(flowPacket->header()->source(), flowPacket->header()->destination()))) {
@@ -172,6 +203,10 @@ namespace net {
 
         // find flow
         flow->WriteToFlow(flowPacket);
+
+        now = std::chrono::system_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
+        LOG_IF(INFO, duration > 100) << "RecvFromConnection() insert to queue " << std::to_string(duration) << " microseconds";
     }
 
     Bond::~Bond() {
@@ -182,16 +217,16 @@ namespace net {
         return "Bond[ter=" + terConnection_->ToString() + ", sat=" + satConnection_->ToString() + "]";
     }
 
+    // try every 100ms to write a HeartBeatPacket
     void Bond::WriteHeartBeatPacket() {
-        packet::HeartBeatPacket *heartBeatPacket = packet::HeartBeatPacket::make();
-
-        //DLOG(INFO) << heartBeatPacket->ToString() << " -> " << satConnection_->ToString();
-
-        sendSatMutex_.lock();
-        SendToConnection(satConnection_, heartBeatPacket);
-        sendSatMutex_.unlock();
-
-        delete heartBeatPacket;
+        if(satConnection_->IoCtl<int>(TIOCOUTQ) == 0) { // only if sat send buffer is empty
+            if(sendSatMutex_.try_lock()) {
+                packet::HeartBeatPacket *heartBeatPacket = packet::HeartBeatPacket::make();
+                SendToConnection(satConnection_, heartBeatPacket);
+                sendSatMutex_.unlock();
+                delete heartBeatPacket;
+            }
+        }
 
         usleep(100000); // 100ms
     }
@@ -202,9 +237,19 @@ namespace net {
         try {
             int bytes_written = 0;
             while (bytes_written < buffer->size()) {
-                bytes_written += connection->Send(buffer->data() + bytes_written, buffer->size() - bytes_written,0);
+                int ret = 0;
+                try {
+                    ret = connection->Send(buffer->data() + bytes_written, buffer->size() - bytes_written,
+                                                      0);
+                } catch (Exception e) {
+                    continue;
+                }
 
-                //DLOG(INFO) << "Write " << bytes_written << "bytes -> " << connection->ToString();
+                assert(ret > 0);
+
+                bytes_written += ret;
+
+                //LOG(INFO) << "Write " << bytes_written << "bytes -> " << connection->ToString();
             }
 
             context_->metrics()->getConnection(connection->fd())->AddSendBytes(bytes_written);
@@ -233,7 +278,6 @@ namespace net {
 
         //LOG(INFO) << "ter queue: " << satConnection_->IoCtl<int>(TIOCOUTQ);
         while(terConnection_->IoCtl<int>(TIOCOUTQ) > 10000) {
-            usleep(5);
         }
 
         sendTerMutex_.lock();
@@ -249,7 +293,6 @@ namespace net {
 
         //LOG(INFO) << "sat queue: " << satConnection_->IoCtl<int>(TIOCOUTQ);
         while(satConnection_->IoCtl<int>(TIOCOUTQ) > 3750000) {
-            usleep(5);
         }
 
         sendSatMutex_.lock();

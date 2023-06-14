@@ -120,8 +120,6 @@ namespace net {
         };
 
     private:
-        int test = 6;
-
         Connection() {
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
         };

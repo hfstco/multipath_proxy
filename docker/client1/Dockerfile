@@ -20,5 +20,6 @@ RUN chmod +x /entrypoint.sh
 # copy python tests
 COPY GetParallel.py /root/GetParallel.py
 COPY GetSequential.py /root/GetSequential.py
+COPY GetMultipleSequential.py /root/GetMultipleSequential.py
 
 ENTRYPOINT ["/entrypoint.sh"]

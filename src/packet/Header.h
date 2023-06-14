@@ -9,7 +9,7 @@
 
 namespace packet {
 
-        static const uint32_t MAGIC = 0xDEADBEEF;
+        static const uint32_t MAGIC = 0xAAAAAAAA;
 
         enum TYPE : uint32_t {
             FLOW = 0xC001DA7A,

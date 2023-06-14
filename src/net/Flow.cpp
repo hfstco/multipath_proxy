@@ -51,9 +51,9 @@ namespace net {
             //std::lock_guard lock(connection_->recvLock());
 
             bytes_read = connection_->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
-            // DLOG(INFO) << connection_->ToString() << " -> READ " << bytes_read << "bytes";
+            //LOG(INFO) << connection_->ToString() << " -> READ " << bytes_read << "bytes";
         } catch (Exception e) {
-            LOG(INFO) << e.what();
+            return;
         }
 
         // socket closed
@@ -121,7 +121,7 @@ namespace net {
         int bytes_sent = 0;
         try {
             bytes_sent = connection_->Send(flowPacket->data(), flowPacket->header()->size(), 0);
-            //DLOG(INFO) << "SENT " << bytes_sent << "bytes -> " << connection_->ToString();
+            //LOG(INFO) << "SENT " << bytes_sent << "bytes -> " << connection_->ToString();
         } catch (SocketErrorException e) {
             // socket closed waiting for close package
         } catch (Exception e) {
