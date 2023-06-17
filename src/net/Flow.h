@@ -9,7 +9,7 @@
 #include <thread>
 
 #include "../collections/BlockingFlowPacketQueue.h"
-#include "base/SockAddr.h"
+#include "SockAddr.h"
 #include "../worker/Looper.h"
 
 namespace packet {

@@ -8,7 +8,7 @@
 #include "../src/packet/Packet.h"
 #include "../src/packet/FlowPacket.h"
 #include "../src/collections/LockFreeFlowPacketQueue.h"
-#include "../src/net/base/SockAddr.h"
+#include "../src/net/SockAddr.h"
 
 packet::FlowPacket *generatePacket(uint64_t id) {
     net::ipv4::SockAddr_In source = net::ipv4::SockAddr_In("127.0.0.1", 2345);

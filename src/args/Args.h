@@ -19,6 +19,8 @@ namespace args {
     inline std::string TER;
     inline std::string SAT;
 
+    inline bool METRICS_ENABLED = false;
+
     void init(int argc, char *argv[]);
 
 } // mpp::args

@@ -7,7 +7,7 @@
 #include "../src/packet/Header.h"
 #include "../src/packet/FlowHeader.h"
 #include "../src/packet/HeartBeatHeader.h"
-#include "../src/net/base/SockAddr.h"
+#include "../src/net/SockAddr.h"
 
 TEST(packet_Header, verify_FlowHeader) {
     net::ipv4::SockAddr_In sourceSockAddrIn = net::ipv4::SockAddr_In("127.0.0.1", 7777);

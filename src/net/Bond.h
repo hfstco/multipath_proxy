@@ -8,7 +8,7 @@
 #include <atomic>
 #include <thread>
 
-#include "../net/base/SockAddr.h"
+#include "SockAddr.h"
 #include "../worker/Looper.h"
 
 namespace packet {

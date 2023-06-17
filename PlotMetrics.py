@@ -15,25 +15,29 @@ fig, axs = plt.subplots(2, 2)
 sns.lineplot(ax=axs[0, 0],
              x='timestamp',
              y='sendDataRate',
-             hue='fd')
+             hue='fd',
+             data=df)
 axs[0, 0].set_title('sendDataRate')
 
 sns.lineplot(ax=axs[1, 0],
              x='timestamp',
              y='sendBufferFillLevel',
-             hue='fd')
+             hue='fd',
+             data=df)
 axs[1, 0].set_title('sendBufferFillLevel')
 
 sns.lineplot(ax=axs[0, 1],
              x='timestamp',
              y='recvDataRate',
-             hue='fd')
+             hue='fd',
+             data=df)
 axs[0, 1].set_title('recvDataRate')
 
 sns.lineplot(ax=axs[1, 1],
              x='timestamp',
              y='recvBufferFillLevel',
-             hue='fd')
+             hue='fd',
+             data=df)
 axs[1, 1].set_title('recvBufferFillLevel')
 
 plt.show()

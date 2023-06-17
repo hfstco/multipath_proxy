@@ -65,7 +65,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
-#include "../src/net/base/TcpSocket.h"
+#include "../src/net/TcpSocket.h"
 
 TEST(development_tests, write_buffer_default) {
     try {

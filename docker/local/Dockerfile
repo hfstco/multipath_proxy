@@ -24,6 +24,7 @@ RUN apt-get update \
       tar \
       python3 \
       python3-dev \
+      python3-pip \
       wget \
       vim \
       linux-tools-common \
@@ -46,6 +47,12 @@ WORKDIR /root/glog
 RUN cmake -S . -B build -G "Unix Makefiles"
 RUN cmake --build build
 RUN cmake --build build --target install
+
+# gperftools
+RUN apt install -y gperf google-perftools libgoogle-perftools-dev
+
+# plot
+RUN pip3 install gprof2dot
 
 # entrypoint
 COPY docker/local/config/entrypoint.sh /entrypoint.sh

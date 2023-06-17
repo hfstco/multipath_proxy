@@ -64,7 +64,7 @@ namespace metrics {
             }
         }
 
-        usleep(10);
+        usleep(10000);
     }
 
     std::string Metrics::ToString() {

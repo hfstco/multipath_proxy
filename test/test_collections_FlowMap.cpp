@@ -6,8 +6,8 @@
 #include "gtest/gtest.h"
 #include "../src/collections/FlowMap.h"
 #include "../src/net/Proxy.h"
-#include "../src/net/base/SockAddr.h"
-#include "../src/net/base/TcpConnection.h"
+#include "../src/net/SockAddr.h"
+#include "../src/net/TcpConnection.h"
 
 /*
 TEST(collections_FlowMap, insert) {

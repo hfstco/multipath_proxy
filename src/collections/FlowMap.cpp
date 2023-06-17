@@ -8,27 +8,27 @@
 
 #include "../exception/Exception.h"
 #include "../net/Flow.h"
-#include "../net/base/SockAddr.h"
+#include "../net/SockAddr.h"
 #include "../packet/FlowPacket.h"
 #include "../packet/FlowHeader.h"
 
 namespace collections {
 
-    FlowMap::FlowMap() : std::unordered_map<std::string, net::Flow *>() {}
+    FlowMap::FlowMap() : std::unordered_map<SockAddr_In_Pair, net::Flow *>() {}
 
     int FlowMap::Size() {
-        return std::unordered_map<std::string, net::Flow *>::size();
+        return std::unordered_map<SockAddr_In_Pair, net::Flow *>::size();
     }
 
     void FlowMap::Insert(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::Flow *flow) {
         //LOG(ERROR) << ToString() <<  ".Insert(" << source.ToString() + ", " + destination.ToString() << ")";
 
-        std::unordered_map<std::string, net::Flow *>::insert(std::pair<std::string, net::Flow *>(source.ToString() + "|" + destination.ToString(), flow));
+        std::unordered_map<SockAddr_In_Pair, net::Flow *>::insert(std::pair<SockAddr_In_Pair, net::Flow *>(SockAddr_In_Pair(source, destination), flow));
     }
 
     net::Flow *FlowMap::Find(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination) { // TODO width ::at(key)? -> return nullptr (https://cplusplus.com/reference/map/map/at/)
-        std::unordered_map<std::string, net::Flow *>::iterator flow = std::unordered_map<std::string, net::Flow *>::find(source.ToString() + "|" + destination.ToString()); // std::unordered_map<std::string, std::string>::at(utils::connectionString(header));
-        if (flow == std::unordered_map<std::string, net::Flow *>::end()) {
+        std::unordered_map<SockAddr_In_Pair, net::Flow *>::iterator flow = std::unordered_map<SockAddr_In_Pair, net::Flow *>::find(SockAddr_In_Pair(source, destination)); // std::unordered_map<std::string, std::string>::at(utils::connectionString(header));
+        if (flow == std::unordered_map<SockAddr_In_Pair, net::Flow *>::end()) {
             return nullptr;
         } else {
             return flow->second;
@@ -40,8 +40,8 @@ namespace collections {
     }
 
     void FlowMap::Erase(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination) {
-        std::unordered_map<std::string, net::Flow *>::iterator flow = std::unordered_map<std::string, net::Flow *>::find(source.ToString() + "|" + destination.ToString());
-        if (flow == std::unordered_map<std::string, net::Flow *>::end()) {
+        std::unordered_map<SockAddr_In_Pair, net::Flow *>::iterator flow = std::unordered_map<SockAddr_In_Pair, net::Flow *>::find(SockAddr_In_Pair(source, destination));
+        if (flow == std::unordered_map<SockAddr_In_Pair, net::Flow *>::end()) {
             NotFoundException e = NotFoundException("key=" + source.ToString() + "|" + destination.ToString() + " not found in map.");
             LOG(INFO) << ToString() << ".Erase(" << source.ToString() << "|" << destination.ToString() << ") ~> " << e.ToString();
 
@@ -49,7 +49,7 @@ namespace collections {
         } else {
             LOG(INFO) << ToString() << ".Erase(" << flow->second->ToString() << ")";
 
-            std::unordered_map<std::string, net::Flow *>::erase(flow);
+            std::unordered_map<SockAddr_In_Pair, net::Flow *>::erase(flow);
         }
     }
 

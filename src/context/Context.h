@@ -7,9 +7,9 @@
 #define MULTIPATH_PROXY_CONTEXT_H
 
 #include "../collections/FlowMap.h"
-#include "../net/Bond.h"
 #include "../task/ThreadPool.h"
 #include "../metrics/Metrics.h"
+#include "../collections/ConnectionManager.h"
 
 namespace context {
 
@@ -26,6 +26,10 @@ namespace context {
             return metrics_;
         }
 
+        collections::ConnectionManager *connections() const {
+            return connections_;
+        }
+
         /*task::ThreadPool *threadPool() const {
             return threadPool_;
         }*/
@@ -39,14 +43,16 @@ namespace context {
             delete flows_;
             //delete threadPool_;
             delete metrics_;
+            delete connections_;
         }
 
     private:
         collections::FlowMap *flows_;
         //task::ThreadPool *threadPool_;
         metrics::Metrics *metrics_;
+        collections::ConnectionManager *connections_;
 
-        Context() : flows_(new collections::FlowMap()), metrics_(new metrics::Metrics())/*, threadPool_(new task::ThreadPool())*/ {}
+        Context() : flows_(new collections::FlowMap()), metrics_(new metrics::Metrics()), connections_(new collections::ConnectionManager)/*, threadPool_(new task::ThreadPool())*/ {}
     };
 
 } // context

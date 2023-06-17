@@ -40,7 +40,7 @@
       <paths name="workstation local (40ed8548-f5f7-4f18-8f57-bec810cf3b4d)">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/tmp.AKrdjddGZU" local="$PROJECT_DIR$" />
+            <mapping deploy="/opt/mpp" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-local" />
@@ -55,7 +55,7 @@
       <paths name="workstation remote (1d08ecaf-fee9-47e9-8f2c-17dcd6ae47a2)">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/tmp.LVuUPtZd9e" local="$PROJECT_DIR$" />
+            <mapping deploy="/opt/mpp" local="$PROJECT_DIR$" />
           </mappings>
           <excludedPaths>
             <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-local" />

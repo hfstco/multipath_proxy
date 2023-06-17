@@ -81,7 +81,6 @@ namespace collections {
                 nextAvailable_ = false;
             } else {
                 assert(deque_.front()->header()->id() == currentId_.load(std::memory_order_relaxed));
-                conditionVariable_.notify_one();
             }
 
             lock.unlock();
@@ -96,8 +95,6 @@ namespace collections {
         }
 
         void Clear() {
-            DLOG(INFO) << ToString() << ".Clear()";
-
             std::unique_lock lock(mutex_);
 
             size_ = 0;

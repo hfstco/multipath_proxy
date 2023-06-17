@@ -30,7 +30,8 @@ namespace args {
                 {"local", no_argument,       0, 'l'},
                 {"ter", required_argument,       0, 't'},
                 {"sat", required_argument,       0, 's'},
-                {"gui", no_argument,       0, 'g'},
+                //{"gui", no_argument,       0, 'g'},
+                {"metrics", no_argument, 0, 'm'},
                 {"help", no_argument, nullptr, 'h'},
                 0
         };
@@ -61,6 +62,12 @@ namespace args {
                     opt = (struct option *)&(long_opts[index]);
                     SAT = optarg;
                     LOG(INFO) << "SAT=" + SAT;
+                    break;
+
+                case 'm':
+                    opt = (struct option *)&(long_opts[index]);
+                    METRICS_ENABLED = true;
+                    LOG(INFO) << "Metrics enabled.";
                     break;
 
                 case 0:

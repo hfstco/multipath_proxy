@@ -10,6 +10,31 @@
 #include <mutex>
 #include <atomic>
 
+#include "../net/SockAddr.h"
+
+struct SockAddr_In_Pair {
+    SockAddr_In_Pair(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination) : source_(source), destination_(destination) {}
+
+    bool operator==(const SockAddr_In_Pair &other) const
+    {
+        return (source_ == other.source_ && destination_ == other.destination_);
+        //return memcmp(this, &other, sizeof(SockAddr_In)); // TODO check
+    }
+
+    net::ipv4::SockAddr_In source_;
+    net::ipv4::SockAddr_In destination_;
+};
+
+template<>
+struct std::hash<SockAddr_In_Pair>
+{
+    std::size_t operator()(SockAddr_In_Pair const& s) const noexcept
+    {
+        return s.source_.sin_addr.s_addr ^ s.source_.sin_port ^ s.destination_.sin_addr.s_addr ^ s.destination_.sin_port; // TODO
+        return 0;
+    }
+};
+
 namespace net {
     class Flow;
 
@@ -24,7 +49,7 @@ namespace packet {
 
 namespace collections {
 
-    class FlowMap : private std::unordered_map<std::string, net::Flow *> { // TODO private unordered_map
+class FlowMap : private std::unordered_map<SockAddr_In_Pair, net::Flow *> { // TODO private unordered_map
     public:
         FlowMap();
 

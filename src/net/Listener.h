@@ -18,18 +18,22 @@ namespace net {
         friend Connection<S, SA>;
 
     public:
-        Connection<S, SA> *Accept(SA &addr) {
-            S *s = S::Accept(addr);
+        template<IsSocket AS>
+        AS *Accept(SA &addr) {
+            /*S *s = S::Accept(addr);
             Connection<S, SA> *c = new Connection<S, SA>(s);
             delete s;
-            return c;
+            return c;*/
+            return  S::template Accept<AS>(addr);
         }
 
-        Connection<S, SA> *Accept() {
-            S *s = S::Accept();
+        template<IsSocket AS>
+        AS *Accept() {
+            /*S *s = S::Accept();
             Connection<S, SA> *c = new Connection<S, SA>(s);
             delete s;
-            return c;
+            return c;*/
+            return  S::template Accept<AS>();
         }
 
         std::string ToString() {
@@ -45,21 +49,18 @@ namespace net {
         }
 
     protected:
-        Listener() {
-            DLOG(INFO) << "Listener() * " << ToString();
-
-            S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
-        }
-
-        Listener(S *socket) : S(socket) {
-            DLOG(INFO) << "Listener(socket=" << socket->ToString() << ") * " << ToString();
-        }
-
         Listener(SA sockaddr) : Listener() {
             DLOG(INFO) << "Listener(sockaddr=" << sockaddr.ToString() << ") * " << ToString();
 
             S::Bind(sockaddr);
             S::Listen();
+        }
+
+    private:
+        //context::Context *context_;
+
+        Listener() {
+            S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
         }
     };
 }

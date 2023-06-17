@@ -25,5 +25,5 @@ include_directories(${CURSES_INCLUDE_DIR})
 
 file(GLOB_RECURSE SRCS "*.cpp" "*.h")
 add_executable(mpp ${SRCS})
-target_link_libraries(mpp glog::glog ${CURSES_LIBRARIES})
+target_link_libraries(mpp glog::glog ${CURSES_LIBRARIES} profiler)
 # target_link_libraries(test_multipath_proxy ${UUID_LIBRARIES})

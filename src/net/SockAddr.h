@@ -12,7 +12,7 @@
 #include <string.h>
 #include <sstream>
 
-#include "../../exception/Exception.h"
+#include "../exception/Exception.h"
 
 namespace net {
 
@@ -80,6 +80,12 @@ namespace net {
                 this->sin_port = port;
             };
 
+            bool operator==(const SockAddr_In &other) const
+            {
+                return (this->sin_family == other.sin_family && this->sin_addr.s_addr == other.sin_addr.s_addr && this->sin_port == other.sin_port);
+                //return memcmp(this, &other, sizeof(SockAddr_In)); // TODO check
+            }
+
             sa_family_t family() {
                 return this->sin_family;
             };
@@ -87,9 +93,18 @@ namespace net {
             std::string ip() {
                 char ip[INET_ADDRSTRLEN];
 
-                if (!inet_ntop(AF_INET, &sin_addr, ip, INET_ADDRSTRLEN)) {
+                /*if (!inet_ntop(AF_INET, &sin_addr, ip, INET_ADDRSTRLEN)) {
                     throw SockAddrErrorException("inet_ntop() failed. errno=" + std::string(strerror(errno)));
-                }
+                }*/
+
+                int a,b,c,d;
+
+                a = (0xFF000000 & sin_addr.s_addr) >> 24;
+                b = (0x00FF0000 & sin_addr.s_addr) >> 16;
+                c = (0x0000FF00 & sin_addr.s_addr) >> 8;
+                d = 0x000000FF & sin_addr.s_addr;
+
+                snprintf(ip,16,"%d.%d.%d.%d",d,c,b,a);
 
                 return std::string(ip);
             }
@@ -151,6 +166,12 @@ namespace net {
                 this->sin6_addr = sin6_addr;
                 this->sin6_port = port;
             };
+
+            bool operator==(const SockAddr_In6 &other) const
+            {
+                //return (this->sin6_family == other.sin6_family && this->sin6_addr == other.sin6_addr && this->sin6_port == other.sin6_port);
+                return memcmp(this, &other, sizeof(SockAddr_In6)); // TODO check
+            }
 
             sa_family_t family() {
                 return this->sin6_family;

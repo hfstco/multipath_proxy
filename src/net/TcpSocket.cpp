@@ -7,8 +7,14 @@
 
 namespace net {
     namespace ipv4 {
-        TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In>(AF_INET, SOCK_STREAM, 0) {}
-        TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In>(sock_fd) {}
+
+        TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In>(AF_INET, SOCK_STREAM, 0) {
+            DLOG(INFO) << "TcpSocket() * " + ToString();
+        }
+
+        TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In>(sock_fd) {
+            DLOG(INFO) << "TcpSocket(fd=" + std::to_string(sock_fd) + ") * " + ToString();
+        }
 
         TcpSocket *TcpSocket::make() {
             return new TcpSocket();
@@ -20,14 +26,6 @@ namespace net {
 
         void TcpSocket::Listen(int backlog) {
             return Socket<TcpSocket, SockAddr_In>::Listen(backlog);
-        }
-
-        TcpSocket *TcpSocket::Accept() {
-            return Socket<TcpSocket, SockAddr_In>::Accept();
-        }
-
-        TcpSocket *TcpSocket::Accept(SockAddr_In &addr) {
-            return Socket<TcpSocket, SockAddr_In>::Accept(addr);
         }
 
         void TcpSocket::Connect(SockAddr_In addr) {
@@ -58,6 +56,10 @@ namespace net {
             Socket::Close();
         }
 
+        std::string TcpSocket::ToString() {
+            return "TcpSocket[fd=" + std::to_string(fd()) + "]";
+        }
+
         TcpSocket::~TcpSocket() {
             DLOG(INFO) << ToString() << ".~TcpSocket()";
         }
@@ -66,8 +68,12 @@ namespace net {
 
 
     namespace ipv6 {
-        TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In6>(AF_INET6, SOCK_STREAM, 0) {}
-        TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In6>(sock_fd) {}
+        TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In6>(AF_INET6, SOCK_STREAM, 0) {
+            DLOG(INFO) << "TcpSocket() * " + ToString();
+        }
+        TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In6>(sock_fd) {
+            DLOG(INFO) << "TcpSocket(" + std::to_string(sock_fd) + ") * " + ToString();
+        }
 
         TcpSocket *TcpSocket::make() {
             return new TcpSocket();
@@ -79,14 +85,6 @@ namespace net {
 
         void TcpSocket::Listen(int backlog) {
             return Socket<TcpSocket, SockAddr_In6>::Listen(backlog);
-        }
-
-        TcpSocket *TcpSocket::Accept() {
-            return Socket<TcpSocket, SockAddr_In6>::Accept();
-        }
-
-        TcpSocket *TcpSocket::Accept(SockAddr_In6 &addr) {
-            return Socket::Accept(addr);
         }
 
         void TcpSocket::Connect(SockAddr_In6 addr) {
@@ -115,6 +113,10 @@ namespace net {
 
         void TcpSocket::Close() {
             Socket::Close();
+        }
+
+        std::string TcpSocket::ToString() {
+            return "TcpSocket[fd=" + std::to_string(fd()) + "]";
         }
 
         TcpSocket::~TcpSocket() {

@@ -8,7 +8,7 @@
 
 #include "Flow.h"
 
-#include "base/TcpConnection.h"
+#include "TcpConnection.h"
 #include "../packet/FlowPacket.h"
 #include "../packet/FlowHeader.h"
 #include "Bond.h"
@@ -128,6 +128,7 @@ namespace net {
             LOG(ERROR) << e.ToString();
         }
 
+        // metrics
         context_->metrics()->getConnection(connection_->fd())->AddSendBytes(bytes_sent);
 
         //DLOG(INFO) << flowPacket->ToString() << " -> " << connection_->ToString();

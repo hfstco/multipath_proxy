@@ -3,7 +3,7 @@
 //
 
 #include "gtest/gtest.h"
-#include "../src/net/base/SockAddr.h"
+#include "../src/net/SockAddr.h"
 #include <cstring>
 
 TEST(net_SockAddr, memcmp_net_SockAddr) {

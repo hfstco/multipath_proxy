@@ -4,7 +4,7 @@
 
 #include "FlowHeader.h"
 
-#include "../net/base/SockAddr.h"
+#include "../net/SockAddr.h"
 
 namespace packet {
     FlowHeader::FlowHeader(FLOW_CTRL ctrl, net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, uint64_t id) : Header(TYPE::FLOW), ctrl_(ctrl), sourceIP_(source.sin_addr),

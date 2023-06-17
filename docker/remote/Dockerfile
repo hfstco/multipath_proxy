@@ -24,6 +24,7 @@ RUN apt-get update \
       tar \
       python3 \
       python3-dev \
+      python3-pip \
       wget \
       vim \
       linux-tools-common \
@@ -50,6 +51,12 @@ RUN cmake --build build --target install
 # entrypoint
 COPY docker/remote/config/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# plot
+RUN pip3 install gprof2dot
+
+# gperftools
+RUN apt install -y gperf google-perftools libgoogle-perftools-dev
 
 # wireshark/tcpdump
 RUN apt install -y tcpdump

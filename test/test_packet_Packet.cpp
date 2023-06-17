@@ -9,7 +9,7 @@
 #include "../src/packet/HeartBeatHeader.h"
 #include "../src/packet/FlowHeader.h"
 #include "../src/packet/FlowPacket.h"
-#include "../src/net/base/SockAddr.h"
+#include "../src/net/SockAddr.h"
 #include "../src/packet/Header.h"
 
 TEST(packet_Packet, verify_HeartBeatPacket) {

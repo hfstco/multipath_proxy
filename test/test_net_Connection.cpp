@@ -5,8 +5,8 @@
 #include <thread>
 #include <glog/logging.h>
 #include "gtest/gtest.h"
-#include "../src/net/base/TcpConnection.h"
-#include "../src/net/base/TcpListener.h"
+#include "../src/net/TcpConnection.h"
+#include "../src/net/TcpListener.h"
 #include "../src/packet/Buffer.h"
 
 TEST(net_Connection, ipv4_TcpListener) {

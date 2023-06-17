@@ -3,9 +3,9 @@
 //
 
 #include "args/Args.h"
-#include "net/base/TcpListener.h"
-#include "net/base/TcpConnection.h"
-#include "net/base/SockAddr.h"
+#include "net/TcpListener.h"
+#include "net/TcpConnection.h"
+#include "net/SockAddr.h"
 #include "net/Bond.h"
 #include "net/Proxy.h"
 #include "collections/FlowMap.h"
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
             net::Bond bond = net::Bond(terConnection, satConnection, &context::Context::GetDefaultContext());
 
             while(true) {
-                usleep(1000000);
+                sleep(30);
             }
 
             context::Context::GetDefaultContext().metrics()->removeConnection(terConnection->fd());
@@ -68,11 +68,11 @@ int main(int argc, char *argv[]) {
             net::Proxy proxy = net::Proxy(net::ipv4::SockAddr_In("172.30.10.2:5000"), &bond, &context::Context::GetDefaultContext());
 
             while(true) {
-                usleep(100000);
+                sleep(30);
             }
 
-            context::Context::GetDefaultContext().metrics()->removeConnection(terConnection->fd());
-            context::Context::GetDefaultContext().metrics()->removeConnection(satConnection->fd());
+            //context::Context::GetDefaultContext().metrics()->removeConnection(terConnection->fd());
+            //context::Context::GetDefaultContext().metrics()->removeConnection(satConnection->fd());
         }
     } catch (Exception e) {
         LOG(ERROR) << e.what();

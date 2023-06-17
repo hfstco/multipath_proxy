@@ -10,7 +10,7 @@
 #include <poll.h>
 #include <sys/socket.h>
 #include <glog/logging.h>
-#include "../../exception/Exception.h"
+#include "../exception/Exception.h"
 #include "SockAddr.h"
 
 namespace net {
@@ -34,6 +34,8 @@ namespace net {
     class Socket {
 
     public:
+        Socket() = delete;
+
         static S *make(int domain, int type, int protocol) {
             return new Socket(domain, type, protocol);
         }
@@ -54,7 +56,8 @@ namespace net {
             VLOG(3) << ToString() << ".Bind(" << addr.ToString() << ")";
         }
 
-        S *Accept() { // TODO merge with Accept(SA &sockaddr)
+        template<IsSocket AS = S>
+        AS *Accept() { // TODO merge with Accept(SA &sockaddr)
             int fd = -1;
 
             if ((fd = accept(fd_, NULL, NULL)) < 0) {
@@ -65,14 +68,15 @@ namespace net {
                 throw socketErrorException;
             }
 
-            S *s = new S(fd);
+            AS *s = new AS(fd);
 
             VLOG(3) << ToString() << ".Accept() -> " << s->ToString();
 
             return s;
         };
 
-        S *Accept(SA &addr) {
+        template<IsSocket AS = S>
+        AS *Accept(SA &addr) {
             int fd = -1;
             socklen_t addrlen = sizeof(addr);
 
@@ -84,7 +88,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            S* s = new S(fd);
+            AS* s = new AS(fd);
 
             VLOG(3) << ToString() << ".Accept(" << addr.ToString() << ") -> " << s->ToString();
 
@@ -332,7 +336,7 @@ namespace net {
         }
 
         virtual ~Socket() {
-            //this->Close();
+            this->Close();
 
             DLOG(INFO) << ToString() << ".~Socket()";
         }
@@ -354,10 +358,6 @@ namespace net {
             fd_ = fd;
 
             DLOG(INFO) << "Socket(fd=" << fd << ") * " << ToString();
-        }
-
-        explicit Socket(Socket *socket) {
-            fd_ = socket->fd_;
         }
 
     private:

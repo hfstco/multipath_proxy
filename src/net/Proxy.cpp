@@ -10,9 +10,9 @@
 
 #include "Proxy.h"
 
-#include "base/SockAddr.h"
-#include "base/TcpConnection.h"
-#include "base/TcpListener.h"
+#include "SockAddr.h"
+#include "TcpConnection.h"
+#include "TcpListener.h"
 #include "Flow.h"
 #include "../collections/FlowMap.h"
 #include "Bond.h"

@@ -11,6 +11,8 @@
 namespace net {
     namespace ipv4 {
 
+        class SockAddr_In;
+
         class TcpSocket : public Socket<TcpSocket, SockAddr_In> {
             friend Socket<TcpSocket, SockAddr_In>; // S Accept()
 
@@ -20,8 +22,15 @@ namespace net {
             void Bind(SockAddr_In addr);
             void Listen(int backlog = SOMAXCONN);
 
-            TcpSocket *Accept();
-            TcpSocket *Accept(SockAddr_In &addr);
+            template<IsSocket T = TcpSocket>
+            T *Accept() {
+                return Socket<TcpSocket, SockAddr_In>::template Accept<T>();
+            }
+
+            template<IsSocket T = TcpSocket>
+            T *Accept(SockAddr_In &addr) {
+                return Socket<TcpSocket, SockAddr_In>::template Accept<T>(addr);
+            }
             void Connect(SockAddr_In addr);
 
             ssize_t Send(unsigned char *buf, size_t size, int flags);
@@ -44,23 +53,20 @@ namespace net {
 
             void Close();
 
-            std::string ToString() {
-                return "TcpSocket[fd=" + std::to_string(fd()) + "]";
-            }
+            std::string ToString();
 
             ~TcpSocket() override;
 
-            //protected:
+        protected:
             TcpSocket();
             TcpSocket(int sock_fd);
-            TcpSocket(TcpSocket *tcpSocket) : Socket<TcpSocket, SockAddr_In>(tcpSocket) {
-                DLOG(INFO) << "TcpSocket(tcpSocket=" + tcpSocket->ToString() + ") * " + ToString();
-            }
         };
 
     } // ipv4
 
     namespace ipv6 {
+
+        class SockAddr_In6;
 
         class TcpSocket : public Socket<TcpSocket, SockAddr_In6> {
             friend Socket<TcpSocket, SockAddr_In6>; // S Accept()
@@ -71,8 +77,15 @@ namespace net {
             void Bind(SockAddr_In6 addr);
             void Listen(int backlog = SOMAXCONN);
 
-            TcpSocket *Accept();
-            TcpSocket *Accept(SockAddr_In6 &addr);
+            template<IsSocket T = TcpSocket>
+            T *Accept() {
+                return Socket<TcpSocket, SockAddr_In6>::template Accept<T>();
+            }
+
+            template<IsSocket T = TcpSocket>
+            T *Accept(SockAddr_In6 &addr) {
+                return Socket<TcpSocket, SockAddr_In6>::template Accept<T>(addr);
+            }
             void Connect(SockAddr_In6 addr);
 
             ssize_t Send(unsigned char *buf, size_t size, int flags);
@@ -95,18 +108,13 @@ namespace net {
 
             void Close();
 
-            std::string ToString() {
-                return "TcpSocket[fd=" + std::to_string(fd()) + "]";
-            }
+            std::string ToString();
 
             ~TcpSocket() override;
 
         protected:
             TcpSocket();
             TcpSocket(int sock_fd);
-            TcpSocket(TcpSocket *tcpSocket) : Socket<TcpSocket, SockAddr_In6>(tcpSocket) {
-                DLOG(INFO) << "TcpSocket(tcpSocket=" + tcpSocket->ToString() + ") * " + ToString();
-            }
         };
 
     } // ipv6

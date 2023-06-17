@@ -8,7 +8,7 @@
 #include <glog/logging.h>
 
 #include "gtest/gtest.h"
-#include "../src/net/base/TcpSocket.h"
+#include "../src/net/TcpSocket.h"
 
 
 TEST(net_Socket, ipv4_TcpSocket_connect_send_recv) {
