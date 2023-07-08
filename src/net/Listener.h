@@ -57,7 +57,7 @@ namespace net {
         }
 
     private:
-        //context::Context *context_;
+        context::Context *context_ = &context::Context::GetDefaultContext();
 
         Listener() {
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);

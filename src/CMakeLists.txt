@@ -5,6 +5,17 @@ find_package(glog 0.6.0 REQUIRED)
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
 
+# ev
+include_directories(/usr/include)
+
+# quiche
+#include_directories(/root/quiche/quiche/include)
+#link_directories(/root/quiche/target/debug)
+#message(${CMAKE_BINARY_DIR})
+#file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/cert.crt DESTINATION ${CMAKE_BINARY_DIR}/src)
+#file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/cert.key DESTINATION ${CMAKE_BINARY_DIR}/src)
+#file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/rootca.crt DESTINATION ${CMAKE_BINARY_DIR}/src)
+
 ## local
 #file(GLOB_RECURSE LOCAL_SRCS "*.cpp" "*.h")
 #list(FILTER LOCAL_SRCS EXCLUDE REGEX ".*(Remote.cpp|Remote.h)$")
@@ -25,5 +36,5 @@ include_directories(${CURSES_INCLUDE_DIR})
 
 file(GLOB_RECURSE SRCS "*.cpp" "*.h")
 add_executable(mpp ${SRCS})
-target_link_libraries(mpp glog::glog ${CURSES_LIBRARIES} profiler)
+target_link_libraries(mpp glog::glog ${CURSES_LIBRARIES} profiler ev)
 # target_link_libraries(test_multipath_proxy ${UUID_LIBRARIES})

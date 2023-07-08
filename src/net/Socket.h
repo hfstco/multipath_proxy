@@ -10,10 +10,14 @@
 #include <poll.h>
 #include <sys/socket.h>
 #include <glog/logging.h>
+#include <sys/ioctl.h>
+
 #include "../exception/Exception.h"
 #include "SockAddr.h"
 
 namespace net {
+
+    class Flow;
 
     namespace ipv4 {
         class TcpSocket;
@@ -25,7 +29,7 @@ namespace net {
     }
 
     template<class S>
-    concept IsSocket = std::same_as<ipv4::TcpSocket, S> || std::same_as<ipv6::TcpSocket, S> || std::same_as<int, S> || std::same_as<ipv4::TcpConnection, S> || std::same_as<ipv6::TcpConnection, S>;
+    concept IsSocket = std::same_as<ipv4::TcpSocket, S> || std::same_as<ipv6::TcpSocket, S> || std::same_as<int, S> || std::same_as<ipv4::TcpConnection, S> || std::same_as<ipv6::TcpConnection, S> || std::same_as<Flow, S>;
 
     template<class SA>
     concept IsSockAddr = std::same_as<SockAddr, SA> || std::same_as<ipv4::SockAddr_In, SA> || std::same_as<ipv6::SockAddr_In6, SA> || std::same_as<sockaddr*, SA>; // TODO

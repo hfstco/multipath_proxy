@@ -18,6 +18,7 @@
 #include "Bond.h"
 #include "../task/ThreadPool.h"
 #include "../context/Context.h"
+#include "../metrics/Metrics.h"
 
 namespace net {
 
@@ -26,6 +27,8 @@ namespace net {
 #ifdef __linux__
         listener_->SetSockOpt(IPPROTO_IP, IP_TRANSPARENT, 1);
 #endif
+        acceptLooper_.Start();
+
         DLOG(INFO) << "Proxy(" << sockAddrIn.ToString() << ") * " << ToString();
     }
 
@@ -39,7 +42,7 @@ namespace net {
             ipv4::SockAddr_In destination = tcpConnection->GetSockName();
 
             // metrics
-            context_->metrics()->addConnection(tcpConnection->fd());
+            //context_->metrics()->addConnection(tcpConnection->fd());
 
             // create new Flow for connection
             net::Flow *flow = net::Flow::make(source, destination, tcpConnection, bond_, context_);

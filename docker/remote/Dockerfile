@@ -61,4 +61,15 @@ RUN apt install -y gperf google-perftools libgoogle-perftools-dev
 # wireshark/tcpdump
 RUN apt install -y tcpdump
 
+# ev
+RUN apt install -y libev-dev
+
+#quiche
+#WORKDIR /root
+#RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+#ENV PATH="/root/.cargo/bin:${PATH}"
+#RUN git clone --recursive https://github.com/cloudflare/quiche
+#WORKDIR /root/quiche
+#RUN cargo build --features ffi
+
 ENTRYPOINT ["/entrypoint.sh"]

@@ -8,9 +8,11 @@ ip route add 172.30.31.0/24 via 172.30.30.2 #terr
 ip route add 172.30.40.0/24 via 172.30.30.2 #servers
 
 iptables -t nat -A POSTROUTING -s 172.30.10.0/24 -o terl0 -j MASQUERADE
-ip route add default via 172.30.40.254 dev internet0
+
+#ip route add default via 172.30.254.254 dev internet0
 # tproxy
 # echo "8192 2100000 8400000" > /proc/sys/net/ipv4/tcp_mem
+
 echo "8192 2100000 8400000" > /proc/sys/net/ipv4/tcp_rmem
 echo "8192 2100000 8400000" > /proc/sys/net/ipv4/tcp_wmem
 ip rule add fwmark 1 lookup 100
@@ -25,7 +27,7 @@ iptables -A OUTPUT -t mangle -p tcp --dport 7000 -j MARK --set-mark 177
 
 iptables -A POSTROUTING -t nat -o satr0 -p tcp --dport 7000 -j SNAT --to 172.30.20.1
 
-ip route change default via 172.30.254.254 dev internet0
+ip route add default via 172.30.254.254 dev internet0
 
 # start iperf
 iperf3 -s -D

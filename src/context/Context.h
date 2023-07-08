@@ -6,10 +6,18 @@
 #ifndef MULTIPATH_PROXY_CONTEXT_H
 #define MULTIPATH_PROXY_CONTEXT_H
 
-#include "../collections/FlowMap.h"
-#include "../task/ThreadPool.h"
-#include "../metrics/Metrics.h"
-#include "../collections/ConnectionManager.h"
+namespace collections {
+    class FlowMap;
+    class ConnectionManager;
+}
+
+/*namespace task {
+    class ThreadPool;
+}*/
+
+namespace metrics {
+    class Metrics;
+}
 
 namespace context {
 
@@ -18,33 +26,17 @@ namespace context {
         Context(Context const&) = delete;
         void operator=(Context const&) = delete;
 
-        collections::FlowMap *flows() const {
-            return flows_;
-        }
+        collections::FlowMap *flows() const;
 
-        metrics::Metrics *metrics() const {
-            return metrics_;
-        }
+        metrics::Metrics *metrics() const;
 
-        collections::ConnectionManager *connections() const {
-            return connections_;
-        }
+        collections::ConnectionManager *connections() const;
 
-        /*task::ThreadPool *threadPool() const {
-            return threadPool_;
-        }*/
+        /*task::ThreadPool *threadPool() const;*/
 
-        static Context &GetDefaultContext() {
-            static Context context;
-            return context;
-        }
+        static Context &GetDefaultContext();
 
-        virtual ~Context() {
-            delete flows_;
-            //delete threadPool_;
-            delete metrics_;
-            delete connections_;
-        }
+        virtual ~Context();
 
     private:
         collections::FlowMap *flows_;
@@ -52,7 +44,7 @@ namespace context {
         metrics::Metrics *metrics_;
         collections::ConnectionManager *connections_;
 
-        Context() : flows_(new collections::FlowMap()), metrics_(new metrics::Metrics()), connections_(new collections::ConnectionManager)/*, threadPool_(new task::ThreadPool())*/ {}
+        Context();
     };
 
 } // context

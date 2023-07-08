@@ -9,8 +9,8 @@
 #include <atomic>
 #include <map>
 
-#include "ConnectionMetric.h"
 #include "../worker/Looper.h"
+#include "../context/Context.h"
 
 namespace metrics {
 
@@ -18,10 +18,10 @@ namespace metrics {
     public:
         Metrics();
 
-        void addConnection(int fd);
+        /*void addConnection(int fd);
         void removeConnection(int fd);
 
-        ConnectionMetric *getConnection(int fd);
+        ConnectionMetric *getConnection(int fd);*/
 
         void PrintMetrics();
 
@@ -29,7 +29,7 @@ namespace metrics {
 
         virtual ~Metrics();
     private:
-        std::map<int, ConnectionMetric *> connectionMetrics_;
+        //std::map<int, ConnectionMetric *> connectionMetrics_;
 
         std::ofstream *file_;
 

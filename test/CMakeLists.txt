@@ -21,9 +21,13 @@ find_package(GTest 1.13.0 REQUIRED)
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIR})
 
+#quiche
+include_directories(/root/quiche/quiche/include)
+link_directories(/root/quiche/target/debug)
+
 file(GLOB TESTS *.cpp)
 file(GLOB_RECURSE SRCS ../src/*.cpp ../src/*.h)
 list(FILTER SRCS EXCLUDE REGEX ".*(main.cpp|main.h)$")
 add_executable(test_multipath_proxy ${SRCS} ${TESTS})
-target_link_libraries(test_multipath_proxy GTest::gtest glog::glog ${CURSES_LIBRARIES})
+target_link_libraries(test_multipath_proxy GTest::gtest glog::glog ${CURSES_LIBRARIES} quiche)
 # target_link_libraries(test_multipath_proxy ${UUID_LIBRARIES})

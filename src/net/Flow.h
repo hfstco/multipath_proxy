@@ -41,6 +41,8 @@ namespace net {
     class Bond;
 
     class Flow {
+        //friend Socket<Flow, net::ipv4::SockAddr_In>;
+
     public:
         static Flow *make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, net::Bond *bond, context::Context *context);
 
@@ -70,6 +72,7 @@ namespace net {
 
         collections::BlockingFlowPacketQueue toBondQueue_;
         std::atomic<uint64_t> toBondId_;
+        std::atomic<uint64_t> byteSize_;
 
         std::atomic<bool> closed_;
 

@@ -7,6 +7,7 @@
 
 #include "Connection.h"
 
+#include "../metrics/Metrics.h"
 
 namespace net {
     namespace ipv4 {

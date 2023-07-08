@@ -28,8 +28,13 @@ namespace net {
                                                                                                                                                                          context_(context),
                                                                                                                                                                          recvFromConnectionLooper_(std::bind(&Flow::RecvFromConnection, this)),
                                                                                                                                                                          sendToConnectionLooper_(std::bind(&Flow::SendToConnection, this)),
-                                                                                                                                                                         sendToBondLooper_(std::bind(&Flow::SendToBond, this)) {
+                                                                                                                                                                         sendToBondLooper_(std::bind(&Flow::SendToBond, this))
+                                                                                                                                                                         {
         LOG(INFO) << "Flow(" << source_.ToString() << "|" << destination_.ToString() << ", " << tcpConnection->ToString() << ")";
+
+        recvFromConnectionLooper_.Start();
+        sendToConnectionLooper_.Start();
+        sendToBondLooper_.Start();
     }
 
     Flow *Flow::make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, net::Bond *bond, context::Context *context) {
@@ -48,8 +53,6 @@ namespace net {
         // read data from connection
         ssize_t bytes_read = 0;
         try {
-            //std::lock_guard lock(connection_->recvLock());
-
             bytes_read = connection_->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
             //LOG(INFO) << connection_->ToString() << " -> READ " << bytes_read << "bytes";
         } catch (Exception e) {
@@ -61,38 +64,26 @@ namespace net {
             recvFromConnectionLooper_.Stop();
         }
 
-        if (closed_) {
+        /*if (closed_) {
             flowPacket->header()->id(toBondId_);
-        }
+        }*/
 
         // resize packet to fit data
         flowPacket->Resize(bytes_read);
 
-        assert(bytes_read == flowPacket->header()->size());
-        assert(bytes_read == flowPacket->size() - sizeof(packet::FlowHeader));
+        //assert(bytes_read == flowPacket->header()->size());
+        //assert(bytes_read == flowPacket->size() - sizeof(packet::FlowHeader));
 
         //DLOG(INFO) << connection_->ToString() << " -> " << flowPacket->ToString();
 
-        // metrics
-        context_->metrics()->getConnection(connection_->fd())->AddRecvBytes(bytes_read);
-
-        // update metrics
-        //context_->flows()->
-
         // write package to toBond_ queue
         toBondQueue_.Insert(flowPacket);
-        context_->flows()->addByteSize(flowPacket->header()->size());
+        context_->flows()->addByteSize(bytes_read);
     }
 
     void Flow::SendToConnection() {
         // try to get next package
         packet::FlowPacket *flowPacket = toConnectionQueue_.Pop();
-
-        // if next package is not available try again
-        /*if (!flowPacket) {
-            usleep(40);
-            return;
-        }*/
 
         // close packet
         if (flowPacket->header()->size() == 0) {
@@ -103,15 +94,17 @@ namespace net {
             sendToConnectionLooper_.Stop();
 
             if (closed_) {
-                context_->flows()->Erase(source_, destination_);
+                assert(!recvFromConnectionLooper_.IsRunning() && !sendToConnectionLooper_.IsRunning() && !sendToBondLooper_.IsRunning());
                 std::thread([this] {
                     delete this;
                 }).detach();
             } else {
                 closed_ = true;
-                toBondId_ = toBondQueue_.currentId();
-                toBondQueue_.Clear();
                 connection_->Shutdown(SHUT_RDWR);
+                connection_->RecvLock();
+                toBondQueue_.Clear();
+                toBondId_ = toBondQueue_.currentId();
+                connection_->RecvUnlock();
             }
 
             return;
@@ -128,33 +121,30 @@ namespace net {
             LOG(ERROR) << e.ToString();
         }
 
-        // metrics
-        context_->metrics()->getConnection(connection_->fd())->AddSendBytes(bytes_sent);
-
         //DLOG(INFO) << flowPacket->ToString() << " -> " << connection_->ToString();
 
         // delete package
         delete flowPacket;
+
+        // metrics
+        /*try {
+            context_->metrics()->getConnection(connection_->fd())->AddSendBytes(bytes_sent);
+        } catch (NotFoundException e) {
+            return;
+        }*/
     }
 
     void Flow::SendToBond() {
         // try to get next package
         packet::FlowPacket *flowPacket = toBondQueue_.Pop();
 
-        // if next package is not available try again
-        /*if( !flowPacket ) {
-            usleep(40);
-            return;
-        }*/
-
         // close packet
         if( flowPacket->header()->size() == 0 ) {
-            bond_->SendToTer(flowPacket);
-
             sendToBondLooper_.Stop();
 
             if (closed_) {
-                context_->flows()->Erase(source_, destination_);
+                assert(!recvFromConnectionLooper_.IsRunning() && !sendToConnectionLooper_.IsRunning() && !sendToBondLooper_.IsRunning());
+
                 std::thread([this] {
                     delete this;
                 }).detach();
@@ -162,18 +152,13 @@ namespace net {
                 assert(toBondQueue_.Empty());
 
                 closed_ = true;
-                connection_->Shutdown(SHUT_RDWR);
             }
 
-            return;
+            assert(byteSize() < 2000);
         }
 
-        //DLOG(INFO) << "flow byteSize: " << byteSize() << ", flows byteSize: " << context_->flows()->getByteSize();
-
         // write packet
-        // context_->flows()->getByteSize() total backlog
-        // byteSize() backlog of flow
-        if( byteSize() < 2000 || context_->flows()->getByteSize() < 74219 ) { // TODO dynamic TMC_THRESHOLDSMALLFLOW, TMC_THRESHOLDTERSAT, first packet?
+        if( byteSize() < 2000 || context_->flows()->getByteSize() < 74219 ) {
             bond_->SendToTer(flowPacket);
         } else {
             bond_->SentToSat(flowPacket);
@@ -181,6 +166,9 @@ namespace net {
     }
 
     Flow::~Flow() {
+        // remove from flows
+        context_->flows()->Erase(source_, destination_);
+
         // close and delete connection
         connection_->Close();
         delete connection_;

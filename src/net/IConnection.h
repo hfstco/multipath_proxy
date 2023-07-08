@@ -21,6 +21,9 @@ namespace net {
         virtual uint64_t recvBytes() = 0;
         virtual uint64_t sendBytes() = 0;
 
+        virtual uint64_t recvPackets() = 0;
+        virtual uint64_t sendPackets() = 0;
+
         virtual float recvDataRate() = 0;
         virtual float sendDataRate() = 0;
     };

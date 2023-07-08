@@ -22,11 +22,22 @@
 
 namespace net {
     Bond::Bond(net::ipv4::TcpConnection *terConnection, net::ipv4::TcpConnection *satConnection, context::Context *context) : terConnection_(terConnection), satConnection_(satConnection),
-    readFromTerLooper_(worker::Looper(std::bind(&Bond::RecvFromConnection, this, terConnection))),
-    readFromSatLooper_(worker::Looper(std::bind(&Bond::RecvFromConnection, this, satConnection))),
-    heartbeatLooper_(worker::Looper(std::bind(&Bond::WriteHeartBeatPacket, this))),
     context_(context) {
-        DLOG(INFO) << "Bond(ter=" << terConnection->ToString() << ", sat=" << satConnection->ToString() << ") * " << ToString();
+        //DLOG(INFO) << "Bond(ter=" << terConnection->ToString() << ", sat=" << satConnection->ToString() << ") * " << ToString();
+
+        if(args::SAT_ENABLED) {
+            readFromSatLooper_ = new worker::Looper(std::bind(&Bond::RecvFromConnection, this, satConnection));
+            readFromSatLooper_->Start();
+
+            if(args::HEARTBEAT_ENABLED) {
+                heartbeatLooper_ = new worker::Looper(std::bind(&Bond::WriteHeartBeatPacket, this));
+                heartbeatLooper_->Start();
+            }
+        }
+        if(args::TER_ENABLED) {
+            readFromTerLooper_ = new worker::Looper(std::bind(&Bond::RecvFromConnection, this, terConnection));
+            readFromTerLooper_->Start();
+        }
     }
 
     void Bond::RecvFromConnection(net::ipv4::TcpConnection *connection) {
@@ -35,10 +46,6 @@ namespace net {
         packet::FlowPacket *flowPacket = nullptr;
         int bytes_read = 0;
 
-        // performance
-        /*std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-        std::chrono::time_point<std::chrono::system_clock> now;
-        uint64_t duration;*/
 
         // read Packet from Connection
         try {
@@ -53,11 +60,6 @@ namespace net {
                     LOG(INFO) << e.what();
                 }
 
-                /*now = std::chrono::system_clock::now();
-                duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
-                LOG_IF(INFO, duration > 100) << "RecvFromConnection() read header " << std::to_string(duration) << " microseconds";
-                start = now;*/
-
                 //LOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
             }
 
@@ -71,7 +73,11 @@ namespace net {
                 delete buffer;
 
                 // metrics
-                //context_->metrics()->getConnection(connection->fd())->AddRecvBytes(bytes_read);
+                /*try {
+                    context_->metrics()->getConnection(connection->fd())->AddRecvBytes(bytes_read);
+                } catch (NotFoundException e) {
+                    return;
+                }*/
 
                 return;
             }
@@ -88,19 +94,14 @@ namespace net {
                     LOG(INFO) << e.what();
                 }
 
-                /*now = std::chrono::system_clock::now();
-                duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
-                LOG_IF(INFO, duration > 100) << "RecvFromConnection() read flow header " << std::to_string(duration) << " microseconds";
-                start = now;*/
-
                 if (bytes_read == 0) {
                     delete buffer;
 
                     terConnection_->Shutdown(SHUT_RDWR);
                     satConnection_->Shutdown(SHUT_RDWR);
-                    readFromTerLooper_.Stop();
-                    readFromSatLooper_.Stop();
-                    heartbeatLooper_.Stop();
+                    readFromTerLooper_->Stop();
+                    readFromSatLooper_->Stop();
+                    heartbeatLooper_->Stop();
                     std::thread([this] {
                         delete this;
                     }).detach();
@@ -113,11 +114,6 @@ namespace net {
             assert(bytes_read == (sizeof(packet::FlowHeader) - sizeof(packet::Header)));
 
             flowPacket = (packet::FlowPacket *) packet;
-
-            /*now = std::chrono::system_clock::now();
-            duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
-            LOG_IF(INFO, duration > 100) << "RecvFromConnection() before read data " << std::to_string(duration) << " microseconds";
-            start = now;*/
 
             // read packet data from socket
             bytes_read = 0;
@@ -138,9 +134,9 @@ namespace net {
 
                     terConnection_->Shutdown(SHUT_RDWR);
                     satConnection_->Shutdown(SHUT_RDWR);
-                    readFromTerLooper_.Stop();
-                    readFromSatLooper_.Stop();
-                    heartbeatLooper_.Stop();
+                    readFromTerLooper_->Stop();
+                    readFromSatLooper_->Stop();
+                    heartbeatLooper_->Stop();
                     std::thread([this] {
                         delete this;
                     }).detach();
@@ -157,28 +153,18 @@ namespace net {
 
             terConnection_->Shutdown(SHUT_RDWR);
             satConnection_->Shutdown(SHUT_RDWR);
-            readFromTerLooper_.Stop();
-            readFromSatLooper_.Stop();
-            heartbeatLooper_.Stop();
+            readFromTerLooper_->Stop();
+            readFromSatLooper_->Stop();
+            heartbeatLooper_->Stop();
             std::thread([this] {
                 delete this;
             }).detach();
         }
 
-        /*now = std::chrono::system_clock::now();
-        duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
-        LOG(INFO) << "RecvFromConnection() read " << std::to_string(duration) << " microseconds";
-        start = now;*/
-
         // process FlowPacket
         flowPacket->Resize(flowPacket->header()->size());
 
-        /*now = std::chrono::system_clock::now();
-        duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
-        LOG_IF(INFO, duration > 50) << "RecvFromConnection() resize " << std::to_string(duration) << " microseconds";
-        start = now;*/
-
-        //DLOG(INFO) << connection->ToString() << " -> " + flowPacket->ToString();
+        DLOG(INFO) << connection->ToString() << " -> " + flowPacket->ToString();
 
         // expect more data to read?
         /*if (flowPacket->header()->size() == 1024) {
@@ -193,11 +179,6 @@ namespace net {
         {
             std::lock_guard lock(context_->flows()->mutex());
 
-            /*now = std::chrono::system_clock::now();
-            duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
-            LOG_IF(INFO, duration > 50) << "RecvFromConnection() lock " << std::to_string(duration) << " microseconds";
-            start = now;*/
-
             // check if flow already exists
             if (!(flow = context_->flows()->Find(flowPacket->header()->source(), flowPacket->header()->destination()))) {
                 // create flow
@@ -206,7 +187,7 @@ namespace net {
                     net::ipv4::TcpConnection *flowConnection = net::ipv4::TcpConnection::make(flowPacket->header()->destination());
 
                     // metrics
-                    context_->metrics()->addConnection(flowConnection->fd());
+                    //context_->metrics()->addConnection(flowConnection->fd());
 
                     flow = net::Flow::make(flowPacket->header()->source(), flowPacket->header()->destination(), flowConnection, this, context_);
 
@@ -227,19 +208,30 @@ namespace net {
             }
         }
 
-        // metrics
-        //context_->metrics()->getConnection(connection->fd())->AddRecvBytes(bytes_read);
-
         // find flow
         flow->WriteToFlow(flowPacket);
 
-        /*now = std::chrono::system_clock::now();
-        duration = std::chrono::duration_cast<std::chrono::microseconds>(now - start).count();
-        LOG_IF(INFO, duration > 50) << "RecvFromConnection() write to flow " << std::to_string(duration) << " microseconds";*/
+        // metrics
+        /*try {
+            context_->metrics()->getConnection(connection->fd())->AddRecvBytes(bytes_read);
+        } catch (NotFoundException e) {
+            return;
+        }*/
     }
 
     Bond::~Bond() {
         DLOG(INFO) << ToString() << ".~Bond()";
+
+        if(args::SAT_ENABLED) {
+            delete readFromSatLooper_;
+
+            if(args::HEARTBEAT_ENABLED) {
+                delete heartbeatLooper_;
+            }
+        }
+        if(args::TER_ENABLED) {
+            delete readFromTerLooper_;
+        }
     }
 
     std::string Bond::ToString() {
@@ -248,7 +240,7 @@ namespace net {
 
     // try every 100ms to write a HeartBeatPacket
     void Bond::WriteHeartBeatPacket() {
-        if(satConnection_->IoCtl<int>(TIOCOUTQ) == 0) { // only if sat send buffer is empty
+        if(satConnection_->IoCtl<int>(TIOCOUTQ) == 0 || satConnection_->IoCtl<int>(FIONREAD) == 0) { // only if sat send buffer is empty
             if(sendSatMutex_.try_lock()) {
                 packet::HeartBeatPacket *heartBeatPacket = packet::HeartBeatPacket::make();
                 SendToConnection(satConnection_, heartBeatPacket);
@@ -257,14 +249,14 @@ namespace net {
             }
         }
 
-        usleep(100000); // 100ms
+        usleep(1000000); // 1s
     }
 
     void Bond::SendToConnection(net::ipv4::TcpConnection *connection, packet::Packet *packet) {
         packet::Buffer *buffer = packet;
 
+        int bytes_written = 0;
         try {
-            int bytes_written = 0;
             while (bytes_written < buffer->size()) {
                 int ret = 0;
                 try {
@@ -281,9 +273,6 @@ namespace net {
                 //LOG(INFO) << "Write " << bytes_written << "bytes -> " << connection->ToString();
             }
 
-            //metrics
-            context_->metrics()->getConnection(connection->fd())->AddSendBytes(bytes_written);
-
             assert(bytes_written == buffer->size());
         } catch (Exception e) {
             LOG(INFO) << e.what();
@@ -292,23 +281,33 @@ namespace net {
 
             terConnection_->Shutdown(SHUT_RDWR);
             satConnection_->Shutdown(SHUT_RDWR);
-            readFromTerLooper_.Stop();
-            readFromSatLooper_.Stop();
-            heartbeatLooper_.Stop();
+            readFromTerLooper_->Stop();
+            readFromSatLooper_->Stop();
+            heartbeatLooper_->Stop();
             std::thread([this] {
                 delete this;
             }).detach();
 
             return;
         }
+
+/*        try {
+            //metrics
+            context_->metrics()->getConnection(connection->fd())->AddSendBytes(bytes_written);
+        } catch (NotFoundException e) {
+            return;
+        }*/
     }
 
     void Bond::SendToTer(packet::FlowPacket *flowPacket) {
-        //DLOG(INFO) << flowPacket->ToString() << " -> " << terConnection_->ToString();
+        if(!args::TER_ENABLED) {
+            SentToSat(flowPacket);
+            return;
+        }
 
-        //LOG(INFO) << "ter queue: " << satConnection_->IoCtl<int>(TIOCOUTQ);
         while(terConnection_->IoCtl<int>(TIOCOUTQ) > 10000) {
-            usleep(10);
+            //LOG(INFO) << "Waiting ter...";
+            //usleep(4219); // 2MBit/s / 8 = 0.25 MB/s = 250000byte/s / 1056 = ~237 packet/s = 1 packet every 4.219 ms = 4129 us
         }
 
         sendTerMutex_.lock();
@@ -316,21 +315,32 @@ namespace net {
         SendToConnection(terConnection_, flowPacket);
         sendTerMutex_.unlock();
 
+        DLOG(INFO) << flowPacket->ToString() << " -> " << terConnection_->ToString();
+
         delete flowPacket;
     }
 
     void Bond::SentToSat(packet::FlowPacket *flowPacket) {
-        //DLOG(INFO) << flowPacket->ToString() << " -> " << satConnection_->ToString();
+        if(!args::SAT_ENABLED) {
+            SendToTer(flowPacket);
+            return;
+        }
 
-        //LOG(INFO) << "sat queue: " << satConnection_->IoCtl<int>(TIOCOUTQ);
-        while(satConnection_->IoCtl<int>(TIOCOUTQ) > 3750000) {
-            usleep(10);
+        if(satConnection_->IoCtl<int>(TIOCOUTQ) > 4500000) { // 3750000
+            //LOG(INFO) << "Waiting sat...";
+            if(terConnection_->IoCtl<int>(TIOCOUTQ) == 0) {
+                SendToTer(flowPacket);
+                return;
+            }
+            usleep(168); // 50MBit/s / 8 = 6.25 MB/s = 6250000byte/s / 1056 = ~5919 packet/s = 1 packet every 0.168 ms = 168 us
         }
 
         sendSatMutex_.lock();
         context_->flows()->subByteSize(flowPacket->header()->size());
         SendToConnection(satConnection_, flowPacket);
         sendSatMutex_.unlock();
+
+        DLOG(INFO) << flowPacket->ToString() << " -> " << satConnection_->ToString();
 
         delete flowPacket;
     }

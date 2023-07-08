@@ -16,10 +16,10 @@ namespace worker {
 
     class Looper {
     public:
-        Looper(std::function<void()> function) : stop_(ATOMIC_FLAG_INIT), function_(function), thread_(&Looper::Run, this) {}
+        Looper(std::function<void()> function) : running_(ATOMIC_FLAG_INIT), function_(function) {}
 
         void Run() {
-            while(!stop_.test()) {
+            while(running_.test()) {
                 try {
                     function_();
                 } catch (Exception e) {
@@ -28,12 +28,18 @@ namespace worker {
             }
         }
 
-        void Stop() {
-            stop_.test_and_set();
+        void Start() {
+            if (!running_.test_and_set()) {
+                thread_ = std::thread(&Looper::Run, this);
+            }
         }
 
-        void Join() {
-            thread_.join();
+        void Stop() {
+            running_.clear();
+        }
+
+        bool IsRunning() {
+            return running_.test();
         }
 
         std::string ToString() {
@@ -47,7 +53,7 @@ namespace worker {
         }
 
     private:
-        std::atomic_flag stop_;
+        std::atomic_flag running_;
         std::function<void()> function_;
         std::thread thread_;
     };

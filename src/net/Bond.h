@@ -61,9 +61,9 @@ namespace net {
 
         void WriteHeartBeatPacket();
 
-        worker::Looper readFromTerLooper_;
-        worker::Looper readFromSatLooper_;
-        worker::Looper heartbeatLooper_;
+        worker::Looper *readFromTerLooper_;
+        worker::Looper *readFromSatLooper_;
+        worker::Looper *heartbeatLooper_;
     };
 
 } // net

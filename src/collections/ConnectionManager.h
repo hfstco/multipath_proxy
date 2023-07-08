@@ -14,7 +14,7 @@ namespace net {
 
 namespace collections {
 
-    class ConnectionManager : std::unordered_map<int, net::IConnection *> {
+    class ConnectionManager : public std::unordered_map<int, net::IConnection *> {
     public:
         void Insert(net::IConnection *connection);
         void Erase(net::IConnection *connection);

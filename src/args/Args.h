@@ -16,8 +16,12 @@ namespace args {
     };
 
     inline mode MODE;
+    inline bool TER_ENABLED = false;
     inline std::string TER;
+    inline bool SAT_ENABLED = false;
     inline std::string SAT;
+
+    inline bool HEARTBEAT_ENABLED = false;
 
     inline bool METRICS_ENABLED = false;
 

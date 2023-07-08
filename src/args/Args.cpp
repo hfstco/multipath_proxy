@@ -20,16 +20,17 @@ namespace args {
         LOG(INFO) << "Init args...";
 
         if (std::string(argv[0]) == "remote") {
-            MODE = mode::REMOTE;                                                                                     DLOG(INFO) << "Mode set to right";
+            MODE = mode::REMOTE;
         }
 
-        const char* const short_opts = "rlt:s:gh";
+        const char* const short_opts = "rlt:s:bghm";
         const struct option long_opts[] =
         {
                 {"remote", no_argument,       0, 'r'},
                 {"local", no_argument,       0, 'l'},
                 {"ter", required_argument,       0, 't'},
                 {"sat", required_argument,       0, 's'},
+                {"heartbeat", no_argument,      0, 'b'},
                 //{"gui", no_argument,       0, 'g'},
                 {"metrics", no_argument, 0, 'm'},
                 {"help", no_argument, nullptr, 'h'},
@@ -54,18 +55,24 @@ namespace args {
 
                 case 't':
                     opt = (struct option *)&(long_opts[index]);
+                    TER_ENABLED = true;
                     TER = optarg;
                     LOG(INFO) << "TER=" + TER;
                     break;
 
                 case 's':
                     opt = (struct option *)&(long_opts[index]);
+                    SAT_ENABLED = true;
                     SAT = optarg;
                     LOG(INFO) << "SAT=" + SAT;
                     break;
 
+                case 'b':
+                    HEARTBEAT_ENABLED = true;
+                    LOG(INFO) << "Heartbeat enabled.";
+                    break;
+
                 case 'm':
-                    opt = (struct option *)&(long_opts[index]);
                     METRICS_ENABLED = true;
                     LOG(INFO) << "Metrics enabled.";
                     break;

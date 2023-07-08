@@ -12,6 +12,8 @@
 #include "TcpSocket.h"
 #include "IConnection.h"
 #include "../args/Args.h"
+#include "../context/Context.h"
+#include "../collections/ConnectionManager.h"
 
 namespace net {
 
@@ -36,20 +38,42 @@ namespace net {
         }
 
         ssize_t Recv(unsigned char *data, size_t size, int flags) override {
+            std::lock_guard lock(recvMutex_);
+
             if (args::METRICS_ENABLED) {
                 recvBytes_.fetch_add(size);
+                recvPackets_.fetch_add(1);
             }
 
             return S::Recv(data, size, flags);
         };
 
+        void RecvLock() {
+            recvMutex_.lock();
+        }
+
+        void RecvUnlock() {
+            recvMutex_.unlock();
+        }
+
         ssize_t Send(unsigned char *data, size_t size, int flags) override {
+            std::lock_guard lock(sendMutex_);
+
             if (args::METRICS_ENABLED) {
                 sendBytes_.fetch_add(size);
+                sendPackets_.fetch_add(1);
             }
 
             return S::Send(data, size, flags | MSG_NOSIGNAL);
         };
+
+        void SendLock() {
+            recvMutex_.lock();
+        }
+
+        void SendUnlock() {
+            recvMutex_.unlock();
+        }
 
         short Poll(short events, int timeout = 0) {
             return S::Poll(events, timeout);
@@ -76,6 +100,14 @@ namespace net {
             return sendBytes_.load();
         }
 
+        uint64_t sendPackets() override {
+            if (!args::METRICS_ENABLED) {
+                return 0;
+            }
+
+            return sendPackets_.load();
+        }
+
         float sendDataRate() override {
             if (!args::METRICS_ENABLED) {
                 return 0;
@@ -85,12 +117,15 @@ namespace net {
             auto now = std::chrono::system_clock::now();
 
             uint64_t bytesSinceLastTimeStamp = sendBytes - lastSendBytes_.load();
-            float timeSinceLastTimestamp = std::chrono::duration_cast<std::chrono::seconds>(now - lastSendTimeStamp_).count();
+            std::chrono::duration<float> duration = now - lastSendTimeStamp_;
+            float timeSinceLastTimestamp = duration.count();
 
             lastSendTimeStamp_ = now;
             lastSendBytes_ = sendBytes;
 
-            return bytesSinceLastTimeStamp / timeSinceLastTimestamp;
+            //LOG_IF(INFO, bytesSinceLastTimeStamp / timeSinceLastTimestamp > 0) << fd() << " SEND: " << bytesSinceLastTimeStamp / timeSinceLastTimestamp / 1000000 << "b/s";
+
+            return bytesSinceLastTimeStamp / timeSinceLastTimestamp / 1000000;
         }
 
         uint64_t recvBytes() override {
@@ -99,6 +134,14 @@ namespace net {
             }
 
             return recvBytes_.load();
+        }
+
+        uint64_t recvPackets() override {
+            if (!args::METRICS_ENABLED) {
+                return 0;
+            }
+
+            return recvPackets_.load();
         }
 
         float recvDataRate() override {
@@ -110,12 +153,15 @@ namespace net {
             auto now = std::chrono::system_clock::now();
 
             uint64_t bytesSinceLastTimeStamp = recvBytes - lastRecvBytes_.load();
-            float timeSinceLastTimestamp = std::chrono::duration_cast<std::chrono::seconds>(now - lastRecvTimeStamp_).count();
+            std::chrono::duration<float> duration = now - lastRecvTimeStamp_;
+            float timeSinceLastTimestamp = duration.count();
 
             lastRecvTimeStamp_ = now;
             lastRecvBytes_ = recvBytes;
 
-            return bytesSinceLastTimeStamp / timeSinceLastTimestamp;
+            //LOG_IF(INFO, bytesSinceLastTimeStamp / timeSinceLastTimestamp > 0) << fd() << " RECV: " << bytesSinceLastTimeStamp / timeSinceLastTimestamp / 1000000 << "b/s";
+
+            return bytesSinceLastTimeStamp / timeSinceLastTimestamp / 1000000;
         }
 
         int sendBufferSize() override {
@@ -156,7 +202,7 @@ namespace net {
         virtual ~Connection() {
             DLOG(INFO) << ToString() << ".~Connection()";
 
-            //context_->connections()->Erase(this);
+            context::Context::GetDefaultContext().connections()->Erase(this);
         }
 
     protected:
@@ -175,17 +221,20 @@ namespace net {
 
         Connection(int fd) : S(fd) {
             DLOG(INFO) << "Connection(fd=" + std::to_string(fd) + ") * " << ToString();
+
+            context::Context::GetDefaultContext().connections()->Insert(this);
         }
 
     private:
-        //context::Context *context_ = &context::Context::GetDefaultContext();
-
         std::mutex recvMutex_;
         std::mutex sendMutex_;
 
         //metrics
         std::atomic<uint64_t> recvBytes_;
         std::atomic<uint64_t> sendBytes_;
+
+        std::atomic<uint64_t> recvPackets_;
+        std::atomic<uint64_t> sendPackets_;
 
         std::atomic<uint64_t> lastRecvBytes_;
         std::chrono::time_point<std::chrono::system_clock> lastRecvTimeStamp_ = std::chrono::system_clock::now();
@@ -195,7 +244,7 @@ namespace net {
         Connection() {
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
 
-            //context_->connections()->Insert(this);
+            context::Context::GetDefaultContext().connections()->Insert(this);
         };
     };
 

@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-parser = argparse.ArgumentParser(prog='Get')
-parser.add_argument('file')
+parser = argparse.ArgumentParser()
+parser.add_argument('paths', nargs='+')
 args = parser.parse_args()
 
-df = pd.read_csv(args.file)
+df = pd.concat((pd.read_csv(p) for p in args.paths), ignore_index=True)
 
 fig, axs = plt.subplots()
 
@@ -28,12 +28,12 @@ fig, axs = plt.subplots()
 #              palette='Set1')
 # axs[1, 0].set_title('sendBufferFillLevel')
 
-sns.lineplot(x='timestamp',
-             y='sendDataRate',
-             hue='fd',
+sns.lineplot(x='byteSize',
+             y='duration',
+             hue='link',
              data=df,
              palette='Set1')
-axs.set_title('sendDataRate')
+axs.set_title('recvDataRate')
 
 # sns.lineplot(ax=axs[1, 1],
 #              x='timestamp',
@@ -42,6 +42,9 @@ axs.set_title('sendDataRate')
 #              data=df,
 #              palette='Set1')
 # axs[1, 1].set_title('recvBufferFillLevel')
+
+plt.xlim(0, 1000)
+plt.ylim(0, 5)
 
 plt.show()
 
