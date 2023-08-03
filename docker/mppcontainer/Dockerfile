@@ -1,11 +1,14 @@
 FROM ubuntu:latest
 
 # update
-RUN apt update -y
-RUN apt upgrade -y
+RUN DEBIAN_FRONTEND=noninteractive apt-get update -y
+RUN DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+
+# general tools
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y vim apt-utils
 
 # ssh
-RUN apt install -y openssh-server vim
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server
 
 RUN echo "root:root" | chpasswd
 
@@ -30,13 +33,13 @@ RUN ssh-keygen -t rsa -b 4096 -f  /etc/ssh/ssh_host_key
 RUN mkdir -p /run/sshd
 
 # wireshark
-RUN DEBIAN_FRONTEND=noninteractive apt install -y wireshark
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark
 
 # network configuration
-RUN apt install -y net-tools iputils-ping iptables iproute2
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools iputils-ping iptables iproute2
 
 # iperf
-RUN apt install -y git build-essential
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y git build-essential
 
 WORKDIR /root
 RUN git clone https://github.com/esnet/iperf.git

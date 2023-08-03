@@ -7,8 +7,9 @@
 
 #include <deque>
 #include <atomic>
+#include <mutex>
 #include <condition_variable>
-#include <assert.h>
+#include <cassert>
 #include <glog/logging.h>
 
 #include "../packet/FlowPacket.h"
@@ -26,11 +27,11 @@ namespace collections {
         BlockingFlowPacketQueue() : nextAvailable_(false), size_(0), currentId_(0), byteSize_(0) {}
 
         const uint64_t byteSize() const {
-            return byteSize_.load(std::memory_order_relaxed);
+            return byteSize_.load();
         }
 
-        const uint64_t currentId() const {
-            return currentId_.load(std::memory_order_relaxed);
+        uint64_t currentId() const {
+            return currentId_.load();
         }
 
         void Insert(packet::FlowPacket *flowPacket) {
@@ -69,18 +70,18 @@ namespace collections {
 
             //DLOG(INFO) << ToString() << ".Pop()";
 
-            packet::FlowPacket *flowPacket = std::move(deque_.front());
-            assert(flowPacket->header()->id() == currentId_.load(std::memory_order_relaxed));
+            packet::FlowPacket *flowPacket = deque_.front();
+            assert(flowPacket->header()->id() == currentId_.load());
             deque_.pop_front();
 
             currentId_.fetch_add(1);
             size_ -= 1;
             byteSize_.fetch_sub(flowPacket->header()->size());
 
-            if (deque_.empty() || deque_.front()->header()->id() != currentId_.load(std::memory_order_relaxed)) {
+            if (deque_.empty() || deque_.front()->header()->id() != currentId_.load()) {
                 nextAvailable_ = false;
             } else {
-                assert(deque_.front()->header()->id() == currentId_.load(std::memory_order_relaxed));
+                assert(deque_.front()->header()->id() == currentId_.load());
             }
 
             lock.unlock();

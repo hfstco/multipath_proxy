@@ -451,7 +451,7 @@ if ((errno == EWOULDBLOCK) || (errno == EAGAIN)) {
                                 &type, scid, &scid_len, dcid, &dcid_len,
                                 token, &token_len);
     if (rc < 0) {
-        fprintf(stderr, "failed to parse header: %d\n", rc);
+        fprintf(stderr, "failed to parse header: %SendToSat\n", rc);
     }
 
     if (token_len == 0) {

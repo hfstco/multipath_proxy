@@ -1,0 +1,21 @@
+# ninja log v5
+0	35	1691060231114506888	picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-mkdir	327e54bf7896be0
+0	35	1691060231114506888	/tmp/tmp.K74dkG82Wf/cmake-build-debug-local/_deps/picotls-subbuild/picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-mkdir	327e54bf7896be0
+35	8319	1691060239398390943	picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-download	bd5a26f8054c8d5a
+35	8319	1691060239398390943	/tmp/tmp.K74dkG82Wf/cmake-build-debug-local/_deps/picotls-subbuild/picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-download	bd5a26f8054c8d5a
+8319	8331	0	picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-update	d30d721a8ceb2a7b
+8319	8331	0	/tmp/tmp.K74dkG82Wf/cmake-build-debug-local/_deps/picotls-subbuild/picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-update	d30d721a8ceb2a7b
+8331	8345	1691060239422390610	picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-patch	753cba18eafc5e88
+8331	8345	1691060239422390610	/tmp/tmp.K74dkG82Wf/cmake-build-debug-local/_deps/picotls-subbuild/picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-patch	753cba18eafc5e88
+8345	8354	1691060239434390442	picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-configure	b30fa28830144e9e
+8345	8354	1691060239434390442	/tmp/tmp.K74dkG82Wf/cmake-build-debug-local/_deps/picotls-subbuild/picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-configure	b30fa28830144e9e
+8354	8363	1691060239442390332	picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-build	7ecbe3507d5e4f4d
+8354	8363	1691060239442390332	/tmp/tmp.K74dkG82Wf/cmake-build-debug-local/_deps/picotls-subbuild/picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-build	7ecbe3507d5e4f4d
+8363	8376	1691060239454390164	picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-install	a520b5f39210457
+8363	8376	1691060239454390164	/tmp/tmp.K74dkG82Wf/cmake-build-debug-local/_deps/picotls-subbuild/picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-install	a520b5f39210457
+8376	8389	1691060239466389999	picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-test	e62f71b33cbfadf
+8376	8389	1691060239466389999	/tmp/tmp.K74dkG82Wf/cmake-build-debug-local/_deps/picotls-subbuild/picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-test	e62f71b33cbfadf
+8389	8406	1691060239486389720	CMakeFiles/picotls-populate-complete	1d8cd5030f2d19aa
+8389	8406	1691060239486389720	picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-done	1d8cd5030f2d19aa
+8389	8406	1691060239486389720	/tmp/tmp.K74dkG82Wf/cmake-build-debug-local/_deps/picotls-subbuild/CMakeFiles/picotls-populate-complete	1d8cd5030f2d19aa
+8389	8406	1691060239486389720	/tmp/tmp.K74dkG82Wf/cmake-build-debug-local/_deps/picotls-subbuild/picotls-populate-prefix/src/picotls-populate-stamp/picotls-populate-done	1d8cd5030f2d19aa

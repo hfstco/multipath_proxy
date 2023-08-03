@@ -7,10 +7,12 @@
 
 namespace collections {
     void ConnectionManager::Insert(net::IConnection *connection) {
+        std::lock_guard lock(mutex_);
         std::unordered_map<int, net::IConnection *>::insert({connection->fd(), connection});
     }
 
     void ConnectionManager::Erase(net::IConnection *connection) {
+        std::lock_guard lock(mutex_);
         std::unordered_map<int, net::IConnection *>::erase(connection->fd());
     }
 } // collections

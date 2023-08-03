@@ -18,31 +18,8 @@ namespace metrics {
 
         metricsLooper_.Start();
 
-        *file_ << "timestamp,fd,recvBytes,recvPackets,recvDataRate,recvBufferFillLevel,sendBytes,sendPackets,sendDataRate,sendBufferFillLevel" << std::endl;
+        *file_ << "timestamp,fd,recvBytes,recvDataRate,recvBufferFillLevel,sendBytes,sendDataRate,sendBufferFillLevel" << std::endl;
     }
-
-    /*void Metrics::addConnection(int fd) {
-        connectionMetrics_.insert({fd, new ConnectionMetric(fd)});
-    }
-
-    ConnectionMetric *Metrics::getConnection(int fd) {
-        if (auto entry = connectionMetrics_.find(fd); entry != connectionMetrics_.end()) {
-            return entry->second;
-        } else {
-            throw NotFoundException("ConnectionMetric(" + std::to_string(fd) + ") not found.");
-        }
-    }
-
-    void Metrics::removeConnection(int fd) {
-        DLOG(INFO) << ToString() << ".~removeConnection(" << fd << ")";
-
-        if (auto entry = connectionMetrics_.find(fd); entry != connectionMetrics_.end()) {
-            delete entry->second;
-            connectionMetrics_.erase(fd);
-        } else {
-            throw NotFoundException("ConnectionMetric(" + std::to_string(fd) + ") not found.");
-        }
-    }*/
 
     void Metrics::PrintMetrics() {
         LOG(INFO) << "METRICS:\n";
@@ -53,6 +30,10 @@ namespace metrics {
             for (auto it = context::Context::GetDefaultContext().connections()->begin(); it != context::Context::GetDefaultContext().connections()->end(); ++it) {
                 net::IConnection *connection = it->second;
 
+                // datarate
+                float recvDataRate = connection->recvDataRate();
+                float sendDataRate = connection->sendDataRate();
+
                 // timestamp
                 *file_ << std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::system_clock::now().time_since_epoch()).count() << ",";
@@ -61,24 +42,18 @@ namespace metrics {
                 *file_ << it->first << ",";
 
                 // data
-                *file_ << connection->recvBytes() << "," << connection->recvPackets() << ","
-                       << connection->recvDataRate() << "," << connection->recvBufferSize() << ","
-                       << connection->sendBytes() << "," << connection->sendPackets() << ","
-                       << connection->sendDataRate() << "," << connection->sendBufferSize();
+                *file_ << connection->recvBytes() << ","
+                       << recvDataRate << "," << connection->recvBufferSize() << ","
+                       << connection->sendBytes() << ","
+                       << sendDataRate << "," << connection->sendBufferSize();
 
-                LOG(INFO) << it->first << " " << connection->recvBytes() << "," << connection->recvPackets() << ","
-                       << connection->recvDataRate() << "," << connection->recvBufferSize() << ","
-                       << connection->sendBytes() << "," << connection->sendPackets() << ","
-                       << connection->sendDataRate() << "," << connection->sendBufferSize();
+                //LOG(INFO) << connection->fd() << ": recv: " << recvDataRate << ", send: " << sendDataRate;
 
-                //LOG(INFO) << "METRIC: fd[" << it->first << "] sDataRate: " << sendDataRate << ", sBufferLevel: " << sendBufferFillLevel << ", rDataRate: " << recvDataRate << ", rBufferFillLevel: " << recvBufferFillLevel;
-
-                // endl;
                 *file_ << std::endl;
             }
         }
 
-        sleep(1);
+        usleep(1000000);
     }
 
     std::string Metrics::ToString() {

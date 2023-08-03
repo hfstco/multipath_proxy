@@ -57,7 +57,7 @@ TEST(net_Socket, ipv4_TcpSocket_connect_send_recv) {
         net::ipv6::TcpSocket *pTcpSocket3 = pTcpSocket1->Accept();
 
         // send from local -> remote
-        std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
+        std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'SendToSat', '!'};
         pTcpSocket3->Send(vector1.data(), vector1.size(), 0);
 
         // recv on remote side

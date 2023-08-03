@@ -1,7 +1,7 @@
 FROM mppcontainer
 
 # nginx
-RUN apt install -y nginx openssl ssl-cert
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y nginx openssl ssl-cert
 RUN sed -i 's/# listen 443 ssl default_server;/listen 443 ssl default_server;/g' /etc/nginx/sites-available/default
 RUN sed -i 's/# listen \[::\]:443 ssl default_server;/listen \[::\]:443 ssl default_server;/g' /etc/nginx/sites-available/default
 RUN sed -i 's+# include snippets/snakeoil.conf;+include snippets/snakeoil.conf;+g' /etc/nginx/sites-available/default
@@ -22,6 +22,14 @@ RUN openssl rand -out /var/www/html/file.900kbyte  900000
 RUN openssl rand -out /var/www/html/file.1Mbyte   1000000
 RUN openssl rand -out /var/www/html/file.10Mbyte   10000000
 RUN openssl rand -out /var/www/html/file.100Mbyte   100000000
+RUN openssl rand -out /var/www/html/file.200Mbyte   200000000
+RUN openssl rand -out /var/www/html/file.300Mbyte   300000000
+RUN openssl rand -out /var/www/html/file.400Mbyte   400000000
+RUN openssl rand -out /var/www/html/file.500Mbyte   500000000
+RUN openssl rand -out /var/www/html/file.600Mbyte   600000000
+RUN openssl rand -out /var/www/html/file.700Mbyte   700000000
+RUN openssl rand -out /var/www/html/file.800Mbyte   800000000
+RUN openssl rand -out /var/www/html/file.900Mbyte   900000000
 RUN openssl rand -out /var/www/html/file.1Gbyte   1000000000
 
 # entrypoint

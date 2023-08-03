@@ -5,7 +5,7 @@ ENV TZ=Europe/London
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 
-RUN apt-get update \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
   && apt-get install -y build-essential \
       gcc \
       g++ \
@@ -31,15 +31,16 @@ RUN apt-get update \
       linux-tools-generic \
   && apt-get clean
 
+# perf
 RUN ln -fs /usr/lib/linux-tools/*/perf /usr/bin/perf
-
-# mpp
-RUN apt install -y libgoogle-glog-dev libunwind-dev ncurses-dev libgtest-dev uuid-dev
 RUN echo /proc/sys/kernel/perf_event_paranoid
 RUN echo /proc/sys/kernel/kptr_restrict
 
+# mpp
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libgoogle-glog-dev
+
 # glog
-RUN apt install -y libunwind-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libunwind-dev
 
 WORKDIR /root
 RUN git clone https://github.com/google/glog.git
@@ -56,13 +57,40 @@ RUN chmod +x /entrypoint.sh
 RUN pip3 install gprof2dot
 
 # gperftools
-RUN apt install -y gperf google-perftools libgoogle-perftools-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y gperf google-perftools libgoogle-perftools-dev
 
 # wireshark/tcpdump
-RUN apt install -y tcpdump
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tcpdump
+
+# copy mpp to container
+COPY src/ /opt/mpp/
+# compile mpp
+WORKDIR /opt/mpp/
+RUN cmake
+
+# picotls
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y pkg-config libssl-dev faketime libscope-guard-perl libtest-tcp-perl
+WORKDIR /root
+RUN git clone https://github.com/h2o/picotls.git
+WORKDIR /root/picotls
+RUN git submodule init
+RUN git submodule update
+RUN cmake .
+RUN make
+RUN make check
+RUN cp -r /root/picotls/include/* /usr/local/include
+RUN cp /root/picotls/libpicotls* /usr/local/lib
+
+# picoquic
+WORKDIR /root
+RUN git clone https://github.com/private-octopus/picoquic.git
+WORKDIR /root/picoquic
+RUN cmake .
+RUN make
+RUN make install
 
 # ev
-RUN apt install -y libev-dev
+#RUN apt install -y libev-dev
 
 #quiche
 #WORKDIR /root

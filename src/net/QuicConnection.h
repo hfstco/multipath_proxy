@@ -1,53 +1,60 @@
-/*
 //
-// Created by Matthias Hofstätter on 05.07.23.
+// Created by Matthias Hofstätter on 31.07.23.
 //
 
-#ifndef MULTIPATH_PROXY_QUICCONNECTION_H
-#define MULTIPATH_PROXY_QUICCONNECTION_H
+#ifndef MPP_QUICCONNECTION_H
+#define MPP_QUICCONNECTION_H
 
-#include <quiche.h>
+#include <cstdint>
+#include <future>
+#include <array>
 
-#include "SockAddr.h"
-
-#include "../packet/FlowPacket.h"
-#include "../worker/Looper.h"
-
+#include <picoquic.h>
+#include <picosocks.h>
+#include <picoquic_utils.h>
+#include <autoqlog.h>
 
 namespace net {
-    static void debug_log(const char *line, void *argp) {
-        fprintf(stderr, "%s\n", line);
-    }
+
+    #define PICOQUIC_SAMPLE_ALPN "picoquic_sample"
+    #define PICOQUIC_SAMPLE_SNI "test.example.com"
+
+    #define PICOQUIC_NO_ERROR 0
+    #define PICOQUIC_INTERNAL_ERROR 0x101
+    #define PICOQUIC_NAME_TOO_LONG_ERROR 0x102
+    #define PICOQUIC_NO_SUCH_FILE_ERROR 0x103
+    #define PICOQUIC_FILE_READ_ERROR 0x104
+    #define PICOQUIC_FILE_CANCEL_ERROR 0x105
+
+    #define PICOQUIC_SERVER_QLOG_DIR ".";
+
+    class QuicStream;
 
     class QuicConnection {
     public:
-        QuicConnection(net::ipv4::SockAddr_In sockAddr, bool listener = false);
+        QuicStream *CreateStream();
+        QuicStream *CreateStream(uint64_t stream_id);
+        void CloseStream(QuicStream *quic_stream);
 
-        //void Send(packet::FlowPacket *flowPacket, uint64_t streamId);
+        [[nodiscard]] bool disconnected() const;
 
-        quiche_stats ConnectionStats();
-        quiche_path_stats PathStats(size_t idx);
+        std::string ToString();
+
+        virtual ~QuicConnection();
 
     protected:
-        void RecvLoop();
-        void SendLoop();
-    private:
-        int sock_;
+        uint64_t _current_time = 0;
+        picoquic_quic_t *_quic = nullptr;
+        picoquic_cnx_t  *_quic_cnx = nullptr;
+        std::future<int> _packet_loop;
+        std::array<QuicStream *, 100> _streams{}; // TODO size
+        std::atomic_flag _disconnected;
 
-        quiche_conn *conn_;
-        mutable std::mutex connMutex_;
-        quiche_config *config_;
+        QuicConnection();
 
-        net::ipv4::SockAddr_In sockAddr_;
-        socklen_t sockAddrLen_;
-        net::ipv4::SockAddr_In peerAddr_;
-        socklen_t peerAddrLen_;
-
-        worker::Looper recvLooper_;
-        worker::Looper sendLooper_;
+        void disconnected(bool disconnected);
     };
 
 } // net
 
-#endif //MULTIPATH_PROXY_QUICCONNECTION_H
-*/
+#endif //MPP_QUICCONNECTION_H

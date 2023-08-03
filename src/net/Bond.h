@@ -41,7 +41,7 @@ namespace net {
         Bond(net::ipv4::TcpConnection *terConnection, net::ipv4::TcpConnection *satConnection, context::Context *context);
 
         void SendToTer(packet::FlowPacket *flowPacket);
-        void SentToSat(packet::FlowPacket *flowPacket);
+        void SendToSat(packet::FlowPacket *flowPacket);
 
         std::string ToString();
 

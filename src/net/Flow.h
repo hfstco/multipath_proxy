@@ -72,7 +72,8 @@ namespace net {
 
         collections::BlockingFlowPacketQueue toBondQueue_;
         std::atomic<uint64_t> toBondId_;
-        std::atomic<uint64_t> byteSize_;
+        //std::atomic<uint64_t> byteSize_;
+        std::atomic_flag satellite_;
 
         std::atomic<bool> closed_;
 

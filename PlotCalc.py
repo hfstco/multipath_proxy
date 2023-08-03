@@ -14,7 +14,7 @@ def ter(byteSize):
 
 
 def sat(byteSize):
-    return (2 * 600 / 1000) + (byteSize / 6250)
+    return (600 / 1000) + (byteSize / 6250)
 
 
 def implBelowThreshold(byteSize):
@@ -29,13 +29,15 @@ byteSizes = np.linspace(0, 1000, num=100)
 byteSizesBelowThreshold = np.linspace(0, 74.219, num=100)
 byteSizesOverThreshold = np.linspace(74.219, 1000, num=100)
 
-plt.plot(byteSizes, ter(byteSizes), color='blue', label="ter")
-plt.plot(byteSizes, sat(byteSizes), color='red', label="sat")
-plt.plot(byteSizesBelowThreshold, implBelowThreshold(byteSizesBelowThreshold), color='green', label="bond")
-plt.plot(byteSizesOverThreshold, implOverThreshold(byteSizesOverThreshold), color='green')
+plt.plot(byteSizesBelowThreshold, implBelowThreshold(byteSizesBelowThreshold), color='red', label="bond")
+plt.plot(byteSizesOverThreshold, implOverThreshold(byteSizesOverThreshold), color='red')
+plt.plot(byteSizes, sat(byteSizes), color='blue', label="sat")
+plt.plot(byteSizes, ter(byteSizes), color='green', label="ter")
 plt.legend(title="link")
 plt.ylim(0, 5)
 plt.xlim(0, 1000)
+plt.xlabel("byteSize")
+plt.ylabel("duration")
 
 plt.show()
 

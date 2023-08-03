@@ -68,7 +68,7 @@
     net::ipv4::TcpConnection *tcpConnection = net::ipv4::TcpConnection::make(net::ipv4::SockAddr_In("127.0.0.1", 2350));
     net::Flow *flow = net::Flow::make(tcpConnection, nullptr);
 
-    std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
+    std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'SendToSat', '!'};
     vector1.resize(vector1.size());
     std::vector<unsigned char> vector2 = std::vector<unsigned char>();
     packet::FlowPacket *flowPacket = nullptr;
@@ -128,7 +128,7 @@
         net::ipv4::TcpConnection *tcpConnection1 = tcpListener1->Accept();
         delete tcpListener1;
 
-        std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
+        std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'SendToSat', '!'};
         std::vector<unsigned char> vector2(11);
 
         int bytes_read = 0;
@@ -194,7 +194,7 @@ TEST(net_Flow, write_to_connection_unsorted) {
         net::ipv4::TcpConnection *tcpConnection1 = tcpListener1->Accept();
         delete tcpListener1;
 
-        std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
+        std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'SendToSat', '!'};
         std::vector<unsigned char> vector2(11);
 
         int bytes_read = 0;

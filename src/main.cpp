@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <netinet/tcp.h>
 
 #include "args/Args.h"
 #include "net/TcpListener.h"
@@ -19,7 +20,7 @@ int main(int argc, char *argv[]) {
     // init logging
     google::SetLogDestination(0,"mpp.log");
     google::InitGoogleLogging("log_test");
-    FLAGS_alsologtostderr = 1;
+    FLAGS_alsologtostderr = true;
 
     // init arguments
     args::init(argc, argv);
@@ -46,11 +47,13 @@ int main(int argc, char *argv[]) {
                 net::ipv4::TcpListener *terListener = net::ipv4::TcpListener::make(
                         net::ipv4::SockAddr_In(ter.ip(), ter.port()));
                 terConnection = terListener->Accept();
+                terConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
             }
             if(args::SAT_ENABLED) {
                 net::ipv4::TcpListener *satListener = net::ipv4::TcpListener::make(
                         net::ipv4::SockAddr_In(sat.ip(), sat.port()));
                 satConnection = satListener->Accept();
+                satConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
             }
 
             // create Bond
@@ -63,17 +66,19 @@ int main(int argc, char *argv[]) {
             if(args::TER_ENABLED) {
                 terConnection = net::ipv4::TcpConnection::make(
                         net::ipv4::SockAddr_In(ter.ip(), ter.port()));
+                terConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
             }
             if(args::SAT_ENABLED) {
                 satConnection = net::ipv4::TcpConnection::make(
                         net::ipv4::SockAddr_In(sat.ip(), sat.port()));
+                satConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
             }
 
             // create Bond
             net::Bond bond = net::Bond(terConnection, satConnection, &context::Context::GetDefaultContext());
 
             // create Proxy
-            net::Proxy proxy = net::Proxy(net::ipv4::SockAddr_In("172.30.10.2:5000"), &bond, context);
+            net::Proxy proxy = net::Proxy(net::ipv4::SockAddr_In(args::PROXY), &bond, context);
 
             //exit when key pressed
             std::cin.ignore();
@@ -85,7 +90,7 @@ int main(int argc, char *argv[]) {
     delete terConnection;
     delete satConnection;
 
-    delete context;
+    //delete context;
 
     return 0;
 }

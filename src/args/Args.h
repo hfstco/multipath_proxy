@@ -20,6 +20,7 @@ namespace args {
     inline std::string TER;
     inline bool SAT_ENABLED = false;
     inline std::string SAT;
+    inline std::string PROXY;
 
     inline bool HEARTBEAT_ENABLED = false;
 

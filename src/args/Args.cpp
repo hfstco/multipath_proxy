@@ -23,13 +23,14 @@ namespace args {
             MODE = mode::REMOTE;
         }
 
-        const char* const short_opts = "rlt:s:bghm";
+        const char* const short_opts = "rlt:s:p:bghm";
         const struct option long_opts[] =
         {
                 {"remote", no_argument,       0, 'r'},
                 {"local", no_argument,       0, 'l'},
                 {"ter", required_argument,       0, 't'},
                 {"sat", required_argument,       0, 's'},
+                {"proxy", optional_argument, 0, 'p'},
                 {"heartbeat", no_argument,      0, 'b'},
                 //{"gui", no_argument,       0, 'g'},
                 {"metrics", no_argument, 0, 'm'},
@@ -40,7 +41,7 @@ namespace args {
         while (true)
         {
             int index = -1;
-            struct option *opt = 0;
+            struct option *opt = nullptr;
             int result = getopt_long(argc, argv, short_opts, long_opts, &index);
             if (result == -1) break; /* end of list */
             switch (result)
@@ -67,6 +68,12 @@ namespace args {
                     LOG(INFO) << "SAT=" + SAT;
                     break;
 
+                case 'p':
+                    opt = (struct option *)&(long_opts[index]);
+                    PROXY = optarg;
+                    LOG(INFO) << "PROXY=" + PROXY;
+                    break;
+
                 case 'b':
                     HEARTBEAT_ENABLED = true;
                     LOG(INFO) << "Heartbeat enabled.";
@@ -89,6 +96,11 @@ namespace args {
                 default:
                     break;
             }
+        }
+
+        if (MODE == mode::LOCAL && PROXY.empty()) {
+            LOG(ERROR) << "PROXY (-p) not defined.";
+            exit(0);
         }
     }
 

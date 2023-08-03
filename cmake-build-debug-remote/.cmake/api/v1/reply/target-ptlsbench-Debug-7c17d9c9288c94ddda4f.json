@@ -1,0 +1,213 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "_deps/picotls-build/ptlsbench"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"ADD_EXECUTABLE",
+			"link_directories",
+			"TARGET_LINK_LIBRARIES",
+			"INCLUDE_DIRECTORIES"
+		],
+		"files" : 
+		[
+			"cmake-build-debug-remote/_deps/picotls-src/CMakeLists.txt",
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 174,
+				"parent" : 0
+			},
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 48,
+				"parent" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 176,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 35,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-D_GNU_SOURCE -pthread -std=c99 -Wall -O2 -g   -g"
+				},
+				{
+					"fragment" : "-DPTLS_MEMORY_DEBUG=1"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/ext"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-src/deps/micro-ecc"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-src/deps/picotest"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-src/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-build"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 4,
+			"id" : "picotls-core::@6479eefbc15948e30bea"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "picotls-minicrypto::@6479eefbc15948e30bea"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "picotls-openssl::@6479eefbc15948e30bea"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "picotls-fusion::@6479eefbc15948e30bea"
+		}
+	],
+	"id" : "ptlsbench::@6479eefbc15948e30bea",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-D_GNU_SOURCE -pthread -std=c99 -Wall -O2 -g   -g",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-rdynamic",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-L/usr/lib/x86_64-linux-gnu/libssl.so",
+				"role" : "libraryPath"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-L/usr/lib/x86_64-linux-gnu/libcrypto.so",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/usr/lib/x86_64-linux-gnu/libssl.so:/usr/lib/x86_64-linux-gnu/libcrypto.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "_deps/picotls-build/libpicotls-minicrypto.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "_deps/picotls-build/libpicotls-core.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "_deps/picotls-build/libpicotls-openssl.a",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lcrypto",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "-ldl",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "_deps/picotls-build/libpicotls-fusion.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "_deps/picotls-build/libpicotls-core.a",
+				"role" : "libraries"
+			}
+		],
+		"language" : "C"
+	},
+	"name" : "ptlsbench",
+	"nameOnDisk" : "ptlsbench",
+	"paths" : 
+	{
+		"build" : "_deps/picotls-build",
+		"source" : "cmake-build-debug-remote/_deps/picotls-src"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/t/ptlsbench.c",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "EXECUTABLE"
+}

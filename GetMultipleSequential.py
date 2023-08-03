@@ -26,7 +26,7 @@ ssssl.check_hostname = False
 ssssl.verify_mode = ssl.CERT_NONE
 
 if args.warmup:
-    response = urllib.request.urlopen("http://172.30.40.2/file.100Mbyte", context=ssssl)
+    response = urllib.request.urlopen(args.warmup, context=ssssl)
     data = response.read()
 
 for i in range(0, int(args.count)):
@@ -55,5 +55,5 @@ if args.plot:
 
     plt.savefig(args.link + ".png")
 
-dataFrame.to_csv(args.link, index=False)
+dataFrame.to_csv(args.link + ".csv", index=False)
 

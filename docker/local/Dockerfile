@@ -5,7 +5,7 @@ ENV TZ=Europe/London
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 
-RUN apt-get update \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
   && apt-get install -y build-essential \
       gcc \
       g++ \
@@ -31,15 +31,13 @@ RUN apt-get update \
       linux-tools-generic \
   && apt-get clean
 
+# perf
 RUN ln -fs /usr/lib/linux-tools/*/perf /usr/bin/perf
 RUN echo /proc/sys/kernel/perf_event_paranoid
 RUN echo /proc/sys/kernel/kptr_restrict
 
-# mpp
-RUN apt install -y ncurses-dev libgtest-dev uuid-dev
-
 # glog
-RUN apt install -y libunwind-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libunwind-dev
 
 WORKDIR /root
 RUN git clone https://github.com/google/glog.git
@@ -48,21 +46,22 @@ RUN cmake -S . -B build -G "Unix Makefiles"
 RUN cmake --build build
 RUN cmake --build build --target install
 
+# gtest
+
 # gperftools
-RUN apt install -y gperf google-perftools libgoogle-perftools-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y gperf google-perftools libgoogle-perftools-dev
 
 # plot
-RUN pip3 install gprof2dot
-
-# entrypoint
-COPY docker/local/config/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+#RUN pip3 install gprof2dot
 
 # wireshark/tcpdump
-RUN apt install -y tcpdump
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tcpdump
+
+# copy mpp to container
+COPY / /opt/mpp/
 
 # ev
-RUN apt install -y libev-dev
+#RUN apt install -y libev-dev
 
 #quiche
 #WORKDIR /root
@@ -71,5 +70,30 @@ RUN apt install -y libev-dev
 #RUN git clone --recursive https://github.com/cloudflare/quiche
 #WORKDIR /root/quiche
 #RUN cargo build --features ffi
+
+# picotls
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y pkg-config libssl-dev faketime libscope-guard-perl libtest-tcp-perl
+WORKDIR /root
+RUN git clone https://github.com/h2o/picotls.git
+WORKDIR /root/picotls
+RUN git submodule init
+RUN git submodule update
+RUN cmake .
+RUN make
+RUN make check
+RUN cp -r /root/picotls/include/* /usr/local/include
+RUN cp /root/picotls/libpicotls* /usr/local/lib
+
+# picoquic
+WORKDIR /root
+RUN git clone https://github.com/private-octopus/picoquic.git
+WORKDIR /root/picoquic
+RUN cmake .
+RUN make
+RUN make install
+
+# entrypoint
+COPY docker/local/config/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

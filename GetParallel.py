@@ -14,7 +14,6 @@ args = parser.parse_args()
 
 dataFrame = pandas.DataFrame(columns=['url', 'byteSize', 'duration'])
 
-
 async def get(url, session):
     async with session.get(url) as response:
         start = time.time()

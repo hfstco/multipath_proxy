@@ -88,7 +88,7 @@ TEST(net_Connection, ipv4_TcpConnection) {
         packet::Buffer *b1 = packet::Buffer::make(1024);
         c2->Recv(b1->data(), b1->size(), 0);
 
-        std::vector<unsigned char> buffer2 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
+        std::vector<unsigned char> buffer2 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'SendToSat', '!'};
 
         EXPECT_EQ(0, memcmp(b1->data(), buffer2.data(), buffer2.size()));
 

@@ -1,0 +1,309 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "_deps/picotls-build/libpicotls-minicrypto.a"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"ADD_LIBRARY",
+			"TARGET_LINK_LIBRARIES",
+			"INCLUDE_DIRECTORIES"
+		],
+		"files" : 
+		[
+			"cmake-build-debug-remote/_deps/picotls-src/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 90,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 102,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 35,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-D_GNU_SOURCE -pthread -std=c99 -Wall -O2 -g   -g"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 3,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/ext"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-src/deps/micro-ecc"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-src/deps/picotest"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-src/include"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/tmp/tmp.Mj1hrBnrks/cmake-build-debug-remote/_deps/picotls-build"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "picotls-core::@6479eefbc15948e30bea"
+		}
+	],
+	"id" : "picotls-minicrypto::@6479eefbc15948e30bea",
+	"name" : "picotls-minicrypto",
+	"nameOnDisk" : "libpicotls-minicrypto.a",
+	"paths" : 
+	{
+		"build" : "_deps/picotls-build",
+		"source" : "cmake-build-debug-remote/_deps/picotls-src"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/micro-ecc/uECC.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/aes.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/blockwise.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/chacha20.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/chash.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/curve25519.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/drbg.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/hmac.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/gcm.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/gf128.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/modes.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/poly1305.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/sha256.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/deps/cifra/src/sha512.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/lib/cifra.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/lib/cifra/x25519.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/lib/cifra/chacha20.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/lib/cifra/aes128.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/lib/cifra/aes256.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/lib/cifra/random.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/lib/minicrypto-pem.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/lib/uecc.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/lib/asn1.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cmake-build-debug-remote/_deps/picotls-src/lib/ffx.c",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

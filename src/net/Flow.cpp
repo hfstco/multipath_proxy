@@ -30,7 +30,7 @@ namespace net {
                                                                                                                                                                          sendToConnectionLooper_(std::bind(&Flow::SendToConnection, this)),
                                                                                                                                                                          sendToBondLooper_(std::bind(&Flow::SendToBond, this))
                                                                                                                                                                          {
-        LOG(INFO) << "Flow(" << source_.ToString() << "|" << destination_.ToString() << ", " << tcpConnection->ToString() << ")";
+        LOG(ERROR) << "Flow(" << source_.ToString() << "|" << destination_.ToString() << ", " << tcpConnection->ToString() << ")";
 
         recvFromConnectionLooper_.Start();
         sendToConnectionLooper_.Start();
@@ -46,6 +46,12 @@ namespace net {
     }
 
     void Flow::RecvFromConnection() {
+        // preload stop
+        if (byteSize() >= 4500000) {
+            usleep(10000);
+            return;
+        }
+
         // create packet
         packet::FlowHeader flowHeader = packet::FlowHeader(source_, destination_, toBondId_++); // TODO GetSock/PeerName local variable?
         packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 1024); // TODO BUFFER_SIZE;
@@ -56,23 +62,22 @@ namespace net {
             bytes_read = connection_->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
             //LOG(INFO) << connection_->ToString() << " -> READ " << bytes_read << "bytes";
         } catch (Exception e) {
-            return;
+            LOG(INFO) << e.what();
         }
 
         // socket closed
         if (bytes_read == 0) {
             recvFromConnectionLooper_.Stop();
-        }
 
-        /*if (closed_) {
-            flowPacket->header()->id(toBondId_);
-        }*/
+            if(closed_) {
+                toBondQueue_.Clear();
+                assert(toBondQueue_.Empty());
+                flowPacket->header()->id(toBondQueue_.currentId());
+            }
+        }
 
         // resize packet to fit data
         flowPacket->Resize(bytes_read);
-
-        //assert(bytes_read == flowPacket->header()->size());
-        //assert(bytes_read == flowPacket->size() - sizeof(packet::FlowHeader));
 
         //DLOG(INFO) << connection_->ToString() << " -> " << flowPacket->ToString();
 
@@ -101,10 +106,6 @@ namespace net {
             } else {
                 closed_ = true;
                 connection_->Shutdown(SHUT_RDWR);
-                connection_->RecvLock();
-                toBondQueue_.Clear();
-                toBondId_ = toBondQueue_.currentId();
-                connection_->RecvUnlock();
             }
 
             return;
@@ -149,25 +150,32 @@ namespace net {
                     delete this;
                 }).detach();
             } else {
-                assert(toBondQueue_.Empty());
-
                 closed_ = true;
             }
 
-            assert(byteSize() < 2000);
+            //assert(byteSize() < 2000);
+            bond_->SendToTer(flowPacket);
+            return;
         }
 
+        context_->flows()->subByteSize(flowPacket->header()->size());
+
         // write packet
-        if( byteSize() < 2000 || context_->flows()->getByteSize() < 74219 ) {
+        // LOG(INFO) << "backlog: " << byteSize() << ", totalBacklog: " << context_->flows()->getByteSize();
+        // send data to ter if backlog & totalBacklog < S, and satellite_ == false
+        if((byteSize() < 2000 || context_->flows()->getByteSize() < 74219 || flowPacket->header()->id() == 0) && !satellite_.test()) {
             bond_->SendToTer(flowPacket);
         } else {
-            bond_->SentToSat(flowPacket);
+            satellite_.test_and_set();
+            bond_->SendToSat(flowPacket);
         }
     }
 
     Flow::~Flow() {
         // remove from flows
+        context_->flows()->mutex().lock();
         context_->flows()->Erase(source_, destination_);
+        context_->flows()->mutex().unlock();
 
         // close and delete connection
         connection_->Close();

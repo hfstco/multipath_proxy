@@ -1,12 +1,6 @@
-# glog
-find_package(glog 0.6.0 REQUIRED)
-
 # curses
-find_package(Curses REQUIRED)
-include_directories(${CURSES_INCLUDE_DIR})
-
-# ev
-include_directories(/usr/include)
+#find_package(Curses REQUIRED)
+#include_directories(${CURSES_INCLUDE_DIR})
 
 # quiche
 #include_directories(/root/quiche/quiche/include)
@@ -34,7 +28,10 @@ include_directories(/usr/include)
 # find_package(uuid REQUIRED)
 # include_directories(${UUID_INCLUDE_DIRS})
 
+link_directories("/usr/local/lib")
 file(GLOB_RECURSE SRCS "*.cpp" "*.h")
 add_executable(mpp ${SRCS})
-target_link_libraries(mpp glog::glog ${CURSES_LIBRARIES} profiler ev)
+target_link_libraries(mpp glog profiler picoquic-log picoquic-core picotls-core picotls-openssl picotls-fusion OpenSSL::SSL OpenSSL::Crypto)
+#target_link_libraries(mpp PRIVATE picoquic-log picoquic-core)
+#target_include_directories(mpp PRIVATE picoquic)
 # target_link_libraries(test_multipath_proxy ${UUID_LIBRARIES})
