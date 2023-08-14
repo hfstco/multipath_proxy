@@ -20,9 +20,11 @@ namespace net {
 
     class QuicServerConnection : public QuicConnection {
     public:
-        QuicServerConnection(int port);
+        explicit QuicServerConnection(int port, bool is_sat);
 
-        std::string ToString();
+        QuicStream *CreateStream(bool bidirectional) override;
+
+        std::string ToString() override;
 
         virtual ~QuicServerConnection();
 

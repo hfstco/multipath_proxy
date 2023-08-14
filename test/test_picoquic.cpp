@@ -10,11 +10,7 @@
 #include "../src/net/QuicStream.h"
 
 TEST(picoquic, simple) {
-    net::QuicServerConnection qsc = net::QuicServerConnection(7779);
+    net::QuicServerConnection qsc = net::QuicServerConnection(7779, false);
 
-    net::QuicClientConnection qcc = net::QuicClientConnection("localhost", 7779);
-
-    net::QuicStream *qs = qcc.CreateStream();
-    uint8_t *buffer = (uint8_t *)"Hello World!";
-    qs->Send(buffer, 5);
+    //net::QuicClientConnection qcc = net::QuicClientConnection("localhost", 7779, false, "ticket_store.bin", "token_store.bin");
 }

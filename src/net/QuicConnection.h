@@ -16,8 +16,7 @@
 
 namespace net {
 
-    #define PICOQUIC_SAMPLE_ALPN "picoquic_sample"
-    #define PICOQUIC_SAMPLE_SNI "test.example.com"
+    #define PICOQUIC_SAMPLE_ALPN "mpp"
 
     #define PICOQUIC_NO_ERROR 0
     #define PICOQUIC_INTERNAL_ERROR 0x101
@@ -26,19 +25,25 @@ namespace net {
     #define PICOQUIC_FILE_READ_ERROR 0x104
     #define PICOQUIC_FILE_CANCEL_ERROR 0x105
 
-    #define PICOQUIC_SERVER_QLOG_DIR ".";
-
     class QuicStream;
+    class Flow;
 
     class QuicConnection {
+        friend class QuicClientConnection;
+        friend class QuicServerConnection;
     public:
-        QuicStream *CreateStream();
-        QuicStream *CreateStream(uint64_t stream_id);
-        void CloseStream(QuicStream *quic_stream);
+        // https://datatracker.ietf.org/doc/html/rfc9000#name-stream-types-and-identifier
+        virtual QuicStream *CreateStream(bool unidirectional) = 0;
+        QuicStream *ActivateStream(uint64_t streamId);
+        bool StreamExists(uint64_t streamId);
+        void CloseStream(uint64_t streamId);
 
         [[nodiscard]] bool disconnected() const;
+        [[nodiscard]] uint64_t localError() const;
+        [[nodiscard]] uint64_t remoteError() const;
+        [[nodiscard]] uint64_t applicationError() const;
 
-        std::string ToString();
+        virtual std::string ToString();
 
         virtual ~QuicConnection();
 
@@ -47,10 +52,17 @@ namespace net {
         picoquic_quic_t *_quic = nullptr;
         picoquic_cnx_t  *_quic_cnx = nullptr;
         std::future<int> _packet_loop;
-        std::array<QuicStream *, 100> _streams{}; // TODO size
-        std::atomic_flag _disconnected;
+        std::array<QuicStream *, 100> _streams = { nullptr }; // TODO size
+        std::recursive_mutex _streams_mutex;
 
-        QuicConnection();
+        std::atomic_flag _disconnected;
+        uint64_t _localError = 0;
+        uint64_t _remoteError = 0;
+        uint64_t _applicationError = 0;
+
+        const bool _is_sat;
+
+        explicit QuicConnection(bool is_sat);
 
         void disconnected(bool disconnected);
     };

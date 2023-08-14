@@ -4,12 +4,14 @@
 
 #include <glog/logging.h>
 
+#include <utility>
+
 #include "Buffer.h"
 #include "../exception/Exception.h"
 
 namespace packet {
 
-    Buffer::Buffer(uint16_t size) : data_((unsigned char *)malloc(size)), size_(size) {}
+    Buffer::Buffer(uint16_t size) : data_((unsigned char *)malloc(size)), size_(size) {} // TODO malloc?
 
     Buffer::Buffer(unsigned char *data, uint16_t size) : Buffer(size) {
         memcpy(data_, data, size);
@@ -26,7 +28,7 @@ namespace packet {
     }
 
     Buffer *Buffer::make(std::vector<unsigned char> data) {
-        return new Buffer(data);
+        return new Buffer(std::move(data));
     }
 
     unsigned char *Buffer::data() {
@@ -38,7 +40,7 @@ namespace packet {
     }
 
     void Buffer::Resize(uint16_t size) {
-        unsigned char *newDataPtr = (unsigned char *)realloc(data_, size);
+        auto *newDataPtr = (unsigned char *)realloc(data_, size);
         if( !newDataPtr ) {
             BufferReallocError bufferReallocError = BufferReallocError("Can't realloc(data_, " + std::to_string(size) + ".");
 

@@ -14,7 +14,7 @@
 //              socket.  The default value is the system page size.
 //              (On Linux 2.4, the default value is 4 kB.)  This
 //              value is used to ensure that in memory pressure
-//              mode, allocations below this size will still
+//              mode_t, allocations below this size will still
 //              succeed.  This is not used to bound the size of the
 //              send buffer declared using SO_SNDBUF on a socket.
 //

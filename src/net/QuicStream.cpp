@@ -7,71 +7,66 @@
 #include <glog/logging.h>
 
 #include "QuicConnection.h"
+#include "Flow.h"
 
 namespace net {
-    QuicStream::QuicStream(QuicConnection *quic_connection, uint64_t id) : _quic_connection(quic_connection), _id(id), _finished(false), _reset(false) {
-        LOG(ERROR) << "QuicStream::QuicStream(quic_connection=" << quic_connection << ", id=" << id << ")";
+    QuicStream::QuicStream(picoquic_cnx_t *quic_cnx, uint64_t id) : _quic_cnx(quic_cnx),
+                                                                    _active(false),
+                                                                    _id(id),
+                                                                    _reset(false),
+                                                                    _finished(false),
+                                                                    _remoteStreamError(0) {
+        LOG(INFO) << "QuicStream::QuicStream(quic_cnx=" << quic_cnx << ", id=" << id << ")";
+
+        if (picoquic_set_app_stream_ctx(_quic_cnx, _id, this) != 0) {
+            /* Internal error */
+            (void) picoquic_reset_stream(_quic_cnx, _id, PICOQUIC_INTERNAL_ERROR);
+
+            throw -1;
+        }
     }
 
-    const uint64_t QuicStream::id() const {
+    uint64_t QuicStream::id() const {
         return _id;
     }
 
-    const std::atomic_flag &QuicStream::reset() const {
-        return _reset;
+    bool QuicStream::finished() const {
+        return _finished.load();
     }
 
-    const std::atomic_flag &QuicStream::finished() const {
-        return _finished;
+    bool QuicStream::reset() const {
+        return _reset.load();
     }
 
-    const std::atomic<uint64_t> &QuicStream::recvBytes() const {
-        return _recv_bytes;
+    uint64_t QuicStream::remoteStreamError() const {
+        return _remoteStreamError.load();
     }
 
-    const std::atomic<uint64_t> &QuicStream::sendBytes() const {
-        return _send_bytes;
-    }
-
-    void QuicStream::remoteError(uint64_t remote_error) {
-        _remote_error.store(remote_error);
-    }
-
-    void QuicStream::reset(bool reset) {
-        if (reset)
-            _reset.test_and_set();
-        else
-            _reset.clear();
-    }
-
-    void QuicStream::finished(bool finished) {
-        if(finished)
-            _finished.test_and_set();
-        else
-            _finished.clear();
-    }
-
-    int QuicStream::Send(unsigned char *data, size_t size) {
-        LOG(ERROR) << ToString() << ".send()"; // TODO params
-
-        // TODO
-
-        return 0;
-    }
-
-    int QuicStream::Recv(unsigned char *data, size_t size) {
-        LOG(ERROR) << ToString() << ".recv()"; // TODO params
-
-        // TODO
-
-        return 0;
+    Flow *QuicStream::flow() const {
+        return _flow;
     }
 
     std::string QuicStream::ToString() const {
-        return "QuicStream[id=" + std::to_string(_id) + "]";
+        std::stringstream ss;
+        ss << std::boolalpha << "QuicStream[quic_cnx=" << _quic_cnx << ", id=" << std::to_string(_id) << ", finished=" << _finished.load() << ", reset=" << _reset.load() << ", remoteStreamError=" << std::to_string(_remoteStreamError) << "]";
+        return ss.str();
     }
 
     QuicStream::~QuicStream() {
         LOG(ERROR) << ToString() << ".~QuicStream()";
+
+        picoquic_reset_stream(_quic_cnx, _id, 0);
     }
+
+    void QuicStream::MarkActiveStream() {
+        if (picoquic_mark_active_stream(_quic_cnx, _id, 1, this) != 0) {
+            /* Internal error */
+            (void) picoquic_reset_stream(_quic_cnx, _id, PICOQUIC_INTERNAL_ERROR);
+
+            throw -1;
+        }
+
+        _active.store(true);
+    }
+
 } // net

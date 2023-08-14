@@ -12,8 +12,16 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
 # glog & gflags
-FIND_PACKAGE(glog REQUIRED)
-include_directories(${GLOG_INCLUDE_DIR})
+include(FetchContent)
+FetchContent_Declare(
+        glog
+        GIT_REPOSITORY https://github.com/google/glog.git
+        GIT_TAG v0.4.0
+        SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/download_deps/glog
+)
+FetchContent_MakeAvailable(glog)
+#FIND_PACKAGE(glog REQUIRED)
+#include_directories(${GLOG_INCLUDE_DIR})
 #FetchContent_Declare(
 #        gflags
 #        GIT_REPOSITORY https://github.com/gflags/gflags.git

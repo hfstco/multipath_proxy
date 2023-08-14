@@ -26,12 +26,12 @@ namespace net {
         class TcpListener;
     }
 
-    class Bond;
+    class QuicConnection;
 
     class Proxy {
     public:
         Proxy() = delete;
-        Proxy(net::ipv4::SockAddr_In sockAddrIn, net::Bond *bond, context::Context *context);
+        Proxy(net::ipv4::SockAddr_In sockAddrIn);
 
         void Accept();
 
@@ -40,12 +40,11 @@ namespace net {
         virtual ~Proxy();
 
     private:
-        net::ipv4::TcpListener *listener_;
+        net::ipv4::TcpListener *_tcpListener;
+        net::QuicConnection *_TER;
+        net::QuicConnection *_SAT;
 
-        net::Bond *bond_;
-        context::Context *context_;
-
-        worker::Looper acceptLooper_;
+        worker::Looper _acceptLooper;
     };
 
 } // net

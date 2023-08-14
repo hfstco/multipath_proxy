@@ -7,9 +7,10 @@
 #include <glog/logging.h>
 
 #include "QuicStream.h"
+#include "Flow.h"
 
 namespace net {
-    QuicConnection::QuicConnection() : _current_time(picoquic_current_time()), _disconnected(false) {
+    QuicConnection::QuicConnection(bool is_sat) : _current_time(picoquic_current_time()), _disconnected(false), _is_sat(is_sat) {
         LOG(ERROR) << "QuicConnection::QuicConnection()";
     }
 
@@ -25,59 +26,54 @@ namespace net {
         }
     }
 
-    QuicStream *QuicConnection::CreateStream(uint64_t stream_id) {
-        LOG(ERROR) << ToString() << ".CreateStream(" << stream_id << ")";
+    uint64_t QuicConnection::localError() const {
+        return _localError;
+    }
 
-        if (_streams[stream_id] != nullptr) {
+    uint64_t QuicConnection::remoteError() const {
+        return _remoteError;
+    }
+
+    uint64_t QuicConnection::applicationError() const {
+        return _applicationError;
+    }
+
+    QuicStream *QuicConnection::ActivateStream(uint64_t streamId) {
+        std::lock_guard lock(_streams_mutex);
+
+        LOG(ERROR) << ToString() << ".ActivateStream(" << streamId << ")";
+
+        if (_streams[streamId] != nullptr) {
             LOG(ERROR) << "Stream exists";
             return nullptr;
         }
 
-        auto *quicStream = new QuicStream(this, stream_id);
-        _streams[stream_id] = quicStream;
+        auto *quicStream = new QuicStream(_quic_cnx, streamId);
+        _streams[streamId] = quicStream;
         return quicStream;
     }
 
-    QuicStream *QuicConnection::CreateStream() {
-        LOG(INFO) << ToString() << ".CreateStream()";
-
-        uint64_t id = -1;
-        for (uint64_t i = 0; i < _streams.size(); i++) {
-            if (_streams[i] == nullptr) {
-                id = i;
-            }
-        }
-
-        if (id == -1) {
-            LOG(ERROR) << "No free streams.";
-            return nullptr;
-        }
-
-        auto *quicStream = new QuicStream(this, id);
-        _streams[id] = quicStream;
-        return quicStream;
+    bool QuicConnection::StreamExists(uint64_t streamId) {
+        return _streams[streamId] != nullptr;
     }
 
-    void QuicConnection::CloseStream(QuicStream *quicStream) {
-        LOG(INFO) << ToString() << ".CloseStream(quicStream->id()=" << quicStream->id() << ")";
+    void QuicConnection::CloseStream(uint64_t streamId) {
+        std::lock_guard lock(_streams_mutex);
 
-        _streams[quicStream->id()] = nullptr;
+        LOG(INFO) << ToString() << ".CloseStream(streamId=" << streamId << ")";
 
-        delete quicStream;
+        delete _streams[streamId];
+        _streams[streamId] = nullptr;
     }
 
     std::string QuicConnection::ToString() {
-        return "QuicConnection[quic=[skip], streams=" + std::to_string(_streams.size()) + "]"; // TODO quic
+        return "QuicConnection[quic=[skip]]"; // TODO quic
     }
 
     QuicConnection::~QuicConnection() {
         LOG(ERROR) << ToString() << ".~QuicConnection()";
 
-        //int ret = _packet_loop.get();
-
-        if (_quic != nullptr) {
-            picoquic_free(_quic);
-        }
+        picoquic_set_callback(_quic_cnx, nullptr, nullptr);
 
         for(auto & _stream : _streams)
         {
@@ -85,6 +81,14 @@ namespace net {
                 delete _stream;
                 _stream = nullptr;
             }
+        }
+
+        if(_quic_cnx != nullptr) {
+            picoquic_close(_quic_cnx, 0);
+        }
+
+        if (_quic != nullptr) {
+            picoquic_free(_quic);
         }
     }
 } // net

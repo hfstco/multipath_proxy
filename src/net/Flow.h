@@ -8,29 +8,9 @@
 #include <atomic>
 #include <thread>
 
-#include "../collections/BlockingFlowPacketQueue.h"
 #include "SockAddr.h"
 #include "../worker/Looper.h"
-
-namespace packet {
-    class FlowPacket;
-}
-
-namespace handler {
-    class FlowHandler;
-}
-
-namespace collections {
-    class FlowMap;
-}
-
-namespace context {
-    class Context;
-}
-
-namespace task {
-    class ThreadPool;
-}
+#include "../backlog/Backlog.h"
 
 namespace net {
 
@@ -38,48 +18,58 @@ namespace net {
         class TcpConnection;
     }
 
-    class Bond;
+    class Proxy;
+    class QuicStream;
+    class QuicConnection;
+    class QuicClientConnection;
+    class QuicServerConnection;
 
     class Flow {
-        //friend Socket<Flow, net::ipv4::SockAddr_In>;
-
+        friend class Proxy;
+        friend class QuicStream;
+        friend class QuicClientConnection;
+        friend class QuicServerConnection;
     public:
-        static Flow *make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, net::Bond *bond, context::Context *context);
+        static Flow *make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcpConnection);
 
-        uint64_t byteSize();
+        net::ipv4::SockAddr_In source();
+        net::ipv4::SockAddr_In destination();
+        size_t size();
+        bool useSatellite();
 
-        void WriteToFlow(packet::FlowPacket *pFlowPacket);
+        backlog::Backlog &Backlog();
 
-        void SendToBond();
+        // tcp connection
         void RecvFromConnection();
         void SendToConnection();
+        // quic connection
+        void Insert(backlog::Chunk *chunk);
+        backlog::Chunk *Next(uint64_t max);
 
         std::string ToString();
 
         virtual ~Flow();
 
     protected:
-        Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcpConnection, net::Bond *bond, context::Context *context);
+        Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcpConnection);
 
     private:
-        net::ipv4::TcpConnection *connection_;
-        net::ipv4::SockAddr_In source_;
-        net::ipv4::SockAddr_In destination_;
-        net::Bond *bond_;
-        context::Context *context_;
+        net::ipv4::TcpConnection *_connection;
+        net::ipv4::SockAddr_In _source;
+        net::ipv4::SockAddr_In _destination;
 
-        collections::BlockingFlowPacketQueue toConnectionQueue_;
+        net::QuicStream *_terTxStream;
+        net::QuicStream *_satTxStream;
 
-        collections::BlockingFlowPacketQueue toBondQueue_;
-        std::atomic<uint64_t> toBondId_;
-        //std::atomic<uint64_t> byteSize_;
-        std::atomic_flag satellite_;
+        std::atomic_flag _useSatellite;
+        std::atomic_flag _closed;
 
-        std::atomic<bool> closed_;
+        std::atomic<uint64_t> _rxOffset;
+        backlog::Backlog _rxBacklog;
+        backlog::Backlog _txBacklog;
 
-        worker::Looper recvFromConnectionLooper_;
-        worker::Looper sendToConnectionLooper_;
-        worker::Looper sendToBondLooper_;
+        worker::Looper _recvFromConnectionLooper;
+        worker::Looper _sendToConnectionLooper;
     }; // Flow
 
 } // net

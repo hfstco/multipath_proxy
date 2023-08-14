@@ -8,12 +8,12 @@
 #include <sys/ioctl.h>
 #include <mutex>
 #include <glog/logging.h>
+#include <atomic>
 
 #include "TcpSocket.h"
 #include "IConnection.h"
-#include "../args/Args.h"
-#include "../context/Context.h"
-#include "../collections/ConnectionManager.h"
+#include "../args/ARGS.h"
+
 
 namespace net {
 
@@ -170,9 +170,6 @@ namespace net {
 
         virtual ~Connection() {
             DLOG(INFO) << ToString() << ".~Connection()";
-
-            // remove from global connections
-            context::Context::GetDefaultContext().connections()->Erase(this);
         }
 
     protected:
@@ -191,9 +188,6 @@ namespace net {
 
         explicit Connection(int fd) : S(fd) {
             DLOG(INFO) << "Connection(fd=" + std::to_string(fd) + ") * " << ToString();
-
-            // add to global connections
-            context::Context::GetDefaultContext().connections()->Insert(this);
         }
 
     private:
@@ -211,9 +205,6 @@ namespace net {
 
         Connection() {
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
-
-            // add to global connections
-            context::Context::GetDefaultContext().connections()->Insert(this);
         };
     };
 

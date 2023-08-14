@@ -88,7 +88,7 @@ public:
     };
 };
 
-// collections exception
+// backlog exception
 
 class NotFoundException : public Exception {
 public:

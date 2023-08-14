@@ -7,12 +7,9 @@
 
 #include "Connection.h"
 
-#include "../metrics/Metrics.h"
 
 namespace net {
     namespace ipv4 {
-
-        class TcpListener;
 
         class TcpConnection : public Connection<TcpSocket, SockAddr_In> {
             //friend TcpListener; // allow TcpListener to call protected TcpConnection(TcpSocket socket)

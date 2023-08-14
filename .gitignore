@@ -1,7 +1,6 @@
 # Project exclude paths
-/cmake-build-debug/
-/cmake-build-debug-client1/
-/cmake-build-debug-left/
-/cmake-build-debug-right/
-/cmake-build-debug-server1/
 /third-party/
+/cmake-build-debug-local/
+/cmake-build-debug-remote/
+/cmake-build-release-local/
+/cmake-build-release-remote/

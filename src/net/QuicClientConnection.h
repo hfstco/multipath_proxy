@@ -15,28 +15,24 @@
 
 namespace net {
 
-    #define PICOQUIC_CLIENT_TICKET_STORE "ticket_store.bin";
-    #define PICOQUIC_CLIENT_TOKEN_STORE "token_store.bin";
-    #define PICOQUIC_CLIENT_QLOG_DIR ".";
-
-
     class QuicClientConnection : public QuicConnection {
     public:
-        QuicClientConnection(std::string server_name, int port);
+        QuicClientConnection(std::string server_name, int port, bool is_sat, std::string ticket_store_name, std::string token_store_name);
 
-        std::string ToString();
+        QuicStream *CreateStream(bool bidirectional) override;
 
-        ~QuicClientConnection() override;
+        std::string ToString() override;
+
+        virtual ~QuicClientConnection();
 
     private:
         std::string _server_name;
         int _port;
-
-        std::string _ticket_store_filename = PICOQUIC_CLIENT_TICKET_STORE;
-        std::string _token_store_filename = PICOQUIC_CLIENT_TOKEN_STORE;
-        std::string _qlog_dir = PICOQUIC_CLIENT_QLOG_DIR;
-        std::string _sni = PICOQUIC_SAMPLE_SNI;
+        std::string _ticket_store_filename;
+        std::string _token_store_filename;
+        std::string _sni;
         struct sockaddr_storage _server_address;
+        std::atomic_flag _ready;
 
         static int callback(picoquic_cnx_t* cnx,
                             uint64_t stream_id, uint8_t* bytes, size_t length,

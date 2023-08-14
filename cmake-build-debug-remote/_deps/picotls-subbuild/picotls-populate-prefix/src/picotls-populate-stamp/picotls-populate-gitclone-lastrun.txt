@@ -1,3 +1,0 @@
-repository='https://github.com/h2o/picotls.git'
-module=''
-tag='origin'

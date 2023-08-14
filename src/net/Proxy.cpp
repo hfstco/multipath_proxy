@@ -2,11 +2,8 @@
 // Created by Matthias Hofstätter on 17.04.23.
 //
 
-#include <thread>
 #include <glog/logging.h>
-#include <sys/poll.h>
 #include <future>
-#include <assert.h>
 
 #include "Proxy.h"
 
@@ -14,20 +11,20 @@
 #include "TcpConnection.h"
 #include "TcpListener.h"
 #include "Flow.h"
-#include "../collections/FlowMap.h"
-#include "Bond.h"
-#include "../task/ThreadPool.h"
-#include "../context/Context.h"
-#include "../metrics/Metrics.h"
+#include "QuicConnection.h"
+#include "TER.h"
+#include "SAT.h"
+#include "QuicStream.h"
 
 namespace net {
 
-    Proxy::Proxy(net::ipv4::SockAddr_In sockAddrIn, net::Bond *bond, context::Context *context) : listener_(net::ipv4::TcpListener::make(sockAddrIn)), bond_(bond), context_(context),
-                                                                                                  acceptLooper_(std::bind(&Proxy::Accept, this)) {
-#ifdef __linux__
-        listener_->SetSockOpt(IPPROTO_IP, IP_TRANSPARENT, 1);
+    Proxy::Proxy(net::ipv4::SockAddr_In sockAddrIn) : _tcpListener(net::ipv4::TcpListener::make(sockAddrIn)), // create tcp listener on sockAddrIn
+                                                                                                          _TER(TER), _SAT(SAT), // TER & SAT quic connections
+                                                                                                          _acceptLooper([this] { Accept(); }) { // thread which runs Accept() in a loop
+#ifdef __linux__ // for debugging on win or macos, tproxy is only available on unix distributions
+        _tcpListener->SetSockOpt(IPPROTO_IP, IP_TRANSPARENT, 1);
 #endif
-        acceptLooper_.Start();
+        _acceptLooper.Start();
 
         DLOG(INFO) << "Proxy(" << sockAddrIn.ToString() << ") * " << ToString();
     }
@@ -36,36 +33,36 @@ namespace net {
         try {
             // accept incoming connection and get source SockAddr
             net::ipv4::SockAddr_In source;
-            net::ipv4::TcpConnection *tcpConnection = listener_->Accept(source); // blocking here
+            net::ipv4::TcpConnection *tcpConnection = _tcpListener->Accept(source); // blocking here
 
             // get destination SockAddr
             ipv4::SockAddr_In destination = tcpConnection->GetSockName();
 
-            // metrics
-            //context_->metrics()->addConnection(tcpConnection->fd());
-
-            // create new Flow for connection
-            net::Flow *flow = net::Flow::make(source, destination, tcpConnection, bond_, context_);
-
-            // add Flow to FlowMap
-            {
-                std::lock_guard lock(context_->flows()->mutex());
-
-                context_->flows()->Insert(source, destination, flow);
-            }
+            // create Flow
+            Flow *flow = Flow::make(source, destination, tcpConnection);
+            // create Streams for Flow
+            // TODO check if streams + 1 nullptr
+            QuicStream *terQuicStream = TER->CreateStream(false);
+            terQuicStream->_flow = flow;
+            terQuicStream->_flow->_terTxStream = terQuicStream;
+            terQuicStream->MarkActiveStream();
+            QuicStream *satQuicStream = SAT->CreateStream(false);
+            satQuicStream->_flow = flow;
+            satQuicStream->_flow->_satTxStream = satQuicStream;
+            satQuicStream->MarkActiveStream();
         } catch (Exception e) {
             LOG(ERROR) << e.what();
         }
     }
 
     std::string Proxy::ToString() {
-        return "Proxy[fd=" + std::to_string(listener_->fd()) + ", sockAddr=" + listener_->GetSockName().ToString() + "]";
+        return "Proxy[fd=" + std::to_string(_tcpListener->fd()) + ", sockAddr=" + _tcpListener->GetSockName().ToString() + "]";
     }
 
     Proxy::~Proxy() {
         DLOG(INFO) << ToString() << ".~Proxy()";
 
-        delete listener_;
+        delete _tcpListener;
     }
 
 } // net

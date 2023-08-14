@@ -5,15 +5,16 @@
 #include <iostream>
 #include <netinet/tcp.h>
 
-#include "args/Args.h"
+#include "args/ARGS.h"
 #include "net/TcpListener.h"
 #include "net/TcpConnection.h"
 #include "net/SockAddr.h"
-#include "net/Bond.h"
 #include "net/Proxy.h"
-#include "collections/FlowMap.h"
-#include "task/ThreadPool.h"
-#include "context/Context.h"
+#include "net/QuicServerConnection.h"
+#include "net/QuicClientConnection.h"
+#include "net/QuicConnection.h"
+#include "net/TER.h"
+#include "net/SAT.h"
 
 
 int main(int argc, char *argv[]) {
@@ -25,72 +26,40 @@ int main(int argc, char *argv[]) {
     // init arguments
     args::init(argc, argv);
 
-    net::ipv4::SockAddr_In ter;
-    net::ipv4::SockAddr_In sat;
+    if (args::MODE == args::mode::LOCAL) { // local
+        if(args::TER_ENABLED) {
+            net::ipv4::SockAddr_In terSockAddr = net::ipv4::SockAddr_In(args::TER_STRING);
+            TER = new net::QuicClientConnection(terSockAddr.ip(), terSockAddr.port(), false, "ter_ticket_store.bin", "ter_token_store.bin");
+        }
+        if(args::SAT_ENABLED) {
+            net::ipv4::SockAddr_In satSockAddr = net::ipv4::SockAddr_In(args::SAT_STRING);
+            SAT = new net::QuicClientConnection(satSockAddr.ip(), satSockAddr.port(), true, "sat_ticket_store.bin", "sat_token_store.bin");
+        }
+
+        net::Proxy proxy = net::Proxy(net::ipv4::SockAddr_In(args::PROXY_STRING));
+
+        //exit when key pressed
+        std::cin.ignore();
+    } else { // remote
+        if(args::TER_ENABLED) {
+            net::ipv4::SockAddr_In terSockAddr = net::ipv4::SockAddr_In(args::TER_STRING);
+            TER = new net::QuicServerConnection(terSockAddr.port(), false);
+        }
+        if(args::SAT_ENABLED) {
+            net::ipv4::SockAddr_In satSockAddr = net::ipv4::SockAddr_In(args::SAT_STRING);
+            SAT = new net::QuicServerConnection(satSockAddr.port(), true);
+        }
+
+        //exit when key pressed
+        std::cin.ignore();
+    }
+
     if(args::TER_ENABLED) {
-        ter = net::ipv4::SockAddr_In(args::TER);
+        delete TER;
     }
     if(args::SAT_ENABLED) {
-        sat = net::ipv4::SockAddr_In(args::SAT);
+        delete SAT;
     }
-
-    net::ipv4::TcpConnection *terConnection = nullptr;
-    net::ipv4::TcpConnection *satConnection = nullptr;
-
-    context::Context *context = &context::Context::GetDefaultContext();
-
-    try {
-        // init mpp
-        if (args::MODE == args::mode::REMOTE) {
-            // create listeners
-            if(args::TER_ENABLED) {
-                net::ipv4::TcpListener *terListener = net::ipv4::TcpListener::make(
-                        net::ipv4::SockAddr_In(ter.ip(), ter.port()));
-                terConnection = terListener->Accept();
-                terConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
-            }
-            if(args::SAT_ENABLED) {
-                net::ipv4::TcpListener *satListener = net::ipv4::TcpListener::make(
-                        net::ipv4::SockAddr_In(sat.ip(), sat.port()));
-                satConnection = satListener->Accept();
-                satConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
-            }
-
-            // create Bond
-            net::Bond bond = net::Bond(terConnection, satConnection, context);
-
-            //exit when key pressed
-            std::cin.ignore();
-        } else {
-            // create connections
-            if(args::TER_ENABLED) {
-                terConnection = net::ipv4::TcpConnection::make(
-                        net::ipv4::SockAddr_In(ter.ip(), ter.port()));
-                terConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
-            }
-            if(args::SAT_ENABLED) {
-                satConnection = net::ipv4::TcpConnection::make(
-                        net::ipv4::SockAddr_In(sat.ip(), sat.port()));
-                satConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
-            }
-
-            // create Bond
-            net::Bond bond = net::Bond(terConnection, satConnection, &context::Context::GetDefaultContext());
-
-            // create Proxy
-            net::Proxy proxy = net::Proxy(net::ipv4::SockAddr_In(args::PROXY), &bond, context);
-
-            //exit when key pressed
-            std::cin.ignore();
-        }
-    } catch (Exception e) {
-        LOG(ERROR) << e.what();
-    }
-
-    delete terConnection;
-    delete satConnection;
-
-    //delete context;
 
     return 0;
 }
