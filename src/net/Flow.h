@@ -74,6 +74,7 @@ namespace net {
         std::atomic<uint64_t> toBondId_;
         //std::atomic<uint64_t> byteSize_;
         std::atomic_flag satellite_;
+        std::chrono::time_point<std::chrono::system_clock> lastSendTimestamp_;
 
         std::atomic<bool> closed_;
 

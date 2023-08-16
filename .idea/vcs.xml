@@ -3,12 +3,8 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/cmake-build-debug-local/_deps/googletest-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/cmake-build-debug-local/_deps/picotls-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/cmake-build-debug-remote/_deps/googletest-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/cmake-build-debug-remote/_deps/picotls-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/cmake-build-release-local/_deps/googletest-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/cmake-build-release-local/_deps/picotls-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/cmake-build-release-remote/_deps/googletest-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/cmake-build-release-remote/_deps/picotls-src" vcs="Git" />
   </component>
 </project>

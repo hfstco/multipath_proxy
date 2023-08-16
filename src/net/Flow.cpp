@@ -48,7 +48,7 @@ namespace net {
     void Flow::RecvFromConnection() {
         // preload stop
         if (byteSize() >= 4500000) {
-            usleep(10000);
+            usleep(168);
             return;
         }
 
@@ -62,7 +62,7 @@ namespace net {
             bytes_read = connection_->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
             //LOG(INFO) << connection_->ToString() << " -> READ " << bytes_read << "bytes";
         } catch (Exception e) {
-            LOG(INFO) << e.what();
+             LOG(INFO) << e.what();
         }
 
         // socket closed
@@ -94,7 +94,7 @@ namespace net {
         if (flowPacket->header()->size() == 0) {
             delete flowPacket;
 
-            assert(toConnectionQueue_.Empty());
+            //assert(toConnectionQueue_.Empty());
 
             sendToConnectionLooper_.Stop();
 
@@ -116,10 +116,9 @@ namespace net {
         try {
             bytes_sent = connection_->Send(flowPacket->data(), flowPacket->header()->size(), 0);
             //LOG(INFO) << "SENT " << bytes_sent << "bytes -> " << connection_->ToString();
-        } catch (SocketErrorException e) {
-            // socket closed waiting for close package
         } catch (Exception e) {
-            LOG(ERROR) << e.ToString();
+            //LOG(ERROR) << e.ToString();
+            // socket closed, skipping packets until close packet arrive
         }
 
         //DLOG(INFO) << flowPacket->ToString() << " -> " << connection_->ToString();
@@ -163,12 +162,19 @@ namespace net {
         // write packet
         // LOG(INFO) << "backlog: " << byteSize() << ", totalBacklog: " << context_->flows()->getByteSize();
         // send data to ter if backlog & totalBacklog < S, and satellite_ == false
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastSendTimestamp_).count() > 600) {
+            satellite_.clear();
+        }
+
         if((byteSize() < 2000 || context_->flows()->getByteSize() < 74219 || flowPacket->header()->id() == 0) && !satellite_.test()) {
             bond_->SendToTer(flowPacket);
         } else {
             satellite_.test_and_set();
             bond_->SendToSat(flowPacket);
         }
+
+        // set last send timestamp
+        lastSendTimestamp_ = std::chrono::system_clock::now();
     }
 
     Flow::~Flow() {

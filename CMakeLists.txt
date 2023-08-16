@@ -12,6 +12,7 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
 # glog & gflags
+# https://github.com/gflags/gflags/issues/279
 FIND_PACKAGE(glog REQUIRED)
 include_directories(${GLOG_INCLUDE_DIR})
 #FetchContent_Declare(
@@ -42,15 +43,15 @@ include_directories(${GLOG_INCLUDE_DIR})
 #endif()
 #FetchContent_MakeAvailable(picoquic)
 
-find_package(OpenSSL REQUIRED)
-if(OpenSSL_FOUND)
-    include_directories(${OPENSSL_INCLUDE_DIRS})
-    link_directories(${OPENSSL_LIBRARIES})
-    message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
-endif()
-
-set(PICOQUIC_FETCH_PTLS 1)
-add_subdirectory(third-party/picoquic)
+#find_package(OpenSSL REQUIRED)
+#if(OpenSSL_FOUND)
+#    include_directories(${OPENSSL_INCLUDE_DIRS})
+#    link_directories(${OPENSSL_LIBRARIES})
+#    message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+#endif()
+#
+#set(PICOQUIC_FETCH_PTLS 1)
+#add_subdirectory(third-party/picoquic)
 
 add_subdirectory(src)
 add_subdirectory(test)

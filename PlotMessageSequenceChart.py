@@ -97,15 +97,15 @@ cv2.line(img, (IMG_WIDTH - 1, PADDING_TOP), (IMG_WIDTH - 1, IMG_HEIGHT + PADDING
 
 # draw packet lines
 for index, row in df[df["type"] == "local"].iterrows():
-    if row["connection"] == 8:
-        packet_arrival = df.where(df.type == "remote").where(df.direction != row['direction']).where(df.id == row["id"]).where(df.connection == 9).where(df.source == row["source"]).where(df.destination == row["destination"]).dropna().reset_index(drop=True)
+    if row["connection"] == 7:
+        packet_arrival = df.where(df.type == "remote").where(df.direction != row['direction']).where(df.id == row["id"]).where(df.connection == 8).where(df.source == row["source"]).where(df.destination == row["destination"]).dropna().reset_index(drop=True)
     else:
-        packet_arrival = df.where(df.type == "remote").where(df.direction != row['direction']).where(df.id == row["id"]).where(df.connection == 11).where(df.source == row["source"]).where(df.destination == row["destination"]).dropna().reset_index(drop=True)
+        packet_arrival = df.where(df.type == "remote").where(df.direction != row['direction']).where(df.id == row["id"]).where(df.connection == 10).where(df.source == row["source"]).where(df.destination == row["destination"]).dropna().reset_index(drop=True)
     if packet_arrival.shape[0] != 1:
         continue
     packet_arrival = packet_arrival.to_dict()
     if row["direction"] == "out":
-        if row["connection"] == 8: # ter packet
+        if row["connection"] == 7: # ter packet
             color = (255, 0, 0)
         else: # sat packet
             color = (0, 255, 0)
@@ -113,7 +113,7 @@ for index, row in df[df["type"] == "local"].iterrows():
             color = (0, 0, 255)
         cv2.arrowedLine(img, (PADDING_LEFT, PADDING_TOP + int((row["timestamp"] - min_timestamp) * us_to_height)), (IMG_WIDTH - 2, PADDING_TOP + int((packet_arrival["timestamp"][0] - min_timestamp) * us_to_height)), color, 2, tipLength=0.01)
     else:
-        if row["connection"] == 9:
+        if row["connection"] == 8:
             color = (255, 0, 0)
         else:
             color = (0, 255, 0)

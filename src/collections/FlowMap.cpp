@@ -43,18 +43,18 @@ namespace collections {
         std::unordered_map<SockAddr_In_Pair, net::Flow *>::iterator flow = std::unordered_map<SockAddr_In_Pair, net::Flow *>::find(SockAddr_In_Pair(source, destination));
         if (flow == std::unordered_map<SockAddr_In_Pair, net::Flow *>::end()) {
             NotFoundException e = NotFoundException("key=" + source.ToString() + "|" + destination.ToString() + " not found in map.");
-            LOG(INFO) << ToString() << ".Erase(" << source.ToString() << "|" << destination.ToString() << ") ~> " << e.ToString();
+            //LOG(INFO) << ToString() << ".Erase(" << source.ToString() << "|" << destination.ToString() << ") ~> " << e.ToString();
 
             throw e;
         } else {
-            LOG(INFO) << ToString() << ".Erase(" << flow->second->ToString() << ")";
+            //LOG(INFO) << ToString() << ".Erase(" << flow->second->ToString() << ")";
 
             std::unordered_map<SockAddr_In_Pair, net::Flow *>::erase(flow);
         }
     }
 
     FlowMap::~FlowMap() {
-        DLOG(INFO) << ToString() << ".~FlowMap()";
+        //DLOG(INFO) << ToString() << ".~FlowMap()";
     }
 
     std::mutex &FlowMap::mutex() {

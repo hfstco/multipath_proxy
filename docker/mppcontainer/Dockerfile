@@ -29,7 +29,7 @@ RUN ( \
   ) > /etc/sshd_config_mpp
 
 RUN ssh-keygen -A
-RUN ssh-keygen -t rsa -b 4096 -f  /etc/ssh/ssh_host_key
+RUN ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_key
 RUN mkdir -p /run/sshd
 
 # wireshark

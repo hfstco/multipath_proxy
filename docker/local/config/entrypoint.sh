@@ -27,7 +27,7 @@ iptables -A OUTPUT -t mangle -p tcp --dport 7000 -j MARK --set-mark 177
 
 iptables -A POSTROUTING -t nat -o satr0 -p tcp --dport 7000 -j SNAT --to 172.30.20.2
 
-ip route add default via 172.30.254.254 dev internet0
+#ip route add default via 172.30.254.254
 
 # start iperf
 iperf3 -s -D

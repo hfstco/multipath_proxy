@@ -47,7 +47,7 @@ namespace worker {
         }
 
         virtual ~Looper() {
-            LOG(INFO) << ToString() << ".~Looper()";
+            //LOG(INFO) << ToString() << ".~Looper()";
 
             thread_.join();
         }

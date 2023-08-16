@@ -198,6 +198,14 @@ namespace net {
                     context_->flows()->Insert(flowPacket->header()->source(), flowPacket->header()->destination(), flow);
                 } catch (Exception e) {
                     LOG(INFO) << e.what();
+
+                    // send close packet
+                    packet::FlowHeader flowHeader = packet::FlowHeader(flowPacket->header()->source(), flowPacket->header()->destination(), 0); // TODO GetSock/PeerName local variable?
+                    packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 0);
+
+                    SendToTer(flowPacket);
+
+                    return;
                 }
             }
         }

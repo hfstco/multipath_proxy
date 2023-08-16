@@ -37,7 +37,7 @@ RUN echo /proc/sys/kernel/perf_event_paranoid
 RUN echo /proc/sys/kernel/kptr_restrict
 
 # glog
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libunwind-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libunwind-dev libgflags-dev
 
 WORKDIR /root
 RUN git clone https://github.com/google/glog.git
@@ -46,51 +46,16 @@ RUN cmake -S . -B build -G "Unix Makefiles"
 RUN cmake --build build
 RUN cmake --build build --target install
 
-# gtest
-
 # gperftools
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y gperf google-perftools libgoogle-perftools-dev
 
 # plot
-#RUN pip3 install gprof2dot
-
-# wireshark/tcpdump
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tcpdump
+RUN pip3 install gprof2dot
 
 # copy mpp to container
 COPY / /opt/mpp/
-
-# ev
-#RUN apt install -y libev-dev
-
-#quiche
-#WORKDIR /root
-#RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-#ENV PATH="/root/.cargo/bin:${PATH}"
-#RUN git clone --recursive https://github.com/cloudflare/quiche
-#WORKDIR /root/quiche
-#RUN cargo build --features ffi
-
-# picotls
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y pkg-config libssl-dev faketime libscope-guard-perl libtest-tcp-perl
-WORKDIR /root
-RUN git clone https://github.com/h2o/picotls.git
-WORKDIR /root/picotls
-RUN git submodule init
-RUN git submodule update
-RUN cmake .
-RUN make
-RUN make check
-RUN cp -r /root/picotls/include/* /usr/local/include
-RUN cp /root/picotls/libpicotls* /usr/local/lib
-
-# picoquic
-WORKDIR /root
-RUN git clone https://github.com/private-octopus/picoquic.git
-WORKDIR /root/picoquic
-RUN cmake .
-RUN make
-RUN make install
+# compile mpp
+WORKDIR /opt/mpp/
 
 # entrypoint
 COPY docker/local/config/entrypoint.sh /entrypoint.sh

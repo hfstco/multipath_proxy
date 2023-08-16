@@ -342,7 +342,7 @@ namespace net {
         virtual ~Socket() {
             this->Close();
 
-            DLOG(INFO) << ToString() << ".~Socket()";
+            //DLOG(INFO) << ToString() << ".~Socket()";
         }
 
     protected:
@@ -355,13 +355,13 @@ namespace net {
                 throw socketErrorException;
             }
 
-            DLOG(INFO) << "Socket(domain=" << domain << ", type=" << type << ", protocol=" << protocol << ") * " + ToString();
+            //DLOG(INFO) << "Socket(domain=" << domain << ", type=" << type << ", protocol=" << protocol << ") * " + ToString();
         }
 
         explicit Socket(int fd) {
             fd_ = fd;
 
-            DLOG(INFO) << "Socket(fd=" << fd << ") * " << ToString();
+            //DLOG(INFO) << "Socket(fd=" << fd << ") * " << ToString();
         }
 
     private:

@@ -67,12 +67,12 @@ current_id += 1
 current_timestamp += datetime.timedelta(microseconds=50)
 
 # send 100000 - 2048 = 97952 bytes remaining
-# send packets SAT until 74219 bytes left
-# send 23733 bytes SAT = 23,177 ~ 24 packets
-# send 24 packets SAT
+# send 97952 bytes SAT = 95,65625 ~ 96 packets
+# send 96 packets SAT
 # 0,003932 s
-step_size = 3932 / 24
-for i in range(24):
+# 0,01567232
+step_size = 15672 / 96
+for i in range(96):
     packet = create_packet(current_timestamp, REMOTE, OUT, SOURCE, DESTINATION, current_id, 1024, SAT_ID)
     df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
     packet = create_packet(current_timestamp + datetime.timedelta(milliseconds=300), LOCAL, IN, SOURCE, DESTINATION, current_id, 1024, SAT_ID)
@@ -84,18 +84,18 @@ for i in range(24):
 # send 73376 bytes TER
 # 72 packets TER
 # 0,293504 s
-step_size = 293504 / 72
-for i in range(72):
-    packet = create_packet(current_timestamp, REMOTE, OUT, SOURCE, DESTINATION, current_id, 1024, TER_ID)
-    df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
-    packet = create_packet(current_timestamp + datetime.timedelta(milliseconds=15), LOCAL, IN, SOURCE, DESTINATION, current_id, 1024, TER_ID)
-    df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
-
-    current_id += 1
-    current_timestamp += datetime.timedelta(microseconds=step_size)
+# step_size = 293504 / 72
+# for i in range(72):
+#     packet = create_packet(current_timestamp, REMOTE, OUT, SOURCE, DESTINATION, current_id, 1024, TER_ID)
+#     df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
+#     packet = create_packet(current_timestamp + datetime.timedelta(milliseconds=15), LOCAL, IN, SOURCE, DESTINATION, current_id, 1024, TER_ID)
+#     df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
+#
+#     current_id += 1
+#     current_timestamp += datetime.timedelta(microseconds=step_size)
 
 # close packet
-current_timestamp = current_timestamp - datetime.timedelta(microseconds=step_size) + datetime.timedelta(milliseconds=15)
+current_timestamp = current_timestamp - datetime.timedelta(microseconds=step_size) + datetime.timedelta(milliseconds=300)
 packet = create_packet(current_timestamp, LOCAL, OUT, SOURCE, DESTINATION, 1, 32, TER_ID)
 df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
 current_timestamp += datetime.timedelta(milliseconds=15)
@@ -120,7 +120,7 @@ IMG_WIDTH = 1250
 IMG_HEIGHT = 2000
 
 #us_to_height = IMG_HEIGHT / diff_timestamp
-us_to_height = IMG_HEIGHT / 1204000
+us_to_height = IMG_HEIGHT / 400000
 
 PADDING_LEFT = 250
 PADDING_RIGHT = 50

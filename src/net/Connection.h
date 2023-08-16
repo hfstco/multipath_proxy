@@ -169,7 +169,7 @@ namespace net {
         }
 
         virtual ~Connection() {
-            DLOG(INFO) << ToString() << ".~Connection()";
+            //DLOG(INFO) << ToString() << ".~Connection()";
 
             // remove from global connections
             context::Context::GetDefaultContext().connections()->Erase(this);
@@ -177,20 +177,20 @@ namespace net {
 
     protected:
         explicit Connection(SA peeraddr) : Connection() {
-            DLOG(INFO) << "Connection(peeraddr=" << peeraddr.ToString() << ") * " << ToString();
+            //DLOG(INFO) << "Connection(peeraddr=" << peeraddr.ToString() << ") * " << ToString();
 
             S::Connect(peeraddr);
         }
 
         Connection(SA peeraddr, SA sockaddr) : Connection() {
-            DLOG(INFO) << "Connection(peeraddr=" << peeraddr.ToString() << ", sockaddr=" << sockaddr.ToString() << ") * " << ToString();
+            //DLOG(INFO) << "Connection(peeraddr=" << peeraddr.ToString() << ", sockaddr=" << sockaddr.ToString() << ") * " << ToString();
 
             S::Bind(peeraddr);
             S::Connect(peeraddr);
         };
 
         explicit Connection(int fd) : S(fd) {
-            DLOG(INFO) << "Connection(fd=" + std::to_string(fd) + ") * " << ToString();
+            //DLOG(INFO) << "Connection(fd=" + std::to_string(fd) + ") * " << ToString();
 
             // add to global connections
             context::Context::GetDefaultContext().connections()->Insert(this);
