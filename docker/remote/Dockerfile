@@ -57,7 +57,7 @@ RUN pip3 install gprof2dot
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y gperf google-perftools libgoogle-perftools-dev
 
 # copy mpp to container
-COPY src/ /opt/mpp/
+COPY / /opt/mpp/
 # compile mpp
 WORKDIR /opt/mpp/
 RUN cmake .
