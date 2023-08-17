@@ -56,6 +56,8 @@ RUN pip3 install gprof2dot
 COPY / /opt/mpp/
 # compile mpp
 WORKDIR /opt/mpp/
+RUN cmake .
+RUN make
 
 # entrypoint
 COPY docker/local/config/entrypoint.sh /entrypoint.sh

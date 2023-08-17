@@ -60,5 +60,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y gperf google-perftools lib
 COPY src/ /opt/mpp/
 # compile mpp
 WORKDIR /opt/mpp/
+RUN cmake .
+RUN make
 
 ENTRYPOINT ["/entrypoint.sh"]
