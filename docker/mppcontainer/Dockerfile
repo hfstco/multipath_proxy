@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
 # update
 RUN DEBIAN_FRONTEND=noninteractive apt-get update -y
