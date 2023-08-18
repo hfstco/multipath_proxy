@@ -332,7 +332,7 @@ namespace net {
                 }
             }*/
 
-            usleep(168); // 50MBit/s / 8 = 6.25 MB/s = 6250000byte/s / 1056 = ~5919 packet/s = 1 packet every 0.168 ms = 168 us
+            std::this_thread::sleep_for(std::chrono::microseconds(168)); // 50MBit/s / 8 = 6.25 MB/s = 6250000byte/s / 1056 = ~5919 packet/s = 1 packet every 0.168 ms = 168 us
         }
 
         // send to socket

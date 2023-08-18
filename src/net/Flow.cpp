@@ -46,6 +46,8 @@ namespace net {
     }
 
     void Flow::RecvFromConnection() {
+        connection_->Poll(POLLIN | POLLRDHUP | POLLHUP, -1);
+
         // preload stop
         if (byteSize() >= 4500000) {
             usleep(168);
