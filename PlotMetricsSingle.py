@@ -28,6 +28,11 @@ sns.lineplot(x='timestamp',
              hue='fd',
              data=df,
              palette='Set1')
+# get handles
+handles, labels = axs.get_legend_handles_labels()
+# use them in the legend
+axs.legend(handles[0:10], labels[0:10], title="fd")
+
 axs.set_title(args.type)
 
 

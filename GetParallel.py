@@ -15,7 +15,7 @@ args = parser.parse_args()
 dataFrame = pandas.DataFrame(columns=['url', 'byteSize', 'duration'])
 
 async def get(url, session):
-    async with session.get(url) as response:
+    async with session.get(url, timeout=None) as response:
         start = time.time()
         result = await response.read()
         duration = time.time() - start;
@@ -25,7 +25,8 @@ async def get(url, session):
 
 async def main():
     connector = aiohttp.TCPConnector(limit=5000)
-    async with aiohttp.ClientSession(connector=connector) as session:
+    timeout = aiohttp.ClientTimeout(total=None,sock_connect=None,sock_read=None)
+    async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
         tasks = []
         for number in range(0, int(args.count)):
             url = args.url

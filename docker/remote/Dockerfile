@@ -61,6 +61,6 @@ COPY / /opt/mpp/
 # compile mpp
 WORKDIR /opt/mpp/
 RUN cmake .
-RUN make
+RUN make -j 4
 
 ENTRYPOINT ["/entrypoint.sh"]
