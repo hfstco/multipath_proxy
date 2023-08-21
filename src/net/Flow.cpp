@@ -13,7 +13,7 @@
 #include "TER.h"
 #include "SAT.h"
 #include "QuicConnection.h"
-#include "../backlog/Backlog.h"
+#include "../backlog/ChunkMap.h"
 #include "QuicStream.h"
 
 
@@ -23,13 +23,10 @@ namespace net {
                                                                                                                              _destination(destination), // destination of Flow
                                                                                                                              _connection(tcpConnection), // connection to endpoint (local -> source, remote -> destination)
                                                                                                                              _rxBacklog(backlog::Backlog()), // incoming backlog
-                                                                                                                             _txBacklog(backlog::Backlog(false)), // outgoing backlog
+                                                                                                                             _txChunkMap(backlog::ChunkMap()), // outgoing backlog
                                                                                                                              _recvFromConnectionLooper([this] { RecvFromConnection(); }), // loop for RecvFromConnection() (own thread)
                                                                                                                              _sendToConnectionLooper([this] { SendToConnection(); }) { // loop for RecvFromConnection() (own thread)
         LOG(INFO) << "Flow(" << _source.ToString() << "|" << _destination.ToString() << ", " << tcpConnection->ToString() << ")";
-
-        _recvFromConnectionLooper.Start();
-        _sendToConnectionLooper.Start();
     }
 
     Flow *Flow::make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcpConnection) {
@@ -49,10 +46,13 @@ namespace net {
     }
 
     bool Flow::useSatellite() {
-        return _useSatellite.test();
+        return _useSatellite.load();
     }
 
     void Flow::RecvFromConnection() {
+        // wait for new data
+        _connection->Poll(POLLIN | POLLHUP | POLLRDHUP, -1);
+
         // preload stop
         if (_rxBacklog.size() >= 4500000) {
             return;
@@ -60,36 +60,41 @@ namespace net {
 
         // read available data
         ssize_t bytes_read = 0;
-        unsigned char *buffer = static_cast<unsigned char *>(malloc(1024));
+        auto *buffer = static_cast<unsigned char *>(malloc(1024));
         try {
             bytes_read = _connection->Recv(buffer, 1024, 0);
-            //LOG(INFO) << _connection->ToString() << " -> READ " << bytes_read << "bytes";
-        } catch (Exception e) {
+        } catch (Exception &e) {
             LOG(INFO) << e.what();
         }
 
         // socket closed
         if (bytes_read == 0) {
             _recvFromConnectionLooper.Stop();
-            _closed.test_and_set();
+            _closed.store(true);
         }
 
-        //LOG(INFO) << _connection->ToString() << " -> " << flowPacket->ToString();
-
-        // insert package to toBond_ queue
-        backlog::Chunk *chunk = new backlog::Chunk(buffer, bytes_read, _rxOffset.fetch_add(bytes_read));
+        // insert chunk into backlog
+        auto *chunk = new backlog::Chunk();
+        chunk->data = buffer;
+        chunk->size = bytes_read;
+        chunk->offset = _rxOffset.fetch_add(bytes_read);
         _rxBacklog.Insert(chunk);
 
-
+        if((_rxBacklog.size() < 2000 || backlog::TotalBacklog::size() < 74219 || chunk->offset == 0) && !_useSatellite.load()) {
+            _terTxStream->MarkActiveStream();
+        } else {
+            _useSatellite.store(true);
+            _satTxStream->MarkActiveStream();
+        }
     }
 
     void Flow::SendToConnection() {
         // try to get next package
-        backlog::Chunk *chunk = _txBacklog.Next(1024); // TODO buffer size
+        backlog::Chunk *chunk = _txChunkMap.Next(1024); // TODO buffer size
 
         // next packet not available
         if (chunk == nullptr) {
-            usleep(10); // TODO blocking queue?
+            usleep(100); // TODO blocking queue?
             return;
         }
 
@@ -133,16 +138,28 @@ namespace net {
         return "Flow[source=" + _source.ToString() + ", destination=" + _destination.ToString() + "]";
     }
 
-    void Flow::Insert(backlog::Chunk *chunk) {
-        _txBacklog.Insert(chunk);
-    }
+    void Flow::MakeActiveFlow(int isActive) {
+        assert(_terTxStream && _satTxStream);
 
-    backlog::Chunk *Flow::Next(uint64_t max) {
-        return _rxBacklog.Next(max);
+        if (isActive) {
+            _recvFromConnectionLooper.Start();
+            _sendToConnectionLooper.Start();
+        } else {
+            _recvFromConnectionLooper.Stop();
+            _sendToConnectionLooper.Stop();
+        }
     }
 
     backlog::Backlog &Flow::Backlog() {
         return _rxBacklog;
+    }
+
+    backlog::Backlog &Flow::rx() {
+        return _rxBacklog;
+    }
+
+    backlog::ChunkMap &Flow::tx() {
+        return _txChunkMap;
     }
 
 } // net

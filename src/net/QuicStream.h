@@ -34,14 +34,15 @@ namespace net {
         [[nodiscard]] uint64_t remoteStreamError() const;
         [[nodiscard]] Flow *flow() const;
 
-        void MarkActiveStream();
+        void MarkActiveStream(int isActive = 1);
+        void ResetStream(uint64_t local_stream_error = 0);
 
         [[nodiscard]] std::string ToString() const;
 
         virtual ~QuicStream();
 
     protected:
-        QuicStream(picoquic_cnx_t *quic_cnx, uint64_t id);
+        QuicStream(picoquic_cnx_t *quic_cnx, uint64_t id, net::Flow *flow);
 
     private:
         picoquic_cnx_t *_quic_cnx;
@@ -56,8 +57,6 @@ namespace net {
         std::atomic<bool> _flowHeaderSent = false;
         unsigned char *_rxBuffer = static_cast<unsigned char *>(malloc(1500));
         uint64_t _rxBufferSize = 0;
-        backlog::Chunk *_chunkBuffer = nullptr;
-        uint64_t _chunkBufferSize = 0;
     };
 
 } // net

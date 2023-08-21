@@ -12,7 +12,6 @@
 namespace packet {
 
         struct __attribute__((packed)) FlowHeader {
-        public:
             struct in_addr sourceIP;           // 4
             struct in_addr destinationIP;      // 8
             in_port_t sourcePort;              // 10

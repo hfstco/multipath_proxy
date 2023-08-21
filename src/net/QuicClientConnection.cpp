@@ -114,10 +114,10 @@ namespace net {
         while(!_ready.test()) {}
     }
 
-    QuicStream *QuicClientConnection::CreateStream(bool bidirectional) {
+    QuicStream *QuicClientConnection::CreateNewStream(bool bidirectional, net::Flow *flow) {
         std::lock_guard lock(_streams_mutex);
 
-        LOG(INFO) << ToString() << ".ActivateStream()";
+        LOG(INFO) << ToString() << ".CreateStream()";
 
         uint64_t stream_id = -1;
         for (uint64_t i = bidirectional ? 0 : 2; i < _streams.size(); i += 4) {
@@ -132,7 +132,7 @@ namespace net {
             return nullptr;
         }
 
-        auto *quicStream = new QuicStream(_quic_cnx, stream_id);
+        auto *quicStream = new QuicStream(_quic_cnx, stream_id, flow);
         _streams[stream_id] = quicStream;
         return quicStream;
     }
@@ -145,7 +145,7 @@ namespace net {
         auto* quicStream = (QuicStream*)v_stream_ctx;
 
         std::string connectionName = (quicClientConnection->_is_sat) ? "SAT" : "TER";
-        LOG(INFO) << connectionName <<  "::callback(cnx=" << cnx << ", stream_id=" << stream_id << ", bytes=[skip], length=" << length << ", fin_or_event=" << fin_or_event << ", callback_ctx=" << callback_ctx << ", v_stream_ctv=" << v_stream_ctx << ")";
+        //LOG(INFO) << connectionName <<  "::callback(cnx=" << cnx << ", stream_id=" << stream_id << ", bytes=[skip], length=" << length << ", fin_or_event=" << fin_or_event << ", callback_ctx=" << callback_ctx << ", v_stream_ctv=" << v_stream_ctx << ")";
 
         if (quicClientConnection == nullptr) {
             /* This should never happen, because the callback context for the client is initialized
@@ -163,11 +163,12 @@ namespace net {
                     // create stream if not exists
                     if (quicStream == nullptr) {
                         // create rx stream
+                        assert(quicClientConnection->_streams[stream_id - 1]->_flow != nullptr);
+
                         // the other flow is created as soon as a packet is received on the other connection
                         net::Flow *flow = quicClientConnection->_streams[stream_id - 1]->_flow;
 
-                        quicStream = quicClientConnection->ActivateStream(stream_id);
-                        quicStream->_flow = flow;
+                        quicStream = quicClientConnection->CreateStream(stream_id, flow);
                     }
 
                     assert(quicStream != nullptr);
@@ -175,6 +176,7 @@ namespace net {
 
                     assert(length < 1500 - quicStream->_rxBufferSize); // TODO rxBuffer size
 
+                    // copy to rx buffer
                     memcpy(quicStream->_rxBuffer + quicStream->_rxBufferSize, bytes, length);
                     quicStream->_rxBufferSize += length;
 
@@ -197,11 +199,14 @@ namespace net {
                     chunk->data = static_cast<unsigned char *>(malloc(chunk->size));
                     memcpy(chunk->data, quicStream->_rxBuffer + sizeof(packet::ChunkHeader), chunk->size);
 
-                    quicStream->flow()->Insert(chunk);
+                    // write chunk to tx queue
+                    quicStream->flow()->tx().Insert(chunk);
+
+                    // reset rx buffer
                     quicStream->_rxBufferSize = 0;
 
-                    // TODO shutdown flow
-                    //delete quicStream;
+                    LOG(INFO) << "RECV " << chunkHeader.ToString();
+
                     break;
                 }
                 case picoquic_callback_prepare_to_send: {
@@ -211,8 +216,13 @@ namespace net {
                             /* Decidedly unexpected */
                             return -1;
                         } else {
+                            LOG(INFO) << "BACKLOG: totalBacklog=" << backlog::TotalBacklog::size() << ", backlog=" << quicStream->flow()->Backlog().size();
+
                             // send FlowHeader first
                             if (!quicStream->_flowHeaderSent.load()) {
+
+                                assert(length >= sizeof(packet::FlowHeader));
+
                                 uint8_t *buffer;
                                 buffer = picoquic_provide_stream_data_buffer(bytes, sizeof(packet::FlowHeader), 0, 1);
                                 if (buffer != nullptr) {
@@ -235,27 +245,31 @@ namespace net {
 
                             // skip if wrong connection
                             if (quicClientConnection->_is_sat) {
-                                if (!quicStream->_flow->_useSatellite.test()) {
-                                    if (backlog::TotalBacklog < 74219 || quicStream->flow()->_rxBacklog.size() <= 2000) {
-                                        //LOG(INFO) << "SKIP " << "SAT";
+                                if (!quicStream->_flow->_useSatellite.load()) {
+                                    if (backlog::TotalBacklog::size() < 74219 || quicStream->flow()->Backlog().size() <= 2000) {
+                                        LOG(INFO) << "SKIP " << "SAT";
                                         picoquic_provide_stream_data_buffer(bytes, 0, 0, 0);
+                                        TER->_streams[stream_id]->MarkActiveStream();
                                         break;
                                     }
                                 }
 
-                                quicStream->flow()->_useSatellite.test_and_set();
+                                quicStream->flow()->_useSatellite.store(true);
                             } else {
-                                if (quicStream->flow()->useSatellite() || (backlog::TotalBacklog >= 75000 && quicStream->flow()->Backlog().size() > 2000)) {
-                                    //LOG(INFO) << "SKIP " << "TER";
+                                if (quicStream->flow()->useSatellite() || (backlog::TotalBacklog::size() >= 75000 && quicStream->flow()->Backlog().size() > 2000)) {
+                                    LOG(INFO) << "SKIP " << "TER";
                                     picoquic_provide_stream_data_buffer(bytes, 0, 0, 0);
+                                    SAT->_streams[stream_id]->MarkActiveStream();
                                     break;
                                 }
                             }
 
+                            assert(length >= sizeof(packet::ChunkHeader));
+
                             // get chunk
-                            backlog::Chunk *chunk = quicStream->flow()->Next(length - sizeof(packet::ChunkHeader));
+                            backlog::Chunk *chunk = quicStream->flow()->rx().Next(length - sizeof(packet::ChunkHeader));
                             if (chunk == nullptr) {
-                                picoquic_provide_stream_data_buffer(bytes, 0, 0, 0);
+                                picoquic_provide_stream_data_buffer(bytes, 0, 0, 0); // active = 0
                                 break;
                             }
 
@@ -362,28 +376,43 @@ namespace net {
         }
         else {
             switch (cb_mode) {
-                case picoquic_packet_loop_ready:
+                case picoquic_packet_loop_ready: {
                     //LOG(ERROR) << "QuicClientConnection::loop_callback(quic=" << quic << ", cb_mode=picoquic_packet_loop_ready, cb_ctx=" << quicClientConnection->ToString() << ", callback_arg=" << callback_arg << ")";
                     LOG(INFO) << "Waiting for packets.";
+
+                    //set
+                    auto *options = static_cast<picoquic_packet_loop_options_t *>(callback_arg);
+                    int enable = 1;
+                    options->do_time_check = enable;
                     break;
-                case picoquic_packet_loop_after_receive:
+                }
+                case picoquic_packet_loop_after_receive: {
                     //LOG(ERROR) << "QuicClientConnection::loop_callback(quic=" << quic << ", cb_mode=picoquic_packet_loop_after_receive, cb_ctx=" << quicClientConnection->ToString() << ", callback_arg=" << callback_arg << ")";
                     break;
-                case picoquic_packet_loop_after_send:
+                }
+                case picoquic_packet_loop_after_send: {
                     //LOG(ERROR) << "QuicClientConnection::loop_callback(quic=" << quic << ", cb_mode=picoquic_packet_loop_after_send, cb_ctx=" << quicClientConnection->ToString() << ", callback_arg=" << callback_arg << ")";
                     if (quicClientConnection->disconnected()) {
                         ret = PICOQUIC_NO_ERROR_TERMINATE_PACKET_LOOP;
                     }
                     break;
-                case picoquic_packet_loop_port_update:
+                }
+                case picoquic_packet_loop_port_update: {
                     //LOG(ERROR) << "QuicClientConnection::loop_callback(quic=" << quic << ", cb_mode=picoquic_packet_loop_port_update, cb_ctx=" << quicClientConnection->ToString() << ", callback_arg=" << callback_arg << ")";
                     break;
-                case picoquic_packet_loop_time_check:
-
-                default:
+                }
+                case picoquic_packet_loop_time_check: {
+                    auto *arg = static_cast<packet_loop_time_check_arg_t *>(callback_arg);
+                    if (arg->delta_t > 100) {
+                        arg->delta_t = 100;
+                    }
+                    break;
+                }
+                default: {
                     //LOG(ERROR) << "QuicClientConnection::loop_callback(quic=" << quic << ", cb_mode=default, cb_ctx=" << quicClientConnection->ToString() << ", callback_arg=" << callback_arg << ")";
                     ret = PICOQUIC_ERROR_UNEXPECTED_ERROR;
                     break;
+                }
             }
         }
 

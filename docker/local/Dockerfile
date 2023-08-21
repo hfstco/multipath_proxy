@@ -57,20 +57,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y gperf google-perftools lib
 # wireshark/tcpdump
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y tcpdump
 
-# copy mpp to container
-COPY / /opt/mpp/
-
-# ev
-#RUN apt install -y libev-dev
-
-#quiche
-#WORKDIR /root
-#RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-#ENV PATH="/root/.cargo/bin:${PATH}"
-#RUN git clone --recursive https://github.com/cloudflare/quiche
-#WORKDIR /root/quiche
-#RUN cargo build --features ffi
-
 # picotls
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y pkg-config libssl-dev faketime libscope-guard-perl libtest-tcp-perl
 WORKDIR /root
@@ -91,6 +77,9 @@ WORKDIR /root/picoquic
 RUN cmake .
 RUN make
 RUN make install
+
+# copy mpp to container
+COPY / /opt/mpp/
 
 # entrypoint
 COPY docker/local/config/entrypoint.sh /entrypoint.sh

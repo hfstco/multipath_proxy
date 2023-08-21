@@ -38,17 +38,17 @@ namespace net {
         return _applicationError;
     }
 
-    QuicStream *QuicConnection::ActivateStream(uint64_t streamId) {
+    QuicStream *QuicConnection::CreateStream(uint64_t streamId, net::Flow *flow) {
         std::lock_guard lock(_streams_mutex);
 
-        LOG(ERROR) << ToString() << ".ActivateStream(" << streamId << ")";
+        LOG(ERROR) << ToString() << ".CreateStream(" << streamId << ")";
 
         if (_streams[streamId] != nullptr) {
             LOG(ERROR) << "Stream exists";
             return nullptr;
         }
 
-        auto *quicStream = new QuicStream(_quic_cnx, streamId);
+        auto *quicStream = new QuicStream(_quic_cnx, streamId, flow);
         _streams[streamId] = quicStream;
         return quicStream;
     }

@@ -33,8 +33,8 @@ namespace net {
         friend class QuicServerConnection;
     public:
         // https://datatracker.ietf.org/doc/html/rfc9000#name-stream-types-and-identifier
-        virtual QuicStream *CreateStream(bool unidirectional) = 0;
-        QuicStream *ActivateStream(uint64_t streamId);
+        virtual QuicStream *CreateNewStream(bool unidirectional, net::Flow *flow) = 0;
+        QuicStream *CreateStream(uint64_t streamId, net::Flow *flow);
         bool StreamExists(uint64_t streamId);
         void CloseStream(uint64_t streamId);
 

@@ -19,7 +19,7 @@ namespace net {
     public:
         QuicClientConnection(std::string server_name, int port, bool is_sat, std::string ticket_store_name, std::string token_store_name);
 
-        QuicStream *CreateStream(bool bidirectional) override;
+        QuicStream *CreateNewStream(bool bidirectional, net::Flow *flow) override;
 
         std::string ToString() override;
 

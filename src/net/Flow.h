@@ -10,6 +10,7 @@
 
 #include "SockAddr.h"
 #include "../worker/Looper.h"
+#include "../backlog/ChunkMap.h"
 #include "../backlog/Backlog.h"
 
 namespace net {
@@ -37,14 +38,14 @@ namespace net {
         size_t size();
         bool useSatellite();
 
+        backlog::Backlog &rx();
         backlog::Backlog &Backlog();
+        backlog::ChunkMap &tx();
 
-        // tcp connection
+        void MakeActiveFlow(int isActive = 1);
+
         void RecvFromConnection();
         void SendToConnection();
-        // quic connection
-        void Insert(backlog::Chunk *chunk);
-        backlog::Chunk *Next(uint64_t max);
 
         std::string ToString();
 
@@ -61,12 +62,12 @@ namespace net {
         net::QuicStream *_terTxStream;
         net::QuicStream *_satTxStream;
 
-        std::atomic_flag _useSatellite;
-        std::atomic_flag _closed;
+        std::atomic<bool> _useSatellite;
+        std::atomic<bool> _closed;
 
         std::atomic<uint64_t> _rxOffset;
         backlog::Backlog _rxBacklog;
-        backlog::Backlog _txBacklog;
+        backlog::ChunkMap _txChunkMap;
 
         worker::Looper _recvFromConnectionLooper;
         worker::Looper _sendToConnectionLooper;

@@ -22,7 +22,7 @@ namespace net {
     public:
         explicit QuicServerConnection(int port, bool is_sat);
 
-        QuicStream *CreateStream(bool bidirectional) override;
+        QuicStream *CreateNewStream(bool bidirectional, net::Flow *flow) override;
 
         std::string ToString() override;
 

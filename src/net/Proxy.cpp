@@ -42,14 +42,11 @@ namespace net {
             Flow *flow = Flow::make(source, destination, tcpConnection);
             // create Streams for Flow
             // TODO check if streams + 1 nullptr
-            QuicStream *terQuicStream = TER->CreateStream(false);
-            terQuicStream->_flow = flow;
-            terQuicStream->_flow->_terTxStream = terQuicStream;
-            terQuicStream->MarkActiveStream();
-            QuicStream *satQuicStream = SAT->CreateStream(false);
-            satQuicStream->_flow = flow;
-            satQuicStream->_flow->_satTxStream = satQuicStream;
-            satQuicStream->MarkActiveStream();
+            QuicStream *terQuicStream = TER->CreateNewStream(false, flow);
+            flow->_terTxStream = terQuicStream;
+            QuicStream *satQuicStream = SAT->CreateNewStream(false, flow);
+            flow->_satTxStream = satQuicStream;
+            flow->MakeActiveFlow();
         } catch (Exception e) {
             LOG(ERROR) << e.what();
         }

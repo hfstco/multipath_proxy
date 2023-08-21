@@ -1,5 +1,5 @@
 # Project exclude paths
-/third-party/
+/venv/
 /cmake-build-debug-local/
 /cmake-build-debug-remote/
 /cmake-build-release-local/

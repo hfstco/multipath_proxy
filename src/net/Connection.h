@@ -11,7 +11,6 @@
 #include <atomic>
 
 #include "TcpSocket.h"
-#include "IConnection.h"
 #include "../args/ARGS.h"
 
 
@@ -29,7 +28,7 @@ namespace net {
     }
 
     template <IsSocket S, IsSockAddr SA>
-    class Connection : public S, public IConnection {
+    class Connection : public S {
         friend Listener<S, SA>;
 
     public:
@@ -37,7 +36,7 @@ namespace net {
             return S::fd();
         }
 
-        ssize_t Recv(unsigned char *data, size_t size, int flags) override {
+        ssize_t Recv(unsigned char *data, size_t size, int flags) {
             std::lock_guard lock(recvMutex_);
 
             ssize_t bytesRead = S::Recv(data, size, flags);
@@ -54,7 +53,7 @@ namespace net {
             return recvMutex_;
         }
 
-        ssize_t Send(unsigned char *data, size_t size, int flags) override {
+        ssize_t Send(unsigned char *data, size_t size, int flags) {
             std::lock_guard lock(sendMutex_);
 
             ssize_t bytesWritten = S::Send(data, size, flags | MSG_NOSIGNAL);
@@ -88,7 +87,7 @@ namespace net {
             return S::template IoCtl<T>(request);
         }
 
-        uint64_t sendBytes() override {
+        uint64_t sendBytes() {
             if (!args::METRICS_ENABLED) {
                 return 0;
             }
@@ -96,7 +95,7 @@ namespace net {
             return sendBytes_.load();
         }
 
-        float sendDataRate() override {
+        float sendDataRate() {
             if (!args::METRICS_ENABLED) {
                 return 0;
             }
@@ -119,7 +118,7 @@ namespace net {
             return bytesSinceLastTimeStamp / timeSinceLastTimestamp / 1048576.0;
         }
 
-        uint64_t recvBytes() override {
+        uint64_t recvBytes() {
             if (!args::METRICS_ENABLED) {
                 return 0;
             }
@@ -127,7 +126,7 @@ namespace net {
             return recvBytes_.load();
         }
 
-        float recvDataRate() override {
+        float recvDataRate() {
             if (!args::METRICS_ENABLED) {
                 return 0;
             }
@@ -148,11 +147,11 @@ namespace net {
             return datarate;
         }
 
-        int sendBufferSize() override {
+        int sendBufferSize() {
             return IoCtl<int>(TIOCOUTQ);
         }
 
-        int recvBufferSize() override {
+        int recvBufferSize() {
             return IoCtl<int>(FIONREAD);
         }
 

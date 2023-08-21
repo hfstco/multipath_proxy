@@ -1,73 +1,30 @@
 //
-// Created by Matthias Hofstätter on 03.08.23.
+// Created by Matthias Hofstätter on 20.08.23.
 //
 
 #ifndef MPP_BACKLOG_H
 #define MPP_BACKLOG_H
 
-#include <cstdint>
-#include <mutex>
-#include <map>
-#include <atomic>
+#include "ChunkMap.h"
 
 namespace backlog {
 
-    struct Chunk {
-        unsigned char *data;
-        uint64_t size;
-        uint64_t offset;
+    class Backlog : public ChunkMap {
+    public:
+        void Insert(Chunk *chunk) override;
+        Chunk *Next(uint64_t max) override;
 
-        Chunk() :   data(),
-                    size(0),
-                    offset(0) {
-        }
-
-        Chunk(unsigned char *data, uint64_t size, uint64_t offset) :    data(data),
-                                                                        size(size),
-                                                                        offset(offset) {
-        }
-
-        std::string ToString() {
-            return "Chunk[offset=" + std::to_string(offset) + ", size=" + std::to_string(size) + "]";
-        }
-
-        virtual ~Chunk() {
-            if (data) {
-                free(data);
-            }
-        }
+        ~Backlog() override;
     };
 
-    class Backlog {
+    class TotalBacklog {
+        friend class Backlog;
     public:
-        explicit Backlog(bool is_rx); // outgoing backlogs do not affect totalBacklog
-        Backlog();
-
-        uint64_t size();
-        uint64_t offset();
-        uint64_t available();
-
-        bool Empty();
-        void Reset();
-
-        void Insert(Chunk *chunk);
-        Chunk *Next(uint64_t max = std::numeric_limits<uint64_t>::max());
-
-        virtual ~Backlog();
+        static uint64_t size();
 
     private:
-        std::map<uint64_t, Chunk *> _chunks;
-        std::mutex _mutex;
-
-        std::atomic<uint64_t> _size = 0;
-        std::atomic<uint64_t> _offset = 0;
-        std::atomic<uint64_t> _available = 0;
-        const bool _is_rx = false;
-
-        // TODO add source, dest and compare on insert
+        inline static std::atomic<uint64_t> _size = 0;
     };
-
-    inline std::atomic<uint64_t> TotalBacklog = 0;
 
 } // backlog
 
