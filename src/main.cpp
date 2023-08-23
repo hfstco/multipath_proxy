@@ -27,28 +27,19 @@ int main(int argc, char *argv[]) {
     args::init(argc, argv);
 
     if (args::MODE == args::mode::LOCAL) { // local
-        if(args::TER_ENABLED) {
-            net::ipv4::SockAddr_In terSockAddr = net::ipv4::SockAddr_In(args::TER_STRING);
-            TER = new net::QuicClientConnection(terSockAddr.ip(), terSockAddr.port(), false, "ter_ticket_store.bin", "ter_token_store.bin");
-        }
-        if(args::SAT_ENABLED) {
-            net::ipv4::SockAddr_In satSockAddr = net::ipv4::SockAddr_In(args::SAT_STRING);
-            SAT = new net::QuicClientConnection(satSockAddr.ip(), satSockAddr.port(), true, "sat_ticket_store.bin", "sat_token_store.bin");
-        }
+        net::ipv4::SockAddr_In terSockAddr = net::ipv4::SockAddr_In(args::TER_STRING);
+        TER = new net::QuicClientConnection(terSockAddr.ip(), terSockAddr.port(), false, "ter_ticket_store.bin", "ter_token_store.bin");
+        net::ipv4::SockAddr_In sat_from_sockaddr = net::ipv4::SockAddr_In("172.30.20.2:6001");
+        net::ipv4::SockAddr_In sat_to_sockaddr = net::ipv4::SockAddr_In("172.30.21.3:6000");
+        int ret = ((net::QuicClientConnection *)TER)->probe_new_path((struct sockaddr*)&sat_from_sockaddr, (struct sockaddr*)&sat_to_sockaddr);
 
         net::Proxy proxy = net::Proxy(net::ipv4::SockAddr_In(args::PROXY_STRING));
 
         //exit when key pressed
         std::cin.ignore();
     } else { // remote
-        if(args::TER_ENABLED) {
-            net::ipv4::SockAddr_In terSockAddr = net::ipv4::SockAddr_In(args::TER_STRING);
-            TER = new net::QuicServerConnection(terSockAddr.port(), false);
-        }
-        if(args::SAT_ENABLED) {
-            net::ipv4::SockAddr_In satSockAddr = net::ipv4::SockAddr_In(args::SAT_STRING);
-            SAT = new net::QuicServerConnection(satSockAddr.port(), true);
-        }
+        net::ipv4::SockAddr_In terSockAddr = net::ipv4::SockAddr_In(args::TER_STRING);
+        TER = new net::QuicServerConnection(terSockAddr.port(), false);
 
         //exit when key pressed
         std::cin.ignore();

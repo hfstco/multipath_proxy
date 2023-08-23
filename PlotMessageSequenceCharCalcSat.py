@@ -130,19 +130,19 @@ for index, row in df[df["type"] == "local"].iterrows():
     packet_arrival = packet_arrival.to_dict()
     if row["direction"] == "out":
         if row["connection"] == TER_ID: # ter packet
-            color = (0, 255, 0)
+            color = (40, 186, 90)
         else: # sat packet
-            color = (255, 0, 0)
+            color = (250, 0, 36)
         if row["size"] == 32: # close packet
-            color = (0, 0, 255)
+            color = (26, 136, 190)
         cv2.arrowedLine(img, (PADDING_LEFT, PADDING_TOP + int((row["timestamp"] - min_timestamp) * us_to_height)), (IMG_WIDTH - 2, PADDING_TOP + int((packet_arrival["timestamp"][0] - min_timestamp) * us_to_height)), color, 2, tipLength=0.01)
     else:
         if row["connection"] == SAT_ID:
-            color = (255, 0, 0)
+            color = (250, 0, 36)
         else:
-            color = (0, 255, 0)
+            color = (40, 186, 90)
         if row["size"] == 32:
-            color = (0, 0, 255)
+            color = (26, 136, 190)
         cv2.arrowedLine(img, (IMG_WIDTH - 2, PADDING_TOP + int((packet_arrival["timestamp"][0] - min_timestamp) * us_to_height)), (PADDING_LEFT, PADDING_TOP + int((row["timestamp"] - min_timestamp) * us_to_height)), color, 2, tipLength=0.01)
 
 cv2.imshow("Test", img)

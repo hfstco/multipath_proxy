@@ -76,6 +76,8 @@ namespace net {
                 picoquic_set_default_idle_timeout(_quic, 1000000000);
                 // https://github.com/private-octopus/picoquic/blob/1e2979e8db0957c8ee798940091c4d0ef13bf8af/picoquic/picoquic.h#L1088
                 picoquic_set_default_priority(_quic, 0xA);
+                // enable path callbacks
+                picoquic_enable_path_callbacks_default(_quic, 1);
             }
         }
 
@@ -319,6 +321,18 @@ namespace net {
                     connection->_disconnected = false;
 
                     break;
+                case picoquic_callback_path_available:
+                    LOG(INFO) << "picoquic_callback_path_available";
+                    break;
+                case picoquic_callback_path_suspended:
+                    LOG(INFO) << "picoquic_callback_path_suspended";
+                    break;
+                case picoquic_callback_path_deleted:
+                    LOG(INFO) << "picoquic_callback_path_deleted";
+                    break;
+                case picoquic_callback_path_quality_changed:
+                    LOG(INFO) << "picoquic_callback_path_quality_changed";
+                    break;
                 default:
                     LOG(INFO) << "default";
                     /* unexpected -- just ignore. */
@@ -404,6 +418,14 @@ namespace net {
         }
 
         //free_context(quicClientConnection);
+    }
+
+    int QuicClientConnection::probe_new_path(const struct sockaddr *addr_from, const struct sockaddr *addr_to) {
+        return picoquic_probe_new_path(_quic_cnx, addr_from, addr_to, picoquic_get_quic_time(_quic));
+    }
+
+    int QuicClientConnection::set_stream_path_affinity(uint64_t stream_id, uint64_t unique_path_id) {
+        return picoquic_set_stream_path_affinity(_quic_cnx, stream_id, unique_path_id);
     }
 
 } // net

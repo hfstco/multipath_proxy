@@ -19,6 +19,10 @@ namespace net {
     public:
         QuicClientConnection(std::string server_name, int port, bool is_sat, std::string ticket_store_name, std::string token_store_name);
 
+        // paths
+        int probe_new_path(const struct sockaddr* addr_from, const struct sockaddr* addr_to);
+        int set_stream_path_affinity(uint64_t stream_id, uint64_t unique_path_id);
+
         std::string to_string() override;
 
         virtual ~QuicClientConnection();

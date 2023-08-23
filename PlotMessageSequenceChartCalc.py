@@ -120,7 +120,7 @@ IMG_WIDTH = 1250
 IMG_HEIGHT = 2000
 
 #us_to_height = IMG_HEIGHT / diff_timestamp
-us_to_height = IMG_HEIGHT / 1204000
+us_to_height = IMG_HEIGHT / 400000
 
 PADDING_LEFT = 250
 PADDING_RIGHT = 50
@@ -132,10 +132,10 @@ img.fill(255)
 
 # draw timestamps
 #step_timestamp = diff_timestamp / 4
-step_timestamp = 1200000 / 4
+step_timestamp = 400000 / 4
 for i in range(5):
     cv2.line(img, (PADDING_LEFT - 50, PADDING_TOP + int(i * step_timestamp * us_to_height)), (PADDING_LEFT, PADDING_TOP + int(i * step_timestamp * us_to_height)), (0, 0, 0), 2)
-    cv2.putText(img, str(int(i * step_timestamp / 1000)) + " ms", (50, PADDING_TOP + int(i * step_timestamp * us_to_height) + 8), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1, 2)
+    cv2.putText(img, str(int(i * step_timestamp / 1000)) + " ms", (50, PADDING_TOP + int(i * step_timestamp * us_to_height) + 8), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, 2)
 
 # draw vertical lines
 cv2.line(img, (PADDING_LEFT, PADDING_TOP), (PADDING_LEFT, IMG_HEIGHT + PADDING_TOP), (0, 0, 0), 2)
@@ -152,19 +152,19 @@ for index, row in df[df["type"] == "local"].iterrows():
     packet_arrival = packet_arrival.to_dict()
     if row["direction"] == "out":
         if row["connection"] == TER_ID: # ter packet
-            color = (255, 0, 0)
+            color = (40, 186, 90)
         else: # sat packet
-            color = (0, 255, 0)
+            color = (250, 0, 36)
         if row["size"] == 32: # close packet
-            color = (0, 0, 255)
+            color = (26, 136, 190)
         cv2.arrowedLine(img, (PADDING_LEFT, PADDING_TOP + int((row["timestamp"] - min_timestamp) * us_to_height)), (IMG_WIDTH - 2, PADDING_TOP + int((packet_arrival["timestamp"][0] - min_timestamp) * us_to_height)), color, 2, tipLength=0.01)
     else:
         if row["connection"] == SAT_ID:
-            color = (255, 0, 0)
+            color = (250, 0, 36)
         else:
-            color = (0, 255, 0)
+            color = (40, 186, 90)
         if row["size"] == 32:
-            color = (0, 0, 255)
+            color = (26, 136, 190)
         cv2.arrowedLine(img, (IMG_WIDTH - 2, PADDING_TOP + int((packet_arrival["timestamp"][0] - min_timestamp) * us_to_height)), (PADDING_LEFT, PADDING_TOP + int((row["timestamp"] - min_timestamp) * us_to_height)), color, 2, tipLength=0.01)
 
 cv2.imshow("Test", img)

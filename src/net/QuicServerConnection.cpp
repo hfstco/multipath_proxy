@@ -40,6 +40,8 @@ namespace net {
         picoquic_set_default_idle_timeout(_quic, 1000000000);
         // https://github.com/private-octopus/picoquic/blob/1e2979e8db0957c8ee798940091c4d0ef13bf8af/picoquic/picoquic.h#L1088
         picoquic_set_default_priority(_quic, 0xA);
+        // enable path callbacks
+        picoquic_enable_path_callbacks_default(_quic, 1);
 
         // start quic loop
         _packet_loop = std::async([this]{
@@ -306,6 +308,18 @@ namespace net {
                 // set _disconnected
                 connection->_disconnected = false;
 
+                break;
+            case picoquic_callback_path_available:
+                LOG(INFO) << "picoquic_callback_path_available";
+                break;
+            case picoquic_callback_path_suspended:
+                LOG(INFO) << "picoquic_callback_path_suspended";
+                break;
+            case picoquic_callback_path_deleted:
+                LOG(INFO) << "picoquic_callback_path_deleted";
+                break;
+            case picoquic_callback_path_quality_changed:
+                LOG(INFO) << "picoquic_callback_path_quality_changed";
                 break;
             default:
                 LOG(INFO) << "default";
