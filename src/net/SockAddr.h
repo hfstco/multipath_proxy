@@ -9,7 +9,7 @@
 #define MULTIPATH_PROXY_SOCKADDR_H
 
 #include <arpa/inet.h>
-#include <string.h>
+#include <cstring>
 #include <sstream>
 
 #include "../exception/Exception.h"
@@ -34,7 +34,7 @@ namespace net {
             this->sa_family = family;
         };
 
-        std::string ToString() {
+        std::string to_string() {
             std::stringstream stringStream;
 
             stringStream << "SA[family=";
@@ -131,7 +131,7 @@ namespace net {
                 this->sin_port = htons(port);
             }
 
-            std::string ToString() {
+            std::string to_string() {
                 return ip() + ":" + std::to_string(port());
             }
 
@@ -205,7 +205,7 @@ namespace net {
                 this->sin6_port = htons(port);
             }
 
-            std::string ToString() {
+            std::string to_string() {
                 return ip() + ":" + std::to_string(port());
             }
 

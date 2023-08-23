@@ -20,7 +20,7 @@ namespace net {
     public:
         template<IsSocket AS>
         AS *Accept(SA &addr) {
-            /*S *s = S::Accept(addr);
+            /*S *s = S::accept(addr);
             Connection<S, SA> *c = new Connection<S, SA>(s);
             delete s;
             return c;*/
@@ -29,7 +29,7 @@ namespace net {
 
         template<IsSocket AS>
         AS *Accept() {
-            /*S *s = S::Accept();
+            /*S *s = S::accept();
             Connection<S, SA> *c = new Connection<S, SA>(s);
             delete s;
             return c;*/
@@ -37,7 +37,7 @@ namespace net {
         }
 
         std::string ToString() {
-            return "Listener[fd=" + std::to_string(S::fd()) + ", sockName=" + S::GetSockName().ToString() + "]";
+            return "Listener[fd=" + std::to_string(S::fd()) + ", sockName=" + S::GetSockName().to_string() + "]";
         }
 
         void Close() {
@@ -50,7 +50,7 @@ namespace net {
 
     protected:
         Listener(SA sockaddr) : Listener() {
-            DLOG(INFO) << "Listener(sockaddr=" << sockaddr.ToString() << ") * " << ToString();
+            DLOG(INFO) << "Listener(sockaddr=" << sockaddr.to_string() << ") * " << ToString();
 
             S::Bind(sockaddr);
             S::Listen();

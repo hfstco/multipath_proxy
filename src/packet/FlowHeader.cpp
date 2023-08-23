@@ -8,8 +8,9 @@
 
 namespace packet {
 
-    std::string FlowHeader::ToString() {
-        return "FlowHeader[source=" + net::ipv4::SockAddr_In(sourceIP, sourcePort).ToString() + ", destination=" + net::ipv4::SockAddr_In(destinationIP, destinationPort).ToString() + "]";
+    std::string FlowHeader::to_string() {
+        return "FlowHeader[source=" + net::ipv4::SockAddr_In(source_ip, source_port).to_string() + ", destination=" +
+               net::ipv4::SockAddr_In(destination_ip, destination_port).to_string() + "]";
     }
 
 } // packet

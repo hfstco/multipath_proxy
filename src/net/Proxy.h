@@ -31,20 +31,18 @@ namespace net {
     class Proxy {
     public:
         Proxy() = delete;
-        Proxy(net::ipv4::SockAddr_In sockAddrIn);
+        Proxy(net::ipv4::SockAddr_In sock_addr_in);
 
-        void Accept();
+        void accept();
 
-        std::string ToString();
+        std::string to_string();
 
         virtual ~Proxy();
 
     private:
-        net::ipv4::TcpListener *_tcpListener;
-        net::QuicConnection *_TER;
-        net::QuicConnection *_SAT;
+        net::ipv4::TcpListener *_tcp_listener;
 
-        worker::Looper _acceptLooper;
+        worker::Looper _accept_looper;
     };
 
 } // net

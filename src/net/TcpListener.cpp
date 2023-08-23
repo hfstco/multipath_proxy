@@ -9,7 +9,7 @@ namespace net {
     namespace ipv4 {
 
         TcpListener::TcpListener(SockAddr_In sockaddr) : Listener<TcpSocket, SockAddr_In>(sockaddr) {
-            DLOG(INFO) << "TcpListener(" << sockaddr.ToString() << ") * " + ToString();
+            DLOG(INFO) << "TcpListener(" << sockaddr.to_string() << ") * " + ToString();
         }
 
         TcpListener *TcpListener::make(SockAddr_In sockaddr) {
@@ -17,7 +17,7 @@ namespace net {
         }
 
         TcpConnection *TcpListener::Accept() { // to keep TcpConnection(SA) constructor protected
-            /*TcpSocket *tcpSocket = Listener<TcpSocket, SockAddr_In>::Accept();
+            /*TcpSocket *tcpSocket = Listener<TcpSocket, SockAddr_In>::accept();
             TcpConnection *tcpConnection = new TcpConnection(tcpSocket);
             delete tcpSocket;
             return tcpConnection;*/
@@ -25,7 +25,7 @@ namespace net {
         }
 
         TcpConnection *TcpListener::Accept(SockAddr_In &addr) { // to keep TcpConnection(SA) constructor protected
-            /*TcpSocket *tcpSocket = Listener<TcpSocket, SockAddr_In>::Accept(addr);
+            /*TcpSocket *tcpSocket = Listener<TcpSocket, SockAddr_In>::accept(addr);
             TcpConnection *tcpConnection = new TcpConnection(tcpSocket);
             delete tcpSocket;
             return tcpConnection;*/
@@ -40,7 +40,7 @@ namespace net {
     namespace ipv6 {
 
         TcpListener::TcpListener(SockAddr_In6 sockaddr) : Listener<TcpSocket, SockAddr_In6>(sockaddr) {
-            DLOG(INFO) << "TcpListener(" << sockaddr.ToString() << ") * " + ToString();
+            DLOG(INFO) << "TcpListener(" << sockaddr.to_string() << ") * " + ToString();
         }
 
         TcpListener *TcpListener::make(SockAddr_In6 sockaddr) {
@@ -48,7 +48,7 @@ namespace net {
         }
 
         TcpConnection *TcpListener::Accept() { // to keep TcpConnection(SA) constructor protected
-            /*TcpSocket *tcpSocket = Listener<TcpSocket, SockAddr_In>::Accept();
+            /*TcpSocket *tcpSocket = Listener<TcpSocket, SockAddr_In>::accept();
             TcpConnection *tcpConnection = new TcpConnection(tcpSocket);
             delete tcpSocket;
             return tcpConnection;*/
@@ -56,7 +56,7 @@ namespace net {
         }
 
         TcpConnection *TcpListener::Accept(SockAddr_In6 &addr) { // to keep TcpConnection(SA) constructor protected
-            /*TcpSocket *tcpSocket = Listener<TcpSocket, SockAddr_In>::Accept(addr);
+            /*TcpSocket *tcpSocket = Listener<TcpSocket, SockAddr_In>::accept(addr);
             TcpConnection *tcpConnection = new TcpConnection(tcpSocket);
             delete tcpSocket;
             return tcpConnection;*/

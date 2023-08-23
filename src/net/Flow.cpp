@@ -13,24 +13,68 @@
 #include "TER.h"
 #include "SAT.h"
 #include "QuicConnection.h"
-#include "../backlog/ChunkMap.h"
+#include "../backlog/SortedBacklog.h"
 #include "QuicStream.h"
+#include "picoquic_internal.h"
+#include "../backlog/Chunk.h"
 
 
 namespace net {
 
-    Flow::Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcpConnection) : _source(source), // source of Flow
-                                                                                                                             _destination(destination), // destination of Flow
-                                                                                                                             _connection(tcpConnection), // connection to endpoint (local -> source, remote -> destination)
-                                                                                                                             _rxBacklog(backlog::Backlog()), // incoming backlog
-                                                                                                                             _txChunkMap(backlog::ChunkMap()), // outgoing backlog
-                                                                                                                             _recvFromConnectionLooper([this] { RecvFromConnection(); }), // loop for RecvFromConnection() (own thread)
-                                                                                                                             _sendToConnectionLooper([this] { SendToConnection(); }) { // loop for RecvFromConnection() (own thread)
-        LOG(INFO) << "Flow(" << _source.ToString() << "|" << _destination.ToString() << ", " << tcpConnection->ToString() << ")";
+    Flow::Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection) :   _source(source), // source of Flow
+                                                                                                                                _destination(destination), // destination of Flow
+                                                                                                                                _connection(tcp_connection), // connection to endpoint (local -> source, remote -> destination)
+                                                                                                                                _ter_stream(TER->create_stream(this)),
+                                                                                                                                _sat_stream(SAT->create_stream(this)),
+                                                                                                                                _tx_backlog(backlog::SortedBacklog()), // outgoing backlog
+                                                                                                                                _recv_from_connection_looper([this] { recv_from_connection(); }), // loop for recv_from_connection() (own thread)
+                                                                                                                                _send_to_connection_looper([this] { send_to_connection(); }) { // loop for recv_from_connection() (own thread)
+        LOG(INFO) << "Flow(" << _source.to_string() << "|" << _destination.to_string() << ", " << tcp_connection->ToString() << ")";
+
+        // start flow workers
+        make_active();
     }
 
-    Flow *Flow::make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcpConnection) {
-        return new Flow(source, destination, tcpConnection);
+    Flow::Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection, uint64_t stream_id) : _source(source), // source of Flow
+                                                                                                                                                  _destination(destination), // destination of Flow
+                                                                                                                                                  _connection(tcp_connection), // connection to endpoint (local -> source, remote -> destination)
+                                                                                                                                                  _ter_stream(TER->create_stream(stream_id, this)),
+                                                                                                                                                  _sat_stream(SAT->create_stream(stream_id, this)),
+                                                                                                                                                  _tx_backlog(backlog::SortedBacklog()), // outgoing backlog
+                                                                                                                                                  _recv_from_connection_looper([this] { recv_from_connection(); }), // loop for recv_from_connection() (own thread)
+                                                                                                                                                  _send_to_connection_looper([this] { send_to_connection(); }) { // loop for recv_from_connection() (own thread)
+        LOG(INFO) << "Flow(" << _source.to_string() << "|" << _destination.to_string() << ", " << tcp_connection->ToString() << ")";
+
+        // start flow workers
+        make_active();
+    }
+
+    Flow *Flow::make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection) {
+        /*Flow *flow = new Flow(source, destination, tcp_connection);
+
+        // create streams
+        flow->_ter_stream = TER->create_stream(flow);
+        flow->_sat_stream = SAT->create_stream(flow);
+
+        // start flow workers
+        flow->make_active();
+
+        return flow;*/
+        return new Flow(source, destination, tcp_connection);
+    }
+
+    Flow *Flow::make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection, uint64_t stream_id) {
+        /*Flow *flow = new Flow(source, destination, tcp_connection);
+
+        // create tx streams
+        flow->_ter_stream = TER->create_stream(stream_id, flow);
+        flow->_sat_stream = SAT->create_stream(stream_id, flow);
+
+        // start flow workers
+        flow->make_active();
+
+        return flow;*/
+        return new Flow(source, destination, tcp_connection, stream_id);
     }
 
     net::ipv4::SockAddr_In Flow::source() {
@@ -41,22 +85,13 @@ namespace net {
         return _destination;
     }
 
-    size_t Flow::size() {
-        return _rxBacklog.size();
+    bool Flow::use_satellite() {
+        return _use_satellite;
     }
 
-    bool Flow::useSatellite() {
-        return _useSatellite.load();
-    }
-
-    void Flow::RecvFromConnection() {
+    void Flow::recv_from_connection() {
         // wait for new data
         _connection->Poll(POLLIN | POLLHUP | POLLRDHUP, -1);
-
-        // preload stop
-        if (_rxBacklog.size() >= 4500000) {
-            return;
-        }
 
         // read available data
         ssize_t bytes_read = 0;
@@ -67,51 +102,73 @@ namespace net {
             LOG(INFO) << e.what();
         }
 
+        // write ChunkHeader to buffer
+        backlog::ChunkHeader chunkHeader = {
+                .offset = _rx_offset.fetch_add(bytes_read),
+                .size = static_cast<uint64_t>(bytes_read)
+        };
+
+        auto *chunk = new backlog::Chunk();
+        chunk->header = chunkHeader;
+        chunk->data = buffer;
+
         // socket closed
         if (bytes_read == 0) {
-            _recvFromConnectionLooper.Stop();
-            _closed.store(true);
+            // stop looper
+            _recv_from_connection_looper.stop();
+
+            /*if (_closed) {
+                // delete this
+                assert(!_recv_from_connection_looper.is_running() && !_send_to_connection_looper.is_running());
+                std::thread([this] {
+                    delete this;
+                }).detach();
+            }*/
+
+            _closed = true;
         }
 
-        // insert chunk into backlog
-        auto *chunk = new backlog::Chunk();
-        chunk->data = buffer;
-        chunk->size = bytes_read;
-        chunk->offset = _rxOffset.fetch_add(bytes_read);
-        _rxBacklog.Insert(chunk);
+        LOG(INFO) << _connection->to_string() << " -> " << chunk->to_string();
 
-        if((_rxBacklog.size() < 2000 || backlog::TotalBacklog::size() < 74219 || chunk->offset == 0) && !_useSatellite.load()) {
-            _terTxStream->MarkActiveStream();
-        } else {
-            _useSatellite.store(true);
-            _satTxStream->MarkActiveStream();
-        }
+        // add packet to backlog
+        backlog.insert(chunk);
     }
 
-    void Flow::SendToConnection() {
+    void Flow::send_to_connection() {
         // try to get next package
-        backlog::Chunk *chunk = _txChunkMap.Next(1024); // TODO buffer size
+        backlog::Chunk *chunk = _tx_backlog.next(1500); // TODO buffer size
 
         // next packet not available
         if (chunk == nullptr) {
-            usleep(100); // TODO blocking queue?
+            usleep(5); // TODO blocking queue?
             return;
         }
 
-        // close packet
-        /*if (flowPacket->header()->size() == 0) {
-            delete flowPacket;
+        // close chunk
+        if (chunk->header.size == 0) {
+            delete chunk;
 
-            // TODO
-            _sendToConnectionLooper.Stop();
-            _closed.test_and_set();
-        }*/
+            // stop looper
+            _send_to_connection_looper.stop();
+
+            /*if (_closed) {
+                assert(!_recv_from_connection_looper.is_running() && !_send_to_connection_looper.is_running());
+                std::thread([this] {
+                    delete this;
+                }).detach();
+            }*/
+
+            _closed = true;
+            _connection->Shutdown(SHUT_RDWR);
+
+            return;
+        }
 
         // send packet to connection
         ssize_t bytes_send = 0;
         try {
-            while (bytes_send < chunk->size) {
-                bytes_send += _connection->Send(chunk->data, chunk->size, 0);
+            while (bytes_send < chunk->header.size) {
+                bytes_send += _connection->Send(chunk->data, chunk->header.size, 0);
             }
         } catch (SocketErrorException e) {
             // socket closed waiting for close package
@@ -120,10 +177,38 @@ namespace net {
             LOG(ERROR) << e.ToString();
         }
 
-        //LOG(INFO) << flowPacket->ToString() << " -> " << _connection->ToString();
+        LOG(INFO) << chunk->to_string() << " -> " << _connection->to_string();
 
         // delete package
         delete chunk;
+    }
+
+    /*void Flow::make_active(int isActive) {
+        assert(_terTxStream && _satTxStream);
+
+        if (isActive) {
+            _recv_from_connection_looper.Start();
+            _send_to_connection_looper.Start();
+        } else {
+            _recv_from_connection_looper.Stop();
+            _send_to_connection_looper.stop();
+        }
+    }
+
+    backlog::UnsortedBacklog &Flow::UnsortedBacklog() {
+        return _rxBacklog;
+    }
+
+    backlog::UnsortedBacklog &Flow::rx() {
+        return _rxBacklog;
+    }*/
+
+    backlog::SortedBacklog &Flow::tx() {
+        return _tx_backlog;
+    }
+
+    std::string Flow::to_string() {
+        return "Flow[source=" + _source.to_string() + ", destination=" + _destination.to_string() + "]";
     }
 
     Flow::~Flow() {
@@ -131,35 +216,24 @@ namespace net {
         _connection->Close();
         delete _connection;
 
-        LOG(INFO) << ToString() << ".~Flow()";
+        LOG(INFO) << to_string() << ".~Flow()";
     }
 
-    std::string Flow::ToString() {
-        return "Flow[source=" + _source.ToString() + ", destination=" + _destination.ToString() + "]";
-    }
+/*    uint64_t Flow::backlog() {
+        auto *ter_stream_head = picoquic_find_stream(_ter_stream->quic_cnx(), _ter_stream->id());
+        auto *sat_stream_head = picoquic_find_stream(_sat_stream->quic_cnx(), _sat_stream->id());
 
-    void Flow::MakeActiveFlow(int isActive) {
-        assert(_terTxStream && _satTxStream);
+        uint64_t sent_offset = ter_stream_head->sent_offset + sat_stream_head->sent_offset;
+        assert(sent_offset <= _sent_offset);
+        uint64_t backlog = _sent_offset - sent_offset;
 
-        if (isActive) {
-            _recvFromConnectionLooper.Start();
-            _sendToConnectionLooper.Start();
-        } else {
-            _recvFromConnectionLooper.Stop();
-            _sendToConnectionLooper.Stop();
-        }
-    }
+        LOG(INFO) << "BACKLOG ter_sent_offset=" << ter_stream_head->sent_offset << ", sat_sent_offset=" << sat_stream_head->sent_offset << ", _sent_offset=" << _sent_offset << ", backlog=" << backlog;
+        return backlog;
+    }*/
 
-    backlog::Backlog &Flow::Backlog() {
-        return _rxBacklog;
-    }
-
-    backlog::Backlog &Flow::rx() {
-        return _rxBacklog;
-    }
-
-    backlog::ChunkMap &Flow::tx() {
-        return _txChunkMap;
+    void Flow::make_active(int is_active) {
+        _recv_from_connection_looper.start();
+        _send_to_connection_looper.start();
     }
 
 } // net

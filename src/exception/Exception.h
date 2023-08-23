@@ -125,7 +125,7 @@ public:
     };
 };
 
-// flow exception
+// _flow exception
 
 class ConnectionClosedException : public Exception {
 public:

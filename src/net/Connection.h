@@ -173,13 +173,13 @@ namespace net {
 
     protected:
         explicit Connection(SA peeraddr) : Connection() {
-            DLOG(INFO) << "Connection(peeraddr=" << peeraddr.ToString() << ") * " << ToString();
+            DLOG(INFO) << "Connection(peeraddr=" << peeraddr.to_string() << ") * " << ToString();
 
             S::Connect(peeraddr);
         }
 
         Connection(SA peeraddr, SA sockaddr) : Connection() {
-            DLOG(INFO) << "Connection(peeraddr=" << peeraddr.ToString() << ", sockaddr=" << sockaddr.ToString() << ") * " << ToString();
+            DLOG(INFO) << "Connection(peeraddr=" << peeraddr.to_string() << ", sockaddr=" << sockaddr.to_string() << ") * " << ToString();
 
             S::Bind(peeraddr);
             S::Connect(peeraddr);

@@ -54,7 +54,7 @@ TEST(net_Socket, ipv4_TcpSocket_connect_send_recv) {
         pTcpSocket2->Connect(net::ipv6::SockAddr_In6("::1", 7002));
 
         // accept connection on local side
-        net::ipv6::TcpSocket *pTcpSocket3 = pTcpSocket1->Accept();
+        net::ipv6::TcpSocket *pTcpSocket3 = pTcpSocket1->accept();
 
         // send from local -> remote
         std::vector<unsigned char> vector1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'SendToSat', '!'};

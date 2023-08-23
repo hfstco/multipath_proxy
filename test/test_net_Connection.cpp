@@ -59,7 +59,7 @@ TEST(net_Connection, ipv4_TcpConnection) {
         try {
             net::ipv6::SockAddr_In6 sockAddrIn6 = net::ipv6::SockAddr_In6("::1", 2350);
             net::ipv6::TcpListener *l1 = net::ipv6::TcpListener::make(sockAddrIn6);
-            net::ipv6::TcpConnection *c1 = l1->Accept();
+            net::ipv6::TcpConnection *c1 = l1->accept();
 
             std::vector<unsigned char> buffer1 = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', '!'};
             packet::Buffer *b1 = packet::Buffer::make(buffer1);

@@ -12,12 +12,12 @@
 namespace packet {
 
         struct __attribute__((packed)) FlowHeader {
-            struct in_addr sourceIP;           // 4
-            struct in_addr destinationIP;      // 8
-            in_port_t sourcePort;              // 10
-            in_port_t destinationPort;         // 12
+            struct in_addr source_ip;           // 4
+            struct in_addr destination_ip;      // 8
+            in_port_t source_port;              // 10
+            in_port_t destination_port;         // 12
 
-            std::string ToString();
+            std::string to_string();
         };
 
 } // packet

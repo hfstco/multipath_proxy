@@ -10,8 +10,8 @@
 
 #include "SockAddr.h"
 #include "../worker/Looper.h"
-#include "../backlog/ChunkMap.h"
-#include "../backlog/Backlog.h"
+#include "../backlog/SortedBacklog.h"
+#include "../backlog/UnsortedBacklog.h"
 
 namespace net {
 
@@ -20,10 +20,10 @@ namespace net {
     }
 
     class Proxy;
-    class QuicStream;
     class QuicConnection;
     class QuicClientConnection;
     class QuicServerConnection;
+    class QuicStream;
 
     class Flow {
         friend class Proxy;
@@ -31,46 +31,50 @@ namespace net {
         friend class QuicClientConnection;
         friend class QuicServerConnection;
     public:
-        static Flow *make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcpConnection);
+        static Flow *make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection);
+        static Flow *make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection, uint64_t stream_id);
 
         net::ipv4::SockAddr_In source();
         net::ipv4::SockAddr_In destination();
         size_t size();
-        bool useSatellite();
+        bool use_satellite();
 
-        backlog::Backlog &rx();
-        backlog::Backlog &Backlog();
-        backlog::ChunkMap &tx();
+        backlog::UnsortedBacklog backlog;
+        backlog::SortedBacklog &tx();
 
-        void MakeActiveFlow(int isActive = 1);
+        void make_active(int is_active = 1);
 
-        void RecvFromConnection();
-        void SendToConnection();
+        void recv_from_connection();
+        void send_to_connection();
 
-        std::string ToString();
+        std::string to_string();
 
         virtual ~Flow();
 
     protected:
-        Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcpConnection);
+        Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection);
+        Flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection, uint64_t stream_id);
 
     private:
-        net::ipv4::TcpConnection *_connection;
+        // tcp connection
         net::ipv4::SockAddr_In _source;
         net::ipv4::SockAddr_In _destination;
+        net::ipv4::TcpConnection *_connection;
 
-        net::QuicStream *_terTxStream;
-        net::QuicStream *_satTxStream;
+        // quic connection
+        QuicStream *_ter_stream;
+        QuicStream *_sat_stream;
 
-        std::atomic<bool> _useSatellite;
+        std::atomic<bool> _use_satellite;
         std::atomic<bool> _closed;
 
-        std::atomic<uint64_t> _rxOffset;
-        backlog::Backlog _rxBacklog;
-        backlog::ChunkMap _txChunkMap;
+        std::atomic<uint64_t> _rx_offset;
+        std::atomic<uint64_t> _sent_offset;
 
-        worker::Looper _recvFromConnectionLooper;
-        worker::Looper _sendToConnectionLooper;
+        backlog::SortedBacklog _tx_backlog;
+
+        worker::Looper _recv_from_connection_looper;
+        worker::Looper _send_to_connection_looper;
     }; // Flow
 
 } // net

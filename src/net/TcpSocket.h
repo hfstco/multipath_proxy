@@ -14,7 +14,7 @@ namespace net {
         class SockAddr_In;
 
         class TcpSocket : public Socket<TcpSocket, SockAddr_In> {
-            friend Socket<TcpSocket, SockAddr_In>; // S Accept()
+            friend Socket<TcpSocket, SockAddr_In>; // S accept()
 
         public:
             static TcpSocket *make();
@@ -53,7 +53,7 @@ namespace net {
 
             void Close();
 
-            std::string ToString();
+            std::string to_string();
 
             ~TcpSocket() override;
 
@@ -69,7 +69,7 @@ namespace net {
         class SockAddr_In6;
 
         class TcpSocket : public Socket<TcpSocket, SockAddr_In6> {
-            friend Socket<TcpSocket, SockAddr_In6>; // S Accept()
+            friend Socket<TcpSocket, SockAddr_In6>; // S accept()
 
         public:
             static TcpSocket *make();
@@ -108,7 +108,7 @@ namespace net {
 
             void Close();
 
-            std::string ToString();
+            std::string to_string();
 
             ~TcpSocket() override;
 

@@ -18,7 +18,7 @@ namespace worker {
     public:
         Looper(std::function<void()> function) : running_(ATOMIC_FLAG_INIT), function_(function) {}
 
-        void Run() {
+        void run() {
             while(running_.test()) {
                 try {
                     function_();
@@ -28,17 +28,17 @@ namespace worker {
             }
         }
 
-        void Start() {
+        void start() {
             if (!running_.test_and_set()) {
-                thread_ = std::thread(&Looper::Run, this);
+                thread_ = std::thread(&Looper::run, this);
             }
         }
 
-        void Stop() {
+        void stop() {
             running_.clear();
         }
 
-        bool IsRunning() {
+        bool is_running() {
             return running_.test();
         }
 

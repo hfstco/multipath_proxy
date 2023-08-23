@@ -28,35 +28,39 @@ namespace net {
         friend class QuicServerConnection;
         friend class Proxy;
     public:
+        [[nodiscard]] picoquic_cnx_t *quic_cnx() const;
         [[nodiscard]] uint64_t id() const;
-        [[nodiscard]] bool finished() const;
-        [[nodiscard]] bool reset() const;
-        [[nodiscard]] uint64_t remoteStreamError() const;
         [[nodiscard]] Flow *flow() const;
 
-        void MarkActiveStream(int isActive = 1);
-        void ResetStream(uint64_t local_stream_error = 0);
+        [[nodiscard]] bool active() const;
+        [[nodiscard]] bool finished() const;
+        [[nodiscard]] bool reset() const;
 
-        [[nodiscard]] std::string ToString() const;
+        [[nodiscard]] uint64_t remote_stream_error() const;
+
+        [[nodiscard]] void mark_active_stream(int is_active = 1) const;
+        void add_to_stream_with_ctx(const uint8_t * data, size_t length, int set_fin);
+
+        [[nodiscard]] std::string to_string() const;
 
         virtual ~QuicStream();
 
     protected:
-        QuicStream(picoquic_cnx_t *quic_cnx, uint64_t id, net::Flow *flow);
-
-    private:
         picoquic_cnx_t *_quic_cnx;
-        const uint64_t _id;
+        QuicConnection *_quic_connection;
+        const uint64_t _stream_id;
+        Flow *_flow;
+
         std::atomic<bool> _active;
         std::atomic<bool> _finished;
         std::atomic<bool> _reset;
-        std::atomic<uint64_t> _remoteStreamError;
-        // TODO STREAM_DATA_BLOCKED, STOP_SENDING
 
-        Flow *_flow = nullptr;
-        std::atomic<bool> _flowHeaderSent = false;
-        unsigned char *_rxBuffer = static_cast<unsigned char *>(malloc(1500));
-        uint64_t _rxBufferSize = 0;
+        std::atomic<uint64_t> _remote_stream_error;
+
+        unsigned char *_recv_buffer = static_cast<unsigned char *>(malloc(1500)); // TODO buffer size
+        uint64_t _recv_buffer_size = 0;
+
+        QuicStream(picoquic_cnx_t *quic_cnx, QuicConnection *quic_connection, uint64_t stream_id, Flow *flow);
     };
 
 } // net

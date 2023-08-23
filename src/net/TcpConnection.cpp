@@ -8,11 +8,11 @@ namespace net {
     namespace ipv4 {
 
         TcpConnection::TcpConnection(SockAddr_In peeraddr) : Connection<TcpSocket, SockAddr_In>(peeraddr) {
-            DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.ToString() << ") * " << ToString();
+            DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.to_string() << ") * " << ToString();
         }
 
         TcpConnection::TcpConnection(SockAddr_In peeraddr, SockAddr_In sockaddr) : Connection<TcpSocket, SockAddr_In>(peeraddr, sockaddr) {
-            DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.ToString() << ", sockaddr=" + sockaddr.ToString() + ") * " << ToString();
+            DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.to_string() << ", sockaddr=" + sockaddr.to_string() + ") * " << ToString();
         }
 
         TcpConnection::TcpConnection(int fd) : Connection<TcpSocket, SockAddr_In>(fd) {
@@ -35,11 +35,11 @@ namespace net {
     namespace ipv6 {
 
         TcpConnection::TcpConnection(SockAddr_In6 peeraddr) : Connection<TcpSocket, SockAddr_In6>(peeraddr) {
-            DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.ToString() << ") * " << ToString();
+            DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.to_string() << ") * " << ToString();
         }
 
         TcpConnection::TcpConnection(SockAddr_In6 peeraddr, SockAddr_In6 sockaddr) : Connection<TcpSocket, SockAddr_In6>(peeraddr, sockaddr) {
-            DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.ToString() << ", sockaddr=" + sockaddr.ToString() + ") * " << ToString();
+            DLOG(INFO) << "TcpConnection(peeraddr=" << peeraddr.to_string() << ", sockaddr=" + sockaddr.to_string() + ") * " << ToString();
         }
 
         TcpConnection::TcpConnection(int fd) : Connection<TcpSocket, SockAddr_In6>(fd) {

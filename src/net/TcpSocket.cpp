@@ -9,11 +9,11 @@ namespace net {
     namespace ipv4 {
 
         TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In>(AF_INET, SOCK_STREAM, 0) {
-            DLOG(INFO) << "TcpSocket() * " + ToString();
+            DLOG(INFO) << "TcpSocket() * " + to_string();
         }
 
         TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In>(sock_fd) {
-            DLOG(INFO) << "TcpSocket(fd=" + std::to_string(sock_fd) + ") * " + ToString();
+            DLOG(INFO) << "TcpSocket(fd=" + std::to_string(sock_fd) + ") * " + to_string();
         }
 
         TcpSocket *TcpSocket::make() {
@@ -56,12 +56,12 @@ namespace net {
             Socket::Close();
         }
 
-        std::string TcpSocket::ToString() {
+        std::string TcpSocket::to_string() {
             return "TcpSocket[fd=" + std::to_string(fd()) + "]";
         }
 
         TcpSocket::~TcpSocket() {
-            DLOG(INFO) << ToString() << ".~TcpSocket()";
+            DLOG(INFO) << to_string() << ".~TcpSocket()";
         }
 
     } // ipv4
@@ -69,10 +69,10 @@ namespace net {
 
     namespace ipv6 {
         TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In6>(AF_INET6, SOCK_STREAM, 0) {
-            DLOG(INFO) << "TcpSocket() * " + ToString();
+            DLOG(INFO) << "TcpSocket() * " + to_string();
         }
         TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In6>(sock_fd) {
-            DLOG(INFO) << "TcpSocket(" + std::to_string(sock_fd) + ") * " + ToString();
+            DLOG(INFO) << "TcpSocket(" + std::to_string(sock_fd) + ") * " + to_string();
         }
 
         TcpSocket *TcpSocket::make() {
@@ -115,12 +115,12 @@ namespace net {
             Socket::Close();
         }
 
-        std::string TcpSocket::ToString() {
+        std::string TcpSocket::to_string() {
             return "TcpSocket[fd=" + std::to_string(fd()) + "]";
         }
 
         TcpSocket::~TcpSocket() {
-            DLOG(INFO) << ToString() << ".~TcpSocket()";
+            DLOG(INFO) << to_string() << ".~TcpSocket()";
         }
 
     } // ipv6
