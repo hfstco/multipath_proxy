@@ -187,6 +187,10 @@ namespace net {
             // check if flow already exists
             if (!(flow = context_->flows()->Find(flowPacket->header()->source(), flowPacket->header()->destination()))) {
                 // create flow if not exists
+                if (flowPacket->header()->size() == 0) {
+                    return;
+                }
+
                 try {
                     // connect to endpoint
                     net::ipv4::TcpConnection *flowConnection = net::ipv4::TcpConnection::make(flowPacket->header()->destination());
@@ -200,8 +204,7 @@ namespace net {
                     LOG(INFO) << e.what();
 
                     // send close packet
-                    packet::FlowHeader flowHeader = packet::FlowHeader(flowPacket->header()->source(), flowPacket->header()->destination(), 0); // TODO GetSock/PeerName local variable?
-                    packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 0);
+                    flowPacket->header()->size(0);
 
                     SendToTer(flowPacket);
 
