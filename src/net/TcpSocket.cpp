@@ -56,7 +56,7 @@ namespace net {
             Socket::Close();
         }
 
-        std::string TcpSocket::ToString() {
+        std::string TcpSocket::to_string() {
             return "TcpSocket[fd=" + std::to_string(fd()) + "]";
         }
 
@@ -115,7 +115,7 @@ namespace net {
             Socket::Close();
         }
 
-        std::string TcpSocket::ToString() {
+        std::string TcpSocket::to_string() {
             return "TcpSocket[fd=" + std::to_string(fd()) + "]";
         }
 

@@ -29,7 +29,7 @@ namespace net {
 #endif
         acceptLooper_.Start();
 
-        DLOG(INFO) << "Proxy(" << sockAddrIn.ToString() << ") * " << ToString();
+        DLOG(INFO) << "Proxy(" << sockAddrIn.to_string() << ") * " << ToString();
     }
 
     void Proxy::Accept() {
@@ -51,7 +51,7 @@ namespace net {
             {
                 std::lock_guard lock(context_->flows()->mutex());
 
-                context_->flows()->Insert(source, destination, flow);
+                context_->flows()->Insert(source.sin_addr, source.sin_port, destination.sin_addr, destination.sin_port, flow);
             }
         } catch (Exception e) {
             LOG(ERROR) << e.what();
@@ -59,7 +59,7 @@ namespace net {
     }
 
     std::string Proxy::ToString() {
-        return "Proxy[fd=" + std::to_string(listener_->fd()) + ", sockAddr=" + listener_->GetSockName().ToString() + "]";
+        return "Proxy[fd=" + std::to_string(listener_->fd()) + ", sockAddr=" + listener_->GetSockName().to_string() + "]";
     }
 
     Proxy::~Proxy() {

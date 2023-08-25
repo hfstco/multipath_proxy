@@ -8,9 +8,10 @@
 #include <atomic>
 #include <thread>
 
-#include "../collections/BlockingFlowPacketQueue.h"
+#include "../collections/SortedBacklog.h"
 #include "SockAddr.h"
 #include "../worker/Looper.h"
+#include "../collections/UnsortedBacklog.h"
 
 namespace packet {
     class FlowPacket;
@@ -46,9 +47,10 @@ namespace net {
     public:
         static Flow *make(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *pTcpConnection, net::Bond *bond, context::Context *context);
 
-        uint64_t byteSize();
+        uint64_t size();
 
-        void WriteToFlow(packet::FlowPacket *pFlowPacket);
+        //void WriteToFlow(packet::FlowPacket *pFlowPacket);
+        void WriteToFlow(packet::PicoPacket *pico_packet);
 
         void SendToBond();
         void RecvFromConnection();
@@ -68,9 +70,9 @@ namespace net {
         net::Bond *bond_;
         context::Context *context_;
 
-        collections::BlockingFlowPacketQueue toConnectionQueue_;
+        collections::SortedBacklog toConnectionQueue_;
 
-        collections::BlockingFlowPacketQueue toBondQueue_;
+        collections::UnsortedBacklog toBondQueue_;
         std::atomic<uint64_t> toBondId_;
         //std::atomic<uint64_t> byteSize_;
         std::atomic_flag satellite_;

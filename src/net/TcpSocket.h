@@ -53,7 +53,7 @@ namespace net {
 
             void Close();
 
-            std::string ToString();
+            std::string to_string();
 
             ~TcpSocket() override;
 
@@ -108,7 +108,7 @@ namespace net {
 
             void Close();
 
-            std::string ToString();
+            std::string to_string();
 
             ~TcpSocket() override;
 

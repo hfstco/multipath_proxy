@@ -84,14 +84,14 @@ bond_df['ds'] = 'bond'
 
 df = pd.concat([ter_df, sat_df, bond_df])
 
-colors = ["#55a868", "#4c72b0", "#c44e52"]
+colors = ["#4daf4a", "#377eb8", "#e41a1c"]
 customPalette = sns.set_palette(sns.color_palette(colors))
 
-plt.figure(figsize=(10,5))
+plt.figure(figsize=(6.4, 3))
 
 sns.barplot(x='website', y='Load', hue='ds', data=df, palette=customPalette)
-plt.ylabel("Load in ms")
+plt.ylabel("Load time in ms")
 plt.xlabel("")
 plt.legend(loc='upper left')
 
-plt.show()
+plt.savefig('plot_browsertime.pdf', dpi=300)

@@ -22,6 +22,7 @@ async def get(url, session):
         return {'url': url, 'byteSize': len(result), 'duration': duration, 'datarate': ((len(result) / 1000000) / duration), 'sha1sum': hashlib.sha1(result).hexdigest()}
 
 # https://stackoverflow.com/questions/35196974/aiohttp-set-maximum-number-of-requests-per-second
+#
 
 async def main():
     connector = aiohttp.TCPConnector(limit=5000)

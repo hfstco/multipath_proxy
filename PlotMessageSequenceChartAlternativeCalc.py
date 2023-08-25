@@ -67,22 +67,35 @@ current_id += 1
 current_timestamp += datetime.timedelta(microseconds=50)
 
 # send 100000 - 2048 = 97952 bytes remaining
-# send 97952 bytes SAT = 95,65625 ~ 96 packets
-# send 96 packets SAT
+# send 24576 bytes SAT ~ 24 packets
+# send 24 packets SAT
 # 0,003932 s
 # 0,01567232
-step_size = 15672 / 96
-for i in range(96):
+step_size_sat = 15672 / 24
+for i in range(24):
     packet = create_packet(current_timestamp, REMOTE, OUT, SOURCE, DESTINATION, current_id, 1024, SAT_ID)
     df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
     packet = create_packet(current_timestamp + datetime.timedelta(milliseconds=300), LOCAL, IN, SOURCE, DESTINATION, current_id, 1024, SAT_ID)
     df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
 
     current_id += 1
-    current_timestamp += datetime.timedelta(microseconds=step_size)
+    current_timestamp += datetime.timedelta(microseconds=step_size_sat)
+
+# send 73376 bytes TER
+# 72 packets TER
+# 0,293504 s
+step_size_ter = 293504 / 72
+for i in range(72):
+    packet = create_packet(current_timestamp, REMOTE, OUT, SOURCE, DESTINATION, current_id, 1024, TER_ID)
+    df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
+    packet = create_packet(current_timestamp + datetime.timedelta(milliseconds=15), LOCAL, IN, SOURCE, DESTINATION, current_id, 1024, TER_ID)
+    df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
+
+    current_id += 1
+    current_timestamp += datetime.timedelta(microseconds=step_size_ter)
 
 # close packet
-current_timestamp = current_timestamp - datetime.timedelta(microseconds=step_size) + datetime.timedelta(milliseconds=300)
+current_timestamp = current_timestamp - datetime.timedelta(microseconds=step_size_ter) + datetime.timedelta(microseconds=15050)
 packet = create_packet(current_timestamp, LOCAL, OUT, SOURCE, DESTINATION, 1, 32, TER_ID)
 df = pd.concat([df, pandas.DataFrame.from_records([packet])], ignore_index=True)
 current_timestamp += datetime.timedelta(milliseconds=15)
@@ -149,7 +162,7 @@ for index, row in df[df["type"] == "local"].iterrows():
     else:
         cv2.arrowedLine(img, (IMG_WIDTH - 2, PADDING_TOP + int((packet_arrival["timestamp"][0] - min_timestamp) * us_to_height)), (PADDING_LEFT, PADDING_TOP + int((row["timestamp"] - min_timestamp) * us_to_height)), color, 2, tipLength=0.01)
 
-# cv2.imshow("Test", img)
-cv2.imwrite("plot_message_sequence_chart_calc.jpg", img)
+cv2.imshow("Test", img)
+cv2.imwrite("plot_message_sequence_chart_alternative_calc.jpg", img)
 
 cv2.waitKey(0)

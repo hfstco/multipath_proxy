@@ -14,21 +14,40 @@
 
 namespace collections {
 
-    FlowMap::FlowMap() : std::unordered_map<SockAddr_In_Pair, net::Flow *>() {}
+    //FlowMap::FlowMap() : std::unordered_map<SockAddr_In_Pair, net::Flow *>() {}
+    FlowMap::FlowMap() : std::unordered_map<sockaddr_pair, net::Flow *>() {}
 
-    int FlowMap::Size() {
-        return std::unordered_map<SockAddr_In_Pair, net::Flow *>::size();
+    size_t FlowMap::Size() {
+        //return std::unordered_map<SockAddr_In_Pair, net::Flow *>::size();
+        return std::unordered_map<sockaddr_pair, net::Flow *>::size();
     }
 
-    void FlowMap::Insert(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::Flow *flow) {
+    /*void FlowMap::Insert(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::Flow *flow) {
         //LOG(ERROR) << ToString() <<  ".Insert(" << source.ToString() + ", " + destination.ToString() << ")";
 
-        std::unordered_map<SockAddr_In_Pair, net::Flow *>::insert(std::pair<SockAddr_In_Pair, net::Flow *>(SockAddr_In_Pair(source, destination), flow));
+        //std::unordered_map<SockAddr_In_Pair, net::Flow *>::insert(std::pair<SockAddr_In_Pair, net::Flow *>(SockAddr_In_Pair(source, destination), flow));
+        std::unordered_map<sockaddr_pair, net::Flow *>::insert(std::pair<sockaddr_pair, net::Flow *>(sockaddr_pair(source.sin_addr, source.sin_port, destination.sin_addr, destination.sin_port), flow));
+    }*/
+
+    void FlowMap::Insert(in_addr source_ip, in_port_t source_port, in_addr destination_ip, in_port_t destination_port, net::Flow *flow) {
+        //LOG(ERROR) << ToString() <<  ".Insert(" << source.ToString() + ", " + destination.ToString() << ")";
+
+        //std::unordered_map<SockAddr_In_Pair, net::Flow *>::insert(std::pair<SockAddr_In_Pair, net::Flow *>(SockAddr_In_Pair(source, destination), flow));
+        std::unordered_map<sockaddr_pair, net::Flow *>::insert(std::pair<sockaddr_pair, net::Flow *>(sockaddr_pair(source_ip, source_port, destination_ip, destination_port), flow));
     }
 
-    net::Flow *FlowMap::Find(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination) { // TODO width ::at(key)? -> return nullptr (https://cplusplus.com/reference/map/map/at/)
+    /*net::Flow *FlowMap::Find(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination) { // TODO width ::at(key)? -> return nullptr (https://cplusplus.com/reference/map/map/at/)
         std::unordered_map<SockAddr_In_Pair, net::Flow *>::iterator flow = std::unordered_map<SockAddr_In_Pair, net::Flow *>::find(SockAddr_In_Pair(source, destination)); // std::unordered_map<std::string, std::string>::at(utils::connectionString(header));
         if (flow == std::unordered_map<SockAddr_In_Pair, net::Flow *>::end()) {
+            return nullptr;
+        } else {
+            return flow->second;
+        }
+    }*/
+
+    net::Flow *FlowMap::Find(in_addr source_ip, in_port_t source_port, in_addr destination_ip, in_port_t destination_port) { // TODO width ::at(key)? -> return nullptr (https://cplusplus.com/reference/map/map/at/)
+        auto flow = std::unordered_map<sockaddr_pair, net::Flow *>::find(sockaddr_pair(source_ip, source_port, destination_ip, destination_port)); // std::unordered_map<std::string, std::string>::at(utils::connectionString(header));
+        if (flow == std::unordered_map<sockaddr_pair, net::Flow *>::end()) {
             return nullptr;
         } else {
             return flow->second;
@@ -39,10 +58,10 @@ namespace collections {
         return "FlowMap[Size=" + std::to_string(size()) + "]"; // TODO print flows
     }
 
-    void FlowMap::Erase(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination) {
+    /*void FlowMap::Erase(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination) {
         std::unordered_map<SockAddr_In_Pair, net::Flow *>::iterator flow = std::unordered_map<SockAddr_In_Pair, net::Flow *>::find(SockAddr_In_Pair(source, destination));
         if (flow == std::unordered_map<SockAddr_In_Pair, net::Flow *>::end()) {
-            NotFoundException e = NotFoundException("key=" + source.ToString() + "|" + destination.ToString() + " not found in map.");
+            NotFoundException e = NotFoundException("key=" + source.to_string() + "|" + destination.to_string() + " not found in map.");
             //LOG(INFO) << ToString() << ".Erase(" << source.ToString() << "|" << destination.ToString() << ") ~> " << e.ToString();
 
             throw e;
@@ -51,6 +70,20 @@ namespace collections {
 
             std::unordered_map<SockAddr_In_Pair, net::Flow *>::erase(flow);
         }
+    }*/
+
+    void FlowMap::Erase(in_addr source_ip, in_port_t source_port, in_addr destination_ip, in_port_t destination_port) {
+        auto flow = std::unordered_map<sockaddr_pair, net::Flow *>::find(sockaddr_pair(source_ip, source_port, destination_ip, destination_port));
+        if (flow == std::unordered_map<sockaddr_pair, net::Flow *>::end()) {
+            NotFoundException e = NotFoundException("");
+            //LOG(INFO) << ToString() << ".Erase(" << source.ToString() << "|" << destination.ToString() << ") ~> " << e.ToString();
+
+            throw e;
+        } else {
+            //LOG(INFO) << ToString() << ".Erase(" << flow->second->ToString() << ")";
+
+            std::unordered_map<sockaddr_pair, net::Flow *>::erase(flow);
+        }
     }
 
     FlowMap::~FlowMap() {
@@ -58,7 +91,7 @@ namespace collections {
     }
 
     std::mutex &FlowMap::mutex() {
-        return mutex_;
+        return _mutex;
     }
 
 } // collections

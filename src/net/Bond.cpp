@@ -19,6 +19,7 @@
 #include "../packet/HeartBeatPacket.h"
 #include "../task/ThreadPool.h"
 #include "../context/Context.h"
+#include "../packet/PicoPacket.h"
 
 namespace net {
     Bond::Bond(net::ipv4::TcpConnection *terConnection, net::ipv4::TcpConnection *satConnection, context::Context *context) : terConnection_(terConnection), satConnection_(satConnection),
@@ -44,18 +45,19 @@ namespace net {
     // read packets from bond connections (ter, sat)
     void Bond::RecvFromConnection(net::ipv4::TcpConnection *connection) {
         // create buffer
-        packet::Buffer *buffer = packet::Buffer::make(1024 + sizeof(packet::FlowHeader));
-        packet::FlowPacket *flowPacket = nullptr;
+        //packet::Buffer *buffer = packet::Buffer::make(1024 + sizeof(packet::FlowHeader));
+        //packet::FlowPacket *flowPacket = nullptr;
+        packet::PicoPacket *pico_packet = new packet::PicoPacket;
         int bytes_read = 0;
 
 
         // read Packet from Connection
         try {
             // read Header
-            unsigned char *ptr = buffer->data();
+            /*unsigned char *ptr = buffer->data();
             while (bytes_read < sizeof(packet::Header)) {
                 try {
-                    bytes_read += connection->Recv(ptr + bytes_read, sizeof(packet::Header) - bytes_read, 0);
+                    //bytes_read += connection->Recv(ptr + bytes_read, sizeof(packet::Header) - bytes_read, 0);
                     // LOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
                 } catch (Exception e) {
                     LOG(INFO) << e.what();
@@ -92,15 +94,16 @@ namespace net {
             }
 
             // otherwise it is a FlowPacket
-            assert(packet->header()->type() == packet::TYPE::FLOW);
+            assert(packet->header()->type() == packet::TYPE::FLOW);*/
 
             // read FlowHeader
             bytes_read = 0;
-            ptr = (unsigned char *)packet->header();
-            while (bytes_read < (sizeof(packet::FlowHeader) - sizeof(packet::Header))) {
+            //ptr = (unsigned char *)packet->header();
+            //while (bytes_read < (sizeof(packet::FlowHeader) - sizeof(packet::Header))) {
+            while (bytes_read < packet::PicoPacketHeaderSize) {
                 try {
-                    bytes_read += connection->Recv(ptr + sizeof(packet::Header) + bytes_read,
-                                                   (sizeof(packet::FlowHeader) - sizeof(packet::Header)) - bytes_read, 0);
+                    //bytes_read += connection->Recv(ptr + sizeof(packet::Header) + bytes_read,(sizeof(packet::FlowHeader) - sizeof(packet::Header)) - bytes_read, 0);
+                    bytes_read += connection->Recv(((uint8_t *)pico_packet) + bytes_read, packet::PicoPacketHeaderSize - bytes_read, 0);
                     // LOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
                 } catch (Exception e) {
                     LOG(INFO) << e.what();
@@ -108,7 +111,8 @@ namespace net {
 
                 // exit if socket closed
                 if (bytes_read == 0) {
-                    delete buffer;
+                    //delete buffer;
+                    delete pico_packet;
 
                     terConnection_->Shutdown(SHUT_RDWR);
                     satConnection_->Shutdown(SHUT_RDWR);
@@ -122,20 +126,21 @@ namespace net {
                     return;
                 }
             }
-            assert(bytes_read == (sizeof(packet::FlowHeader) - sizeof(packet::Header)));
+            //assert(bytes_read == (sizeof(packet::FlowHeader) - sizeof(packet::Header)));
+            assert(bytes_read == packet::PicoPacketHeaderSize);
 
             // downcast to FlowPacket
-            flowPacket = (packet::FlowPacket *) packet;
+            //flowPacket = (packet::FlowPacket *) packet;
 
             // read FlowPacket data from socket
             bytes_read = 0;
-            ptr = flowPacket->data();
-            uint16_t headerSize = flowPacket->header()->size();
-            while (bytes_read < headerSize) {
+            //ptr = flowPacket->data();
+            //uint16_t headerSize = flowPacket->header()->size();
+            //while (bytes_read < headerSize) {
+            while (bytes_read < pico_packet->size) {
                 try {
-                    bytes_read += connection->Recv(ptr + bytes_read,
-                                                   headerSize - bytes_read,
-                                                   0);
+                    //bytes_read += connection->Recv(ptr + bytes_read,headerSize - bytes_read,0);
+                    bytes_read += connection->Recv(((uint8_t *)pico_packet->payload) + bytes_read,pico_packet->size - bytes_read,0);
                     // LOG(INFO) << connection->ToString() << " -> READ " << bytes_read << "bytes";
                 } catch (Exception e) {
                     LOG(INFO) << e.what();
@@ -143,7 +148,8 @@ namespace net {
 
                 // exit if socket closed
                 if (bytes_read == 0) {
-                    delete buffer;
+                    //delete buffer;
+                    delete pico_packet;
 
                     terConnection_->Shutdown(SHUT_RDWR);
                     satConnection_->Shutdown(SHUT_RDWR);
@@ -157,7 +163,9 @@ namespace net {
                     return;
                 }
             }
-            assert(bytes_read == flowPacket->header()->size());
+
+            //assert(bytes_read == flowPacket->header()->size());
+            assert(bytes_read == pico_packet->size);
         } catch (Exception e) {
             // something goes wrong -> quit?!
             LOG(ERROR) << e.what();
@@ -173,7 +181,7 @@ namespace net {
         }
 
         // resize FlowPacket to fit data
-        flowPacket->Resize(flowPacket->header()->size());
+        //flowPacket->Resize(flowPacket->header()->size());
 
         // log
         //DLOG(ERROR) << connection->ToString() << " -> " + flowPacket->ToString();
@@ -185,25 +193,39 @@ namespace net {
             std::lock_guard lock(context_->flows()->mutex());
 
             // check if flow already exists
-            if (!(flow = context_->flows()->Find(flowPacket->header()->source(), flowPacket->header()->destination()))) {
+            //if (!(flow = context_->flows()->Find(flowPacket->header()->source(), flowPacket->header()->destination()))) {
+            if (!(flow = context_->flows()->Find(pico_packet->source_ip, pico_packet->source_port, pico_packet->destination_ip, pico_packet->destination_port))) {
+                // close packet for non existing flow
+                //if (flowPacket->header()->size() == 0) {
+                if (pico_packet->size == 0) {
+                    //delete flowPacket;
+                    delete pico_packet;
+                    return;
+                }
+
+
                 // create flow if not exists
                 try {
                     // connect to endpoint
-                    net::ipv4::TcpConnection *flowConnection = net::ipv4::TcpConnection::make(flowPacket->header()->destination());
+                    //net::ipv4::TcpConnection *flowConnection = net::ipv4::TcpConnection::make(flowPacket->header()->destination());
+                    net::ipv4::TcpConnection *flowConnection = net::ipv4::TcpConnection::make(net::ipv4::SockAddr_In(pico_packet->destination_ip, pico_packet->destination_port));
 
                     // create flow
-                    flow = net::Flow::make(flowPacket->header()->source(), flowPacket->header()->destination(), flowConnection, this, context_);
+                    //flow = net::Flow::make(flowPacket->header()->source(), flowPacket->header()->destination(), flowConnection, this, context_);
+                    flow = net::Flow::make(net::ipv4::SockAddr_In(pico_packet->source_ip, pico_packet->source_port), net::ipv4::SockAddr_In(pico_packet->destination_ip, pico_packet->destination_port), flowConnection, this, context_);
 
                     // insert into FlowMap
-                    context_->flows()->Insert(flowPacket->header()->source(), flowPacket->header()->destination(), flow);
+                    //context_->flows()->Insert(flowPacket->header()->source(), flowPacket->header()->destination(), flow);
+                    context_->flows()->Insert(pico_packet->source_ip, pico_packet->source_port, pico_packet->destination_ip, pico_packet->destination_port, flow);
                 } catch (Exception e) {
                     LOG(INFO) << e.what();
 
                     // send close packet
-                    packet::FlowHeader flowHeader = packet::FlowHeader(flowPacket->header()->source(), flowPacket->header()->destination(), 0); // TODO GetSock/PeerName local variable?
-                    packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 0);
+                    //packet::FlowHeader flowHeader = packet::FlowHeader(flowPacket->header()->source(), flowPacket->header()->destination(), 0); // TODO GetSock/PeerName local variable?
+                    //packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 0);
+                    pico_packet->size = 0;
 
-                    SendToTer(flowPacket);
+                    SendToTer(pico_packet);
 
                     return;
                 }
@@ -211,7 +233,8 @@ namespace net {
         }
 
         // write FlowPacket to Flow
-        flow->WriteToFlow(flowPacket);
+        //flow->WriteToFlow(flowPacket);
+        flow->WriteToFlow(pico_packet);
     }
 
     Bond::~Bond() {
@@ -240,7 +263,7 @@ namespace net {
         if(satConnection_->IoCtl<int>(TIOCOUTQ) == 0 || satConnection_->IoCtl<int>(FIONREAD) == 0) { // only if sat send buffer is empty
             if(sendSatMutex_.try_lock()) {
                 packet::HeartBeatPacket *heartBeatPacket = packet::HeartBeatPacket::make();
-                SendToConnection(satConnection_, heartBeatPacket);
+                //SendToConnection(satConnection_, heartBeatPacket);
                 sendSatMutex_.unlock();
                 delete heartBeatPacket;
             }
@@ -250,17 +273,19 @@ namespace net {
     }
 
     // write packets (FlowPacket, HeartBeatPacket) to socket
-    void Bond::SendToConnection(net::ipv4::TcpConnection *connection, packet::Packet *packet) {
+    //void Bond::SendToConnection(net::ipv4::TcpConnection *connection, packet::Packet *packet) {
+    void Bond::SendToConnection(net::ipv4::TcpConnection *connection, packet::PicoPacket *pico_packet) {
         // upcast to buffer
-        packet::Buffer *buffer = packet;
+        //packet::Buffer *buffer = packet;
 
         int bytes_written = 0;
         try {
-            while (bytes_written < buffer->size()) {
+            //while (bytes_written < buffer->size()) {
+            while (bytes_written < packet::PicoPacketHeaderSize + pico_packet->size) {
                 //int ret = 0;
                 try {
-                    bytes_written += connection->Send(buffer->data() + bytes_written, buffer->size() - bytes_written,
-                                                      0);
+                    //bytes_written += connection->Send(buffer->data() + bytes_written, buffer->size() - bytes_written,0);
+                    bytes_written += connection->Send(((uint8_t*) pico_packet) + bytes_written, packet::PicoPacketHeaderSize + pico_packet->size - bytes_written, 0);
                     // LOG(INFO) << "Write " << bytes_written << "bytes -> " << connection->ToString();
                 } catch (Exception e) {
                     continue;
@@ -273,11 +298,12 @@ namespace net {
                 //LOG(INFO) << "Write " << bytes_written << "bytes -> " << connection->ToString();
             }
 
-            assert(bytes_written == buffer->size());
+            //assert(bytes_written == buffer->size());
         } catch (Exception e) {
             LOG(INFO) << e.what();
 
-            delete buffer;
+            //delete buffer;
+            delete pico_packet;
 
             terConnection_->Shutdown(SHUT_RDWR);
             satConnection_->Shutdown(SHUT_RDWR);
@@ -293,57 +319,59 @@ namespace net {
     }
 
     // try to send on ter
-    void Bond::SendToTer(packet::FlowPacket *flowPacket) {
-        // redirect to sat if not enabled
-        if(!args::TER_ENABLED) {
-            SendToSat(flowPacket);
-            return;
-        }
-
+    //void Bond::SendToTer(packet::FlowPacket *flowPacket) {
+    void Bond::SendToTer(packet::PicoPacket *pico_packet) {
         // wait if BufferFillLevel = BDP + 20%
         while(terConnection_->IoCtl<int>(TIOCOUTQ) > 9000) { // BDP + 20% = 7500 + 1500 = 9000 bytes
-            usleep(4219); // 2MBit/s / 8 = 0.25 MB/s = 250000byte/s / 1056 = ~237 packet/s = 1 packet every 4.219 ms = 4129 us
+            std::this_thread::sleep_for(std::chrono::microseconds(168)); // 2MBit/s / 8 = 0.25 MB/s = 250000byte/s / 1056 = ~237 packet/s = 1 packet every 4.219 ms = 4129 us
         }
 
         // send to socket
         sendTerMutex_.lock();
-        SendToConnection(terConnection_, flowPacket);
+        //SendToConnection(terConnection_, flowPacket);
+        SendToConnection(terConnection_, pico_packet);
         sendTerMutex_.unlock();
 
         //DLOG(ERROR) << flowPacket->ToString() << " -> " << terConnection_->ToString();
+        DLOG(ERROR) << pico_packet->to_string() << " -> " << terConnection_->ToString();
 
         // data sent -> delete FLowPacket
-        delete flowPacket;
+        //delete flowPacket;
+        delete pico_packet;
     }
 
-    void Bond::SendToSat(packet::FlowPacket *flowPacket) {
-        // redirect to ter if not enabled
-        if(!args::SAT_ENABLED) {
-            SendToTer(flowPacket);
-            return;
-        }
-
-        while(satConnection_->IoCtl<int>(TIOCOUTQ) > 4500000) { // 3750000
+    //void Bond::SendToSat(packet::FlowPacket *flowPacket) {
+    void Bond::SendToSat(packet::PicoPacket *pico_packet) {
+        while(satConnection_->IoCtl<int>(TIOCOUTQ) > 4500000) { // BDP + 20% = 3750000 + 75000 = 4500000 bytes
             // bandwidth aggregation
-            /*if(args::TER_ENABLED) {
+            if(args::TER_ENABLED) {
                 if (terConnection_->IoCtl<int>(TIOCOUTQ) < 9000) {
-                    SendToTer(flowPacket);
+                    sendTerMutex_.lock();
+                    //SendToConnection(terConnection_, flowPacket);
+                    SendToConnection(terConnection_, pico_packet);
+                    sendTerMutex_.unlock();
+
+                    //DLOG(ERROR) << flowPacket->ToString() << " -> " << terConnection_->ToString();
+                    DLOG(ERROR) << pico_packet->to_string() << " -> " << terConnection_->ToString();
                     return;
                 }
-            }*/
+            }
 
             std::this_thread::sleep_for(std::chrono::microseconds(168)); // 50MBit/s / 8 = 6.25 MB/s = 6250000byte/s / 1056 = ~5919 packet/s = 1 packet every 0.168 ms = 168 us
         }
 
         // send to socket
         sendSatMutex_.lock();
-        SendToConnection(satConnection_, flowPacket);
+        //SendToConnection(satConnection_, flowPacket);
+        SendToConnection(satConnection_, pico_packet);
         sendSatMutex_.unlock();
 
         //DLOG(ERROR) << flowPacket->ToString() << " -> " << satConnection_->ToString();
+        DLOG(ERROR) << pico_packet->to_string() << " -> " << satConnection_->ToString();
 
         // data sent -> delete FlowPacket
-        delete flowPacket;
+        //delete flowPacket;
+        delete pico_packet;
     }
 
 } // net

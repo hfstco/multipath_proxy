@@ -6,7 +6,6 @@ import re
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-
 def split_on_slash(df_col, split_index):
     return df_col.apply(lambda x: x.split(" / ")[split_index])
 
@@ -41,6 +40,9 @@ args = parser.parse_args()
 
 df = pd.read_csv(args.log, delimiter=r"\s\s+", engine="python")
 
+df = df.loc[df['NAME'] != 'mpp-tercon']
+df = df.loc[df['NAME'] != 'mpp-satcon']
+
 # remove repeating headers
 df = df[df.NAME != "NAME"]
 
@@ -48,14 +50,20 @@ df = df[df.NAME != "NAME"]
 df["mem_percentage"] = percentage_to_float(df["MEM %"])
 df["cpu_percentage"] = percentage_to_float(df["CPU %"])
 
-fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+fig, ax = plt.subplots(figsize=(6.4, 2.4))
 
-sns.lineplot(x=df.index, y="cpu_percentage", hue="NAME", data=df, drawstyle="steps")
-plt.legend(bbox_to_anchor=(1.01, 1), loc='upper left')
-plt.ylabel("CPU [%]")
-plt.title(f"CPU")
-plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
-#plt.ylim(0, 2400)
-plt.grid()
-plt.show()
+sns.lineplot(x=df.index, y="cpu_percentage", hue="NAME", data=df)
+plt.legend(loc='upper right')
+ax.set_xlabel("Zeit in Sekunden")
+ax.set_ylabel("CPU Auslastung in %")
+#plt.xlabel("Zeit in Sekunden")
+#plt.ylabel("CPU Auslastung in %")
+#plt.title(f"CPU Auslastung")
+#plt.tick_params(axis='x', which='both', bottom=True, top=False, labelbottom=True)
+plt.ylim(0, 2400)
+#plt.grid()
+
+plt.tight_layout()
+#plt.show()
+plt.savefig('plot_docker_stats.pdf', dpi=300, bbox_inches="tight")
 

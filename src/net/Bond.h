@@ -14,6 +14,7 @@
 namespace packet {
     class Packet;
     class FlowPacket;
+    class PicoPacket;
 }
 
 namespace collections {
@@ -40,8 +41,10 @@ namespace net {
     public:
         Bond(net::ipv4::TcpConnection *terConnection, net::ipv4::TcpConnection *satConnection, context::Context *context);
 
-        void SendToTer(packet::FlowPacket *flowPacket);
-        void SendToSat(packet::FlowPacket *flowPacket);
+        //void SendToTer(packet::FlowPacket *flowPacket);
+        void SendToTer(packet::PicoPacket *pico_packet);
+        //void SendToSat(packet::FlowPacket *flowPacket);
+        void SendToSat(packet::PicoPacket *pico_packet);
 
         std::string ToString();
 
@@ -57,7 +60,8 @@ namespace net {
         context::Context *context_;
 
         void RecvFromConnection(net::ipv4::TcpConnection *connection);
-        void SendToConnection(net::ipv4::TcpConnection *connection, packet::Packet *packet);
+        //void SendToConnection(net::ipv4::TcpConnection *connection, packet::Packet *packet);
+        void SendToConnection(net::ipv4::TcpConnection *connection, packet::PicoPacket *pico_packet);
 
         void WriteHeartBeatPacket();
 

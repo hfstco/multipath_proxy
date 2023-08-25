@@ -15,6 +15,7 @@
 #include "../collections/FlowMap.h"
 #include "../task/ThreadPool.h"
 #include "../context/Context.h"
+#include "../packet/PicoPacket.h"
 
 namespace net {
 
@@ -23,14 +24,14 @@ namespace net {
                                                                                                                                                                          connection_(tcpConnection),
                                                                                                                                                                          bond_(bond),
                                                                                                                                                                          toBondId_(0),
-                                                                                                                                                                         toConnectionQueue_(collections::BlockingFlowPacketQueue()),
-                                                                                                                                                                         toBondQueue_(collections::BlockingFlowPacketQueue()),
+                                                                                                                                                                         toConnectionQueue_(collections::SortedBacklog()),
+                                                                                                                                                                         toBondQueue_(collections::UnsortedBacklog()),
                                                                                                                                                                          context_(context),
                                                                                                                                                                          recvFromConnectionLooper_(std::bind(&Flow::RecvFromConnection, this)),
                                                                                                                                                                          sendToConnectionLooper_(std::bind(&Flow::SendToConnection, this)),
                                                                                                                                                                          sendToBondLooper_(std::bind(&Flow::SendToBond, this))
                                                                                                                                                                          {
-        LOG(ERROR) << "Flow(" << source_.ToString() << "|" << destination_.ToString() << ", " << tcpConnection->ToString() << ")";
+        LOG(ERROR) << "Flow(" << source_.to_string() << "|" << destination_.to_string() << ", " << tcpConnection->ToString() << ")";
 
         recvFromConnectionLooper_.Start();
         sendToConnectionLooper_.Start();
@@ -41,27 +42,36 @@ namespace net {
         return new Flow(source, destination, pTcpConnection, bond, context);
     }
 
-    void Flow::WriteToFlow(packet::FlowPacket *pFlowPacket) {
-        toConnectionQueue_.Insert(pFlowPacket);
+    //void Flow::WriteToFlow(packet::FlowPacket *pFlowPacket) {
+    void Flow::WriteToFlow(packet::PicoPacket *pico_packet) {
+        //toConnectionQueue_.push(pFlowPacket);
+        toConnectionQueue_.push(pico_packet);
     }
 
     void Flow::RecvFromConnection() {
         connection_->Poll(POLLIN | POLLRDHUP | POLLHUP, -1);
 
         // preload stop
-        if (byteSize() >= 4500000) {
+        if (size() >= 4500000) {
             usleep(168);
             return;
         }
 
         // create packet
-        packet::FlowHeader flowHeader = packet::FlowHeader(source_, destination_, toBondId_++); // TODO GetSock/PeerName local variable?
-        packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 1024); // TODO BUFFER_SIZE;
+        //packet::FlowHeader flowHeader = packet::FlowHeader(source_, destination_, toBondId_++); // TODO GetSock/PeerName local variable?
+        //packet::FlowPacket *flowPacket = packet::FlowPacket::make(flowHeader, 1024); // TODO BUFFER_SIZE;
+        packet::PicoPacket *pico_packet = new packet::PicoPacket;
+        pico_packet->source_ip = source_.sin_addr;
+        pico_packet->source_port = source_.sin_port;
+        pico_packet->destination_ip = destination_.sin_addr;
+        pico_packet->destination_port = destination_.sin_port;
+        pico_packet->id = toBondId_++;
 
         // read data from connection
         ssize_t bytes_read = 0;
         try {
-            bytes_read = connection_->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
+            //bytes_read = connection_->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
+            bytes_read = connection_->Recv(pico_packet->payload, pico_packet->size, 0);
             //LOG(INFO) << connection_->ToString() << " -> READ " << bytes_read << "bytes";
         } catch (Exception e) {
              LOG(INFO) << e.what();
@@ -72,29 +82,36 @@ namespace net {
             recvFromConnectionLooper_.Stop();
 
             if(closed_) {
-                toBondQueue_.Clear();
-                assert(toBondQueue_.Empty());
-                flowPacket->header()->id(toBondQueue_.currentId());
+                toBondQueue_.reset();
+                assert(toBondQueue_.empty());
+                //flowPacket->header()->id(toBondQueue_.currentId());
+                pico_packet->id = toBondQueue_.currentId();
             }
         }
 
         // resize packet to fit data
-        flowPacket->Resize(bytes_read);
+        //flowPacket->Resize(bytes_read);
+        pico_packet->size = bytes_read;
 
         //DLOG(INFO) << connection_->ToString() << " -> " << flowPacket->ToString();
+        DLOG(INFO) << connection_->ToString() << " -> " << pico_packet->to_string();
 
         // write package to toBond_ queue
-        toBondQueue_.Insert(flowPacket);
+        //toBondQueue_.push(flowPacket);
+        toBondQueue_.push(pico_packet);
         context_->flows()->addByteSize(bytes_read);
     }
 
     void Flow::SendToConnection() {
         // try to get next package
-        packet::FlowPacket *flowPacket = toConnectionQueue_.Pop();
+        //packet::FlowPacket *flowPacket = toConnectionQueue_.pop();
+        packet::PicoPacket *pico_packet = toConnectionQueue_.pop();
 
         // close packet
-        if (flowPacket->header()->size() == 0) {
-            delete flowPacket;
+        //if (flowPacket->header()->size() == 0) {
+        if (pico_packet->size == 0) {
+            //delete flowPacket;
+            delete pico_packet;
 
             //assert(toConnectionQueue_.Empty());
 
@@ -116,7 +133,8 @@ namespace net {
         // send packet to connection
         int bytes_sent = 0;
         try {
-            bytes_sent = connection_->Send(flowPacket->data(), flowPacket->header()->size(), 0);
+            //bytes_sent = connection_->Send(flowPacket->data(), flowPacket->header()->size(), 0);
+            bytes_sent = connection_->Send(pico_packet->payload, pico_packet->size, 0);
             //LOG(INFO) << "SENT " << bytes_sent << "bytes -> " << connection_->ToString();
         } catch (Exception e) {
             //LOG(ERROR) << e.ToString();
@@ -124,9 +142,11 @@ namespace net {
         }
 
         //DLOG(INFO) << flowPacket->ToString() << " -> " << connection_->ToString();
+        DLOG(INFO) << pico_packet->to_string() << " -> " << connection_->ToString();
 
         // delete package
-        delete flowPacket;
+        //delete flowPacket;
+        delete pico_packet;
 
         // metrics
         /*try {
@@ -138,10 +158,12 @@ namespace net {
 
     void Flow::SendToBond() {
         // try to get next package
-        packet::FlowPacket *flowPacket = toBondQueue_.Pop();
+        //packet::FlowPacket *flowPacket = toBondQueue_.pop();
+        packet::PicoPacket *pico_packet = toBondQueue_.pop();
 
         // close packet
-        if( flowPacket->header()->size() == 0 ) {
+        //if( flowPacket->header()->size() == 0 ) {
+        if (pico_packet->size == 0) {
             sendToBondLooper_.Stop();
 
             if (closed_) {
@@ -155,11 +177,13 @@ namespace net {
             }
 
             //assert(byteSize() < 2000);
-            bond_->SendToTer(flowPacket);
+            //bond_->SendToTer(flowPacket);
+            bond_->SendToTer(pico_packet);
             return;
         }
 
-        context_->flows()->subByteSize(flowPacket->header()->size());
+        //context_->flows()->subByteSize(flowPacket->header()->size());
+        context_->flows()->subByteSize(pico_packet->size);
 
         // write packet
         // LOG(INFO) << "backlog: " << byteSize() << ", totalBacklog: " << context_->flows()->getByteSize();
@@ -168,11 +192,16 @@ namespace net {
             satellite_.clear();
         }
 
-        if((byteSize() < 2000 || context_->flows()->getByteSize() < 74219 || flowPacket->header()->id() == 0) && !satellite_.test()) {
-            bond_->SendToTer(flowPacket);
-        } else {
+        //if((size() < 2000 || context_->flows()->getByteSize() < 74219 || flowPacket->header()->id() == 0) && !satellite_.test() && args::TER_ENABLED) {
+        if((size() < 2000 || context_->flows()->getByteSize() < 74219 || pico_packet->id == 0) && !satellite_.test() && args::TER_ENABLED) {
+            //bond_->SendToTer(flowPacket);
+            bond_->SendToTer(pico_packet);
+        } else if(args::SAT_ENABLED) {
             satellite_.test_and_set();
-            bond_->SendToSat(flowPacket);
+            //bond_->SendToSat(flowPacket);
+            bond_->SendToSat(pico_packet);
+        } else {
+
         }
 
         // set last send timestamp
@@ -182,7 +211,7 @@ namespace net {
     Flow::~Flow() {
         // remove from flows
         context_->flows()->mutex().lock();
-        context_->flows()->Erase(source_, destination_);
+        context_->flows()->Erase(source_.sin_addr, source_.sin_port, destination_.sin_addr, destination_.sin_port);
         context_->flows()->mutex().unlock();
 
         // close and delete connection
@@ -192,12 +221,12 @@ namespace net {
         LOG(INFO) << ToString() << ".~Flow()";
     }
 
-    uint64_t Flow::byteSize() {
-        return toBondQueue_.byteSize();
+    uint64_t Flow::size() {
+        return toBondQueue_.size();
     }
 
     std::string Flow::ToString() {
-        return "Flow[source=" + source_.ToString() + ", destination=" + destination_.ToString() + "]";
+        return "Flow[source=" + source_.to_string() + ", destination=" + destination_.to_string() + "]";
     }
 
 } // net

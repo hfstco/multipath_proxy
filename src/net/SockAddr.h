@@ -34,7 +34,7 @@ namespace net {
             this->sa_family = family;
         };
 
-        std::string ToString() {
+        std::string to_string() {
             std::stringstream stringStream;
 
             stringStream << "SA[family=";
@@ -75,8 +75,8 @@ namespace net {
                 port(std::stoi(endpoint.substr(colon + 1, endpoint.length() - colon)));
             }
 
-            SockAddr_In(in_addr sin6_addr, in_port_t port) : SockAddr_In() {
-                this->sin_addr = sin6_addr;
+            SockAddr_In(in_addr sin_addr, in_port_t port) : SockAddr_In() {
+                this->sin_addr = sin_addr;
                 this->sin_port = port;
             };
 
@@ -131,7 +131,7 @@ namespace net {
                 this->sin_port = htons(port);
             }
 
-            std::string ToString() {
+            std::string to_string() {
                 return ip() + ":" + std::to_string(port());
             }
 
@@ -205,7 +205,7 @@ namespace net {
                 this->sin6_port = htons(port);
             }
 
-            std::string ToString() {
+            std::string to_string() {
                 return ip() + ":" + std::to_string(port());
             }
 

@@ -84,7 +84,7 @@ namespace packet {
                 stringStream << "CLOSE";
                 break;
         }
-        stringStream << ", source=" << source().ToString() << ", destination=" << destination().ToString() << ", id=" << id() << ", Size=" << size() << "]";
+        stringStream << ", source=" << source().to_string() << ", destination=" << destination().to_string() << ", id=" << id() << ", Size=" << size() << "]";
 
         return stringStream.str();
     }

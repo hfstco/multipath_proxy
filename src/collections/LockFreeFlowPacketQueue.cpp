@@ -195,7 +195,7 @@ namespace collections {
     }
 
     std::string LockFreeFlowPacketQueue::ToString() {
-        return "FlowPacketQueue[size=" + std::to_string(size()) + ", currentId=" + std::to_string(currentId_) + ", byteSize=" + std::to_string(byteSize_) + "]";
+        return "FlowPacketQueue[size=" + std::to_string(size()) + ", currentId=" + std::to_string(currentId_) + ", size=" + std::to_string(byteSize_) + "]";
     }
 
 } // collections
