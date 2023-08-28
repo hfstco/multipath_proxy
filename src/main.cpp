@@ -4,52 +4,87 @@
 
 #include <iostream>
 #include <netinet/tcp.h>
+#include <glog/logging.h>
 
 #include "args/ARGS.h"
 #include "net/TcpListener.h"
 #include "net/TcpConnection.h"
 #include "net/SockAddr.h"
-#include "net/Proxy.h"
-#include "net/QuicServerConnection.h"
-#include "net/QuicClientConnection.h"
-#include "net/QuicConnection.h"
-#include "net/TER.h"
-#include "net/SAT.h"
+#include "proxy/Proxy.h"
+#include "quic/Quic.h"
+#include "quic/FlowContext.h"
 
 
 int main(int argc, char *argv[]) {
     // init logging
+    google::InitGoogleLogging(argv[0]);
     google::SetLogDestination(0,"mpp.log");
-    google::InitGoogleLogging("log_test");
     FLAGS_alsologtostderr = true;
 
     // init arguments
     args::init(argc, argv);
 
-    if (args::MODE == args::mode::LOCAL) { // local
-        net::ipv4::SockAddr_In terSockAddr = net::ipv4::SockAddr_In(args::TER_STRING);
-        TER = new net::QuicClientConnection(terSockAddr.ip(), terSockAddr.port(), false, "ter_ticket_store.bin", "ter_token_store.bin");
-        net::ipv4::SockAddr_In sat_from_sockaddr = net::ipv4::SockAddr_In("172.30.20.2:6001");
-        net::ipv4::SockAddr_In sat_to_sockaddr = net::ipv4::SockAddr_In("172.30.21.3:6000");
-        int ret = ((net::QuicClientConnection *)TER)->probe_new_path((struct sockaddr*)&sat_from_sockaddr, (struct sockaddr*)&sat_to_sockaddr);
+    //net::ipv4::SockAddr_In sockaddr = net::ipv4::SockAddr_In(args::SAT_STRING);
 
-        net::Proxy proxy = net::Proxy(net::ipv4::SockAddr_In(args::PROXY_STRING));
+
+    if (args::MODE == args::mode::LOCAL) { // local
+        struct sockaddr_storage sockaddr;
+        int ter_is_name = 0;
+
+        picoquic_get_server_address("172.30.21.3", 6000, &sockaddr, &ter_is_name);
+
+        quic::Quic *quic = quic::Quic::make(1, "ticket_store.bin");
+        quic->set_default_congestion_algorithm(picoquic_bbr_algorithm);
+        //quic->set_key_log_file_from_env();
+        //quic->set_key_log_file("key.log");
+        //quic->set_qlog(".");
+        //quic->set_binlog(".");
+        //quic->set_log_level(1);
+        // debug
+        quic->set_default_idle_timeout(10000000);
+        // https://github.com/private-octopus/picoquic/blob/1e2979e8db0957c8ee798940091c4d0ef13bf8af/picoquic/picoquic.h#L1088
+        quic->set_default_priority(0xA);
+        // enable path callbacks
+        quic->enable_path_callbacks_default(1);
+        quic->set_default_multipath_option(2);
+        // subscribe quality update
+        quic->default_quality_update(0, 0);
+        quic->set_padding_policy(39, 1);
+
+        auto *flowContext = quic->create_context<quic::FlowContext>(picoquic_null_connection_id, picoquic_null_connection_id, (struct sockaddr *) &sockaddr, picoquic_current_time(), 0, "", QUIC_ALPN_FLOW, 1);
+        flowContext->start_client_cnx();
+
+        quic->start_packet_loop(0, sockaddr.ss_family, 0, 0, 0);
+
+        proxy::Proxy proxy = proxy::Proxy(flowContext, net::ipv4::SockAddr_In("172.30.10.3", 5000));
 
         //exit when key pressed
         std::cin.ignore();
     } else { // remote
-        net::ipv4::SockAddr_In terSockAddr = net::ipv4::SockAddr_In(args::TER_STRING);
-        TER = new net::QuicServerConnection(terSockAddr.port(), false);
+        quic::Quic *quic = quic::Quic::make(100, "/root/cert.pem", "/root/key.pem");
+
+        quic->set_cookie_mode(2);
+        quic->set_default_congestion_algorithm(picoquic_bbr_algorithm);
+        //quic->set_qlog(".");
+        //quic->set_log_level(1);
+        //quic->set_key_log_file_from_env();
+        //quic->set_key_log_file("key.log");
+        //quic->set_binlog(".");
+        // debug
+        quic->set_default_idle_timeout(10000000);
+        // https://github.com/private-octopus/picoquic/blob/1e2979e8db0957c8ee798940091c4d0ef13bf8af/picoquic/picoquic.h#L1088
+        quic->set_default_priority(0xA);
+        // enable path callbacks
+        quic->enable_path_callbacks_default(1);
+        quic->set_default_multipath_option(2);
+        // subscribe quality update
+        quic->default_quality_update(0, 0);
+        quic->set_padding_policy(39, 1);
+
+        quic->start_packet_loop(6000, 0, 0, 0, 0);
 
         //exit when key pressed
         std::cin.ignore();
-    }
-
-    if(args::TER_ENABLED) {
-        delete TER;
-    }
-    if(args::SAT_ENABLED) {
-        delete SAT;
     }
 
     return 0;

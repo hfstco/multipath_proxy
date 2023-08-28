@@ -7,7 +7,7 @@
 
 #include "../src/net/QuicServerConnection.h"
 #include "../src/net/QuicClientConnection.h"
-#include "../src/net/QuicStream.h"
+#include "../src/quic/Stream.h"
 
 TEST(picoquic, simple) {
     net::QuicServerConnection qsc = net::QuicServerConnection(7779, false);

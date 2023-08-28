@@ -6,32 +6,23 @@
 #define MULTIPATH_PROXY_PROXY_H
 
 #include "../worker/Looper.h"
+#include "../net/SockAddr.h"
+#include "../quic/Context.h"
 
-namespace collections {
-    class FlowMap;
+namespace net::ipv4 {
+    class TcpListener;
 }
 
-namespace task {
-    class ThreadPool;
+namespace quic {
+    class FlowContext;
 }
 
-namespace context {
-    class Context;
-}
-
-namespace net {
-
-    namespace ipv4 {
-        class SockAddr_In;
-        class TcpListener;
-    }
-
-    class QuicConnection;
+namespace proxy {
 
     class Proxy {
     public:
         Proxy() = delete;
-        Proxy(net::ipv4::SockAddr_In sock_addr_in);
+        Proxy(quic::FlowContext *context, net::ipv4::SockAddr_In sock_addr_in);
 
         void accept();
 
@@ -40,11 +31,12 @@ namespace net {
         virtual ~Proxy();
 
     private:
+        quic::FlowContext *_context;
         net::ipv4::TcpListener *_tcp_listener;
 
         worker::Looper _accept_looper;
     };
 
-} // net
+} // proxy
 
 #endif //MULTIPATH_PROXY_PROXY_H

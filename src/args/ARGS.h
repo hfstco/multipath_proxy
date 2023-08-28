@@ -17,11 +17,14 @@ namespace args {
 
     inline mode MODE = mode::LOCAL;
 
+    // global
+    inline uint16_t PORT;
     inline bool TER_ENABLED = false;
-    inline std::string TER_STRING;
-
     inline bool SAT_ENABLED = false;
-    inline std::string SAT_STRING;
+
+    // client
+    inline std::string TER_IP;
+    inline std::string SAT_IP;
 
     inline std::string PROXY_STRING;
 
@@ -40,7 +43,6 @@ namespace args {
                         {"ter", required_argument,       nullptr, 't'},
                         {"sat", required_argument,       nullptr, 's'},
                         {"proxy", optional_argument, nullptr, 'p'},
-                        {"heartbeat", no_argument,      nullptr, 'b'},
                         //{"gui", no_argument,       0, 'g'},
                         {"metrics", no_argument, nullptr, 'm'},
                         {"help", no_argument, nullptr, 'h'},
@@ -66,15 +68,15 @@ namespace args {
                 case 't':
                     opt = (struct option *)&(long_opts[index]);
                     args::TER_ENABLED = true;
-                    args::TER_STRING = optarg;
-                    LOG(INFO) << "TER=" + args::TER_STRING;
+                    //args::TER_STRING = optarg;
+                    //LOG(INFO) << "TER=" + args::TER_STRING;
                     break;
 
                 case 's':
                     opt = (struct option *)&(long_opts[index]);
                     args::SAT_ENABLED = true;
-                    args::SAT_STRING = optarg;
-                    LOG(INFO) << "SAT=" + args::SAT_STRING;
+                    //args::SAT_STRING = optarg;
+                    //LOG(INFO) << "SAT=" + args::SAT_STRING;
                     break;
 
                 case 'p':

@@ -57,7 +57,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".Bind(" << addr.to_string() << ")";
+            //VLOG(3) << to_string() << ".Bind(" << addr.to_string() << ")";
         }
 
         template<IsSocket AS = S>
@@ -74,7 +74,7 @@ namespace net {
 
             AS *s = new AS(fd);
 
-            VLOG(3) << to_string() << ".accept() -> " << s->to_string();
+            //VLOG(3) << to_string() << ".accept() -> " << s->to_string();
 
             return s;
         };
@@ -94,7 +94,7 @@ namespace net {
 
             AS* s = new AS(fd);
 
-            VLOG(3) << to_string() << ".accept(" << addr.to_string() << ") -> " << s->to_string();
+            //VLOG(3) << to_string() << ".accept(" << addr.to_string() << ") -> " << s->to_string();
 
             return s;
         };
@@ -108,7 +108,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".Listen()";
+            //VLOG(3) << to_string() << ".Listen()";
         }
 
         void Connect(SA addr) {
@@ -120,7 +120,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".Connect(" << addr.to_string() << ")";
+            //VLOG(3) << to_string() << ".Connect(" << addr.to_string() << ")";
         }
 
         ssize_t Send(unsigned char *buf, size_t size, int flags) { // TODO merge with SendTo()
@@ -134,7 +134,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".Send(buf=" << buf << ", size=" << size << ", flags=" << flags << ") -> " << bytes_sent << "recvBytes";
+            //VLOG(3) << to_string() << ".Send(buf=" << buf << ", size=" << size << ", flags=" << flags << ") -> " << bytes_sent << "recvBytes";
 
             return bytes_sent;
         }
@@ -150,7 +150,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".Recv(buf=" << buf << ", size=" << size << ", flags=" << flags << ") -> " << bytes_read << "recvBytes";
+            //VLOG(3) << to_string() << ".Recv(buf=" << buf << ", size=" << size << ", flags=" << flags << ") -> " << bytes_read << "recvBytes";
 
             return bytes_read;
         }
@@ -166,7 +166,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".SendTo(buf=" << buf << ", size=" << size << ", flags=" << flags << ", SA=" << dest_addr.to_string() << ") -> " << bytes_sent << "recvBytes";
+            //VLOG(3) << to_string() << ".SendTo(buf=" << buf << ", size=" << size << ", flags=" << flags << ", SA=" << dest_addr.to_string() << ") -> " << bytes_sent << "recvBytes";
 
             return bytes_sent;
         }
@@ -183,7 +183,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".RecvFrom(buf=" << buf << ", size=" << size << ", flags=" << flags << ", SA=" << src_addr.to_string() << ") -> " << bytes_read << "recvBytes";
+            //VLOG(3) << to_string() << ".RecvFrom(buf=" << buf << ", size=" << size << ", flags=" << flags << ", SA=" << src_addr.to_string() << ") -> " << bytes_read << "recvBytes";
 
             return bytes_read;
         }
@@ -199,7 +199,7 @@ namespace net {
 
             }
 
-            VLOG(3) << to_string() << ".Poll(" << events << ", " << timeout << ") -> " << fds[0].revents;
+            //VLOG(3) << to_string() << ".Poll(" << events << ", " << timeout << ") -> " << fds[0].revents;
 
             return fds[0].revents;
         }
@@ -213,7 +213,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << "Socket::Poll(fds=" << fds << ", nfds=" << nfds << ", timeout=" << timeout << ")";
+            //VLOG(3) << "Socket::Poll(fds=" << fds << ", nfds=" << nfds << ", timeout=" << timeout << ")";
         }
 
         SA GetSockName() {
@@ -228,7 +228,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".GetSockName() -> " << addr.to_string();
+            //VLOG(3) << to_string() << ".GetSockName() -> " << addr.to_string();
 
             return addr;
         }
@@ -245,7 +245,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".GetPeerName() -> " << addr.to_string();
+            //VLOG(3) << to_string() << ".GetPeerName() -> " << addr.to_string();
 
             return addr;
         }
@@ -260,7 +260,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".SetSockOpt(level=" << level << ", optname=" << optname << ", optval=" << optval << ")";
+            //VLOG(3) << to_string() << ".SetSockOpt(level=" << level << ", optname=" << optname << ", optval=" << optval << ")";
         }
 
         template<typename T>
@@ -275,7 +275,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << to_string() << ".GetSockOpt(level=" << level << ", optname=" << optname << ") -> " << optval;
+            //VLOG(3) << to_string() << ".GetSockOpt(level=" << level << ", optname=" << optname << ") -> " << optval;
 
             return optval;
         }
@@ -301,7 +301,7 @@ namespace net {
                 VLOG(3) << to_string() << ".Close() ! " << socketErrorException.ToString();
             }
 
-            VLOG(3) << to_string() << ".Close()";
+            //VLOG(3) << to_string() << ".Close()";
         }
 
         void Shutdown(int how) {
@@ -328,7 +328,7 @@ namespace net {
                 throw socketErrorException;
             }
 
-            VLOG(3) << stringStream.str(); // TODO log
+            //VLOG(3) << stringStream.str(); // TODO log
         }
 
         std::string to_string() {

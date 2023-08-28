@@ -7,19 +7,15 @@
 
 #include "Proxy.h"
 
-#include "SockAddr.h"
-#include "TcpConnection.h"
-#include "TcpListener.h"
-#include "Flow.h"
-#include "QuicConnection.h"
-#include "TER.h"
-#include "SAT.h"
-#include "QuicStream.h"
-#include "../packet/FlowHeader.h"
+#include "../net/TcpConnection.h"
+#include "../net/TcpListener.h"
+#include "../flow/Flow.h"
+#include "../quic/FlowContext.h"
 
-namespace net {
+namespace proxy {
 
-    Proxy::Proxy(net::ipv4::SockAddr_In sock_addr_in) : _tcp_listener(net::ipv4::TcpListener::make(sock_addr_in)), // create tcp listener on sock_addr_in
+    Proxy::Proxy(quic::FlowContext *context, net::ipv4::SockAddr_In sock_addr_in)
+            : _context(context), _tcp_listener(net::ipv4::TcpListener::make(sock_addr_in)), // create tcp listener on sock_addr_in
                                                         _accept_looper([this] { accept(); }) { // thread which runs accept() in a loop
 #ifdef __linux__ // for debugging on win or macos, tproxy is only available on unix distributions
         _tcp_listener->SetSockOpt(IPPROTO_IP, IP_TRANSPARENT, 1);
@@ -36,10 +32,10 @@ namespace net {
             net::ipv4::TcpConnection *tcp_connection = _tcp_listener->Accept(source); // blocking here
 
             // get destination SockAddr
-            ipv4::SockAddr_In destination = tcp_connection->GetSockName();
+            net::ipv4::SockAddr_In destination = tcp_connection->GetSockName();
 
             // create Flow
-            Flow *flow = Flow::make(source, destination, tcp_connection);
+            flow::Flow *flow = _context->new_flow(source, destination, tcp_connection);
         } catch (Exception e) {
             LOG(ERROR) << e.what();
         }
@@ -56,4 +52,4 @@ namespace net {
         delete _tcp_listener;
     }
 
-} // net
+} // proxy
