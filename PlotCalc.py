@@ -18,7 +18,7 @@ def sat(byteSize):
 
 
 def implBelowThreshold(byteSize):
-        return ter(byteSize)
+    return ter(byteSize)
 
 
 def implOverThreshold(byteSize):
@@ -29,15 +29,15 @@ byteSizes = np.linspace(0, 1000, num=100)
 byteSizesBelowThreshold = np.linspace(0, 74.219, num=100)
 byteSizesOverThreshold = np.linspace(74.219, 1000, num=100)
 
-plt.plot(byteSizesBelowThreshold, implBelowThreshold(byteSizesBelowThreshold), color='red', label="bond")
-plt.plot(byteSizesOverThreshold, implOverThreshold(byteSizesOverThreshold), color='red')
-plt.plot(byteSizes, sat(byteSizes), color='blue', label="sat")
-plt.plot(byteSizes, ter(byteSizes), color='green', label="ter")
+plt.plot(byteSizes, ter(byteSizes), color='#4daf4a', label="ter")
+plt.plot(byteSizes, sat(byteSizes), color='#377EB8', label="sat")
+plt.plot(byteSizesBelowThreshold, implBelowThreshold(byteSizesBelowThreshold), color='#e41A1c', label="bond")
+plt.plot(byteSizesOverThreshold, implOverThreshold(byteSizesOverThreshold), color='#e41A1c')
 plt.legend(title="link")
-plt.ylim(0, 5)
+plt.ylim(0, 5.5)
+plt.legend(loc='upper right')
 plt.xlim(0, 1000)
-plt.xlabel("byteSize")
-plt.ylabel("duration")
+plt.xlabel("byteSize in Byte")
+plt.ylabel("duration in Sekunden")
 
-plt.show()
-
+plt.savefig('plot_merge_byte_size_duration_calc.pdf', dpi=300)

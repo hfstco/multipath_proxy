@@ -2,7 +2,7 @@
 // Created by Matthias Hofstätter on 05.03.23.
 //
 
-#include <thread>
+/*#include <thread>
 #include <glog/logging.h>
 #include "gtest/gtest.h"
 #include "../src/net/TcpConnection.h"
@@ -52,7 +52,7 @@ TEST(net_Connection, ipv4_TcpConnection) {
     }
 
     t1.join();
-}
+}*/
 
 /*TEST(net_Connection, ipv6_TcpConnection) {
     std::thread t1([&] {

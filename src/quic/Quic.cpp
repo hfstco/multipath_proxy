@@ -150,7 +150,7 @@ namespace quic {
                 // force delta_t 2 us
                 auto time_check_arg = (packet_loop_time_check_arg_t *) callback_arg;
                 //if (time_check_arg->delta_t > 2) {
-                    time_check_arg->delta_t = 0;
+                //time_check_arg->delta_t = 0;
                 //}
 
                 break;

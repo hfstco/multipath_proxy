@@ -31,6 +31,9 @@ namespace quic {
         // create new path
         Path *path = new Path(this, unique_path_id);
         _paths.insert({unique_path_id, path});
+        if (path->set_app_path_ctx(path) != 0) {
+            assert(false); // not implemented
+        }
 
         return path;
     }
@@ -73,12 +76,13 @@ namespace quic {
 
             auto* context = quic->get_context(cnx);
             if (context == nullptr) {
-                // create flow
+                // create context
                 context = quic->create_context(cnx);
             }
 
             auto* stream = (quic::Stream *)v_stream_ctx;
             if (stream == nullptr) {
+                // create stream
                 stream = context->new_stream(stream_id);
             }
 
@@ -187,7 +191,7 @@ namespace quic {
 
     int Context::stream_direct_receive(picoquic_cnx_t *cnx, uint64_t stream_id, int fin, const uint8_t *bytes,
                                        uint64_t offset, size_t length, void *direct_receive_ctx) {
-        assert(false);
+        assert(false); // not implemented
         return 0;
     }
 

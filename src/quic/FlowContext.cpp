@@ -7,10 +7,11 @@
 #include "glog/logging.h"
 
 #include "Quic.h"
-#include "../flow/Flow.h"
 #include "Path.h"
 #include "../backlog/Chunk.h"
 #include "../net/TcpConnection.h"
+#include "../backlog/TotalBacklog.h"
+#include "../flow/Flow.h"
 
 namespace quic {
 
@@ -42,66 +43,50 @@ namespace quic {
         auto* context = (FlowContext *)callback_ctx;
 
         switch (fin_or_event) {
-            case picoquic_callback_stream_data: {
-                // get or create flow
+            case picoquic_callback_stream_data:
+                // fall through
+            case picoquic_callback_stream_fin: {
+                // get flow
                 auto *flow = (flow::Flow *)v_stream_ctx;
+                // create flow if not exists
                 if (flow == nullptr) {
                     assert(length == sizeof(flow::FlowHeader));
-                    // get flow header
+                    // expect flow header
                     flow::FlowHeader header;
                     memcpy(&header, bytes, sizeof(flow::FlowHeader));
 
-                    // connect
+                    // connect to endpoint
+                    // TODO offload connect to flow
                     net::ipv4::TcpConnection* tcp_connection = net::ipv4::TcpConnection::make(net::ipv4::SockAddr_In(header.destination_ip, header.destination_port));
 
                     // create new stream
                     flow = context->new_flow(stream_id, net::ipv4::SockAddr_In(header.source_ip, header.source_port), net::ipv4::SockAddr_In(header.destination_ip, header.destination_port), tcp_connection);
+                    // set default path to TER
+                    flow->set_stream_path_affinity(0);
 
                     return 0;
                 }
 
-                //VLOG(3) << flow->to_string() << " picoquic_callback_stream_data";
-
-                // write bytes into rx buffer
-                memcpy(flow->_rx_buffer.data + flow->_rx_buffer.size, bytes, length);
-                flow->_rx_buffer.size += length;
-
-                // read header
-                if (flow->_rx_buffer.size < sizeof(backlog::ChunkHeader)) {
-                    // need more data
-                    break;
+                if (fin_or_event == picoquic_callback_stream_data) {
+                    ret = flow->stream_data(bytes, length);
+                } else {
+                    ret = flow->stream_fin(bytes, length);
                 }
-
-                backlog::ChunkHeader header;
-                memcpy(&header, flow->_rx_buffer.data, sizeof(backlog::ChunkHeader));
-
-                // read data
-                if (flow->_rx_buffer.size < sizeof(backlog::ChunkHeader) + header.size) {
-                    // need more data
-                    break;
-                }
-
-                auto *chunk = new backlog::Chunk();
-                chunk->header = header;
-                chunk->data = (uint8_t*)malloc(chunk->header.size);
-                memcpy(chunk->data, flow->_rx_buffer.data + sizeof(backlog::ChunkHeader), chunk->header.size);
-
-                // insert chunk
-                flow->_tx_backlog.insert(chunk);
-
-                // reset rx buffer
-                flow->_rx_buffer.size = 0;
-
-                //flow->_connection->Send(bytes, length, 0);
 
                 break;
             }
-            case picoquic_callback_stream_fin: {
-                VLOG(3) << context->to_string() << " picoquic_callback_stream_fin";
+            case picoquic_callback_prepare_to_send: {
+                // get flow from stream context
+                auto *flow = (flow::Flow *)v_stream_ctx;
+                // redirect
+                ret = flow->prepare_to_send(bytes, length);
+
                 break;
             }
             case picoquic_callback_stream_reset: {
-                VLOG(3) << context->to_string() << " picoquic_callback_stream_reset";
+                // delete flow
+                context->delete_stream(stream_id);
+
                 break;
             }
             case picoquic_callback_stop_sending: {
@@ -124,54 +109,6 @@ namespace quic {
                 VLOG(3) << context->to_string() << " picoquic_callback_stream_gap";
                 break;
             }
-            case picoquic_callback_prepare_to_send: {
-                // get or create flow
-                auto *flow = (flow::Flow *)v_stream_ctx;
-                if (flow == nullptr) {
-                    assert(length == sizeof(flow::FlowHeader));
-                    // get flow header
-                    flow::FlowHeader header;
-                    memcpy(&header, bytes, sizeof(flow::FlowHeader));
-
-                    // connect
-                    net::ipv4::TcpConnection* tcp_connection = net::ipv4::TcpConnection::make(net::ipv4::SockAddr_In(header.destination_ip, header.destination_port));
-
-                    // create new stream
-                    flow = context->new_flow(stream_id, net::ipv4::SockAddr_In(header.source_ip, header.source_port), net::ipv4::SockAddr_In(header.destination_ip, header.destination_port), tcp_connection);
-                    // set path affinity to default path
-                    flow->set_stream_path_affinity(1);
-
-                    return 0;
-                }
-
-                //VLOG(3) << flow->to_string() << " picoquic_callback_prepare_to_send";
-
-                assert(length > sizeof(backlog::ChunkHeader));
-
-                // get next chunk
-                backlog::Chunk *chunk = flow->backlog.next(length - sizeof(backlog::ChunkHeader));
-
-                if (chunk == nullptr) {
-                    // no data available, mark flow/stream inactive
-                    bool expected = true;
-                    if (flow->_active.compare_exchange_strong(expected, false)) {
-                        LOG(INFO) << "STREAM ACTIVE CHANGED: FALSE";
-                        picoquic_provide_stream_data_buffer(bytes, 0, 0, 0);
-                    }
-                    break;
-                }
-
-                // send chunk
-                uint8_t *buffer = picoquic_provide_stream_data_buffer(bytes, sizeof(backlog::ChunkHeader) + chunk->header.size, 0, 1);
-                if (buffer != nullptr) {
-                    // write chunk header
-                    memcpy(buffer, &chunk->header, sizeof(backlog::ChunkHeader));
-                    // write chunk data
-                    memcpy(buffer + sizeof(backlog::ChunkHeader), chunk->data, chunk->header.size);
-                }
-
-                break;
-            }
             case picoquic_callback_almost_ready: {
                 VLOG(3) << context->to_string() << " picoquic_callback_almost_ready";
                 break;
@@ -180,7 +117,7 @@ namespace quic {
                 VLOG(3) << context->to_string() << " picoquic_callback_ready";
 
                 if (context->is_client()) {
-                    // probe new path
+                    // probe new path (SAT)
                     struct sockaddr_storage addr_from;
                     int addr_from_is_name = 0;
                     struct sockaddr_storage addr_to;
@@ -189,7 +126,7 @@ namespace quic {
                     picoquic_get_server_address("172.30.21.3", 6000, &addr_from, &addr_from_is_name); // remote_addr
                     picoquic_get_server_address("172.30.20.2", 0, &addr_to, &addr_to_is_name); // local_addr
 
-                    //ret = context->probe_new_path_ex((struct sockaddr *) &addr_from, /*(struct sockaddr *) &addr_to*/nullptr, 0, picoquic_current_time(), 0);
+                    context->probe_new_path_ex((struct sockaddr *) &addr_from, /*(struct sockaddr *) &addr_to*/nullptr, 0, picoquic_current_time(), 0);
 
                     // subscribe to quality update
                 }
@@ -246,10 +183,9 @@ namespace quic {
                     // create new stream
                     path = context->new_path(unique_path_id);
                 }*/
-
                 assert(v_stream_ctx == nullptr);
+
                 auto* path = context->new_path(stream_id);
-                ret = path->set_app_path_ctx(path); // TODO move to context->new_path()?
                 //ret = path->subscribe_to_quality_update_per_path(500000, 50000);
 
                 VLOG(3) << path->to_string() << " picoquic_callback_path_available";
@@ -261,34 +197,25 @@ namespace quic {
                 if (path == nullptr) {
                     // create new stream
                     path = context->new_path(stream_id);
-                    path->set_app_path_ctx(path); // TODO move to context->new_path()?
                 }
 
                 VLOG(3) << path->to_string() << " picoquic_callback_path_suspended";
 
                 // TODO implement, ?
+                assert(false);
 
                 break;
             }
             case picoquic_callback_path_deleted: {
                 // TODO minimize if stream does not exists
-                /*uint64_t unique_path_id = stream_id; // stream_id = unique_path_id
-
-                auto *path = (quic::Path *)v_stream_ctx;
-                if (path != nullptr) {
-                    // create new stream
-                    path = context->new_path(unique_path_id);
-                }*/
+                //uint64_t unique_path_id = stream_id; // stream_id = unique_path_id
 
                 // TODO minimize, delete_path(stream_id) only
                 auto *path = (quic::Path *)v_stream_ctx;
                 if (path == nullptr) {
                     // create new stream
                     path = context->new_path(stream_id);
-                    ret = path->set_app_path_ctx(path); // TODO move to context->new_path()?
                 }
-
-                VLOG(3) << path->to_string() << " picoquic_callback_path_deleted";
 
                 context->delete_path(stream_id);
 
@@ -299,12 +226,10 @@ namespace quic {
                 if (path == nullptr) {
                     // create new stream
                     path = context->new_path(stream_id);
-                    ret = path->set_app_path_ctx(path); // TODO move to context->new_path()?
                 }
 
-                VLOG(3) << path->to_string() << " picoquic_callback_path_quality_changed";
-
-                ret = path->get_path_quality(&path->_quality);
+                // update congestion
+                path->get_path_quality(&path->_congestion);
 
                 break;
             }

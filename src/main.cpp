@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
         struct sockaddr_storage sockaddr;
         int ter_is_name = 0;
 
-        picoquic_get_server_address("172.30.21.3", 6000, &sockaddr, &ter_is_name);
+        picoquic_get_server_address("172.30.31.3", 6000, &sockaddr, &ter_is_name);
 
         quic::Quic *quic = quic::Quic::make(1, "ticket_store.bin");
         quic->set_default_congestion_algorithm(picoquic_bbr_algorithm);
@@ -46,9 +46,10 @@ int main(int argc, char *argv[]) {
         quic->set_default_priority(0xA);
         // enable path callbacks
         quic->enable_path_callbacks_default(1);
-        quic->set_default_multipath_option(2);
+        quic->set_default_multipath_option(1);
         // subscribe quality update
-        quic->default_quality_update(0, 0);
+        //quic->default_quality_update(0, 0);
+
         quic->set_padding_policy(39, 1);
 
         auto *flowContext = quic->create_context<quic::FlowContext>(picoquic_null_connection_id, picoquic_null_connection_id, (struct sockaddr *) &sockaddr, picoquic_current_time(), 0, "", QUIC_ALPN_FLOW, 1);
@@ -76,9 +77,10 @@ int main(int argc, char *argv[]) {
         quic->set_default_priority(0xA);
         // enable path callbacks
         quic->enable_path_callbacks_default(1);
-        quic->set_default_multipath_option(2);
+        quic->set_default_multipath_option(1);
         // subscribe quality update
-        quic->default_quality_update(0, 0);
+        //quic->default_quality_update(0, 0);
+
         quic->set_padding_policy(39, 1);
 
         quic->start_packet_loop(6000, 0, 0, 0, 0);

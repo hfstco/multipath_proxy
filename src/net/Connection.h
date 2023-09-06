@@ -49,10 +49,6 @@ namespace net {
             return bytesRead;
         };
 
-        std::recursive_mutex &recvMutex() {
-            return recvMutex_;
-        }
-
         ssize_t Send(unsigned char *data, size_t size, int flags) {
             std::lock_guard lock(sendMutex_);
 
@@ -65,10 +61,6 @@ namespace net {
 
             return bytesWritten;
         };
-
-        std::recursive_mutex &sendMutex() {
-            return sendMutex_;
-        }
 
         short Poll(short events, int timeout = 0) {
             return S::Poll(events, timeout);
@@ -190,8 +182,8 @@ namespace net {
         }
 
     private:
-        std::recursive_mutex recvMutex_;
-        std::recursive_mutex sendMutex_;
+        std::mutex recvMutex_;
+        std::mutex sendMutex_;
 
         // metrics
         std::atomic<uint64_t> recvBytes_ = 0;

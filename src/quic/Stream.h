@@ -34,13 +34,15 @@ namespace quic {
         Stream(const Stream& stream) = delete;
         Stream& operator=(const Stream& stream) = delete;
 
+        //virtual int prepare_to_send(uint8_t *bytes, size_t length) = 0;
+        //virtual int stream_data(uint8_t *bytes, size_t length) = 0;
+        //virtual int stream_fin(uint8_t *bytes, size_t length) = 0;
+
         [[nodiscard]] std::string to_string() const;
 
         virtual ~Stream();
 
     protected:
-        std::atomic<bool> _active;
-
         Stream(Context *context, uint64_t stream_id);
 
         virtual int callback(picoquic_cnx_t *cnx, uint64_t stream_id, uint8_t *bytes, size_t length,

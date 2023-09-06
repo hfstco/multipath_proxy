@@ -69,8 +69,8 @@ namespace net {
                 this->port(port);
             };
 
-            SockAddr_In(std::string endpoint) : SockAddr_In() {
-                int colon = endpoint.find(':');
+            SockAddr_In(std::string& endpoint) : SockAddr_In() {
+                size_t colon = endpoint.find(':');
                 ip(endpoint.substr(0, colon));
                 port(std::stoi(endpoint.substr(colon + 1, endpoint.length() - colon)));
             }

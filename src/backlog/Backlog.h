@@ -59,24 +59,24 @@ namespace backlog {
             return backlog._size >= value;
         }
 
-        uint64_t size() {
+        [[nodiscard]] uint64_t size() const {
             return _size;
         };
 
-        bool empty() {
+        [[nodiscard]] bool empty() const {
             return _size == 0;
         };
 
         virtual void reset() = 0;
 
         virtual void insert(Chunk *chunk) = 0;
-        virtual Chunk *next(uint64_t max) = 0;
+        virtual Chunk *next() = 0;
 
     protected:
         std::mutex _mutex;
 
-        std::atomic<uint64_t> _size = 0;
-        std::atomic<uint64_t> _offset = 0;
+        uint64_t _offset;
+        uint64_t _size;
     };
 
 } // backlog

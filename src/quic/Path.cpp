@@ -15,12 +15,6 @@ namespace quic {
         VLOG(2) << "*" << to_string();
     }
 
-    int Path::callback(picoquic_cnx_t *cnx, uint64_t stream_id, uint8_t *bytes, size_t length,
-                       picoquic_call_back_event_t fin_or_event, void *callback_ctx, void *v_stream_ctx) {
-        assert(false);
-        return 0;
-    }
-
     std::string Path::to_string() const {
         return "Path[context=" + ((Context *)_context)->to_string() + ", unique_path_id=" + std::to_string(_unique_path_id) + "]";
     }

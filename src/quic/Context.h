@@ -40,7 +40,7 @@ namespace quic {
 
             auto *stream = (STREAM *)new STREAM((CONTEXT *)this, stream_id, args...);
 
-            _streams.insert({stream_id, stream});
+            _streams.insert(std::pair(stream_id, stream));
             picoquic_set_app_stream_ctx(_cnx, stream_id, stream);
 
             // mark active if local stream id
@@ -77,7 +77,7 @@ namespace quic {
                 mark_active_stream(stream_id, 1, stream);
             }*/
 
-            _streams.insert({stream_id, stream});
+            _streams.insert(std::pair(stream_id, stream));
 
             return stream;
         }

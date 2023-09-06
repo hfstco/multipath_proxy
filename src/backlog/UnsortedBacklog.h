@@ -23,7 +23,7 @@ namespace backlog {
         void reset() override;
 
         void insert(Chunk *chunk) override;
-        Chunk *next(uint64_t max) override;
+        Chunk *next() override;
 
         virtual ~UnsortedBacklog();
 
