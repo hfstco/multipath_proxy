@@ -7,6 +7,7 @@
 
 namespace net {
 
+    // interface for metrics
     class IConnection {
     public:
         virtual int fd() = 0;

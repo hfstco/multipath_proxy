@@ -192,7 +192,7 @@ namespace net {
         explicit Connection(int fd) : S(fd) {
             //DLOG(INFO) << "Connection(fd=" + std::to_string(fd) + ") * " << ToString();
 
-            // add to global connections
+            // add to global connection manager
             context::Context::GetDefaultContext().connections()->Insert(this);
         }
 
@@ -212,7 +212,7 @@ namespace net {
         Connection() {
             S::SetSockOpt(SOL_SOCKET, SO_REUSEADDR, 1);
 
-            // add to global connections
+            // add to global connection manager
             context::Context::GetDefaultContext().connections()->Insert(this);
         };
     };

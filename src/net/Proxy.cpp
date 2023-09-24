@@ -27,6 +27,7 @@ namespace net {
 #ifdef __linux__
         listener_->SetSockOpt(IPPROTO_IP, IP_TRANSPARENT, 1);
 #endif
+        // start loop in thread
         acceptLooper_.Start();
 
         DLOG(INFO) << "Proxy(" << sockAddrIn.ToString() << ") * " << ToString();
@@ -41,15 +42,12 @@ namespace net {
             // get destination SockAddr
             ipv4::SockAddr_In destination = tcpConnection->GetSockName();
 
-            // metrics
-            //context_->metrics()->addConnection(tcpConnection->fd());
-
             // create new Flow for connection
             net::Flow *flow = net::Flow::make(source, destination, tcpConnection, bond_, context_);
 
             // add Flow to FlowMap
             {
-                std::lock_guard lock(context_->flows()->mutex());
+                std::lock_guard lock(context_->flows()->mutex()); // sync with bond
 
                 context_->flows()->Insert(source, destination, flow);
             }

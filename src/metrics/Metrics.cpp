@@ -26,28 +26,27 @@ namespace metrics {
     }
 
     void Metrics::WriteMetricsToDisk() {
+        // loop over all connections
         if (!context::Context::GetDefaultContext().connections()->empty()) {
             for (auto it = context::Context::GetDefaultContext().connections()->begin(); it != context::Context::GetDefaultContext().connections()->end(); ++it) {
                 net::IConnection *connection = it->second;
 
-                // datarate
+                // calc datarates of connection
                 float recvDataRate = connection->recvDataRate();
                 float sendDataRate = connection->sendDataRate();
 
-                // timestamp
+                // write timestamp to file
                 *file_ << std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::system_clock::now().time_since_epoch()).count() << ",";
 
-                // fd
+                // write file descriptor to file
                 *file_ << it->first << ",";
 
-                // data
+                // write metrics to file
                 *file_ << connection->recvBytes() << ","
                        << recvDataRate << "," << connection->recvBufferSize() << ","
                        << connection->sendBytes() << ","
                        << sendDataRate << "," << connection->sendBufferSize();
-
-                //LOG(INFO) << connection->fd() << ": recv: " << recvDataRate << ", send: " << sendDataRate;
 
                 *file_ << std::endl;
             }

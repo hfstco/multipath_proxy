@@ -19,8 +19,10 @@ namespace worker {
         Looper(std::function<void()> function) : running_(ATOMIC_FLAG_INIT), function_(function) {}
 
         void Run() {
-            while(running_.test()) {
+            // main loop
+            while(running_.test()) { // loop until running_ == false
                 try {
+                    // call function
                     function_();
                 } catch (Exception e) {
                     LOG(ERROR) << e.what();

@@ -32,6 +32,7 @@ namespace net {
                                                                                                                                                                          {
         LOG(ERROR) << "Flow(" << source_.ToString() << "|" << destination_.ToString() << ", " << tcpConnection->ToString() << ")";
 
+        // start loops
         recvFromConnectionLooper_.Start();
         sendToConnectionLooper_.Start();
         sendToBondLooper_.Start();
@@ -41,11 +42,14 @@ namespace net {
         return new Flow(source, destination, pTcpConnection, bond, context);
     }
 
+    // write method for bond
     void Flow::WriteToFlow(packet::FlowPacket *pFlowPacket) {
         toConnectionQueue_.Insert(pFlowPacket);
     }
 
+    // recv data from endpoint
     void Flow::RecvFromConnection() {
+        // waiting for incoming data from endpoint
         connection_->Poll(POLLIN | POLLRDHUP | POLLHUP, -1);
 
         // preload stop
@@ -62,7 +66,6 @@ namespace net {
         ssize_t bytes_read = 0;
         try {
             bytes_read = connection_->Recv(flowPacket->data(), flowPacket->header()->size(), 0);
-            //LOG(INFO) << connection_->ToString() << " -> READ " << bytes_read << "bytes";
         } catch (Exception e) {
              LOG(INFO) << e.what();
         }
@@ -71,6 +74,7 @@ namespace net {
         if (bytes_read == 0) {
             recvFromConnectionLooper_.Stop();
 
+            // of socket already closed clear rx queue, next packet should be close packet
             if(closed_) {
                 toBondQueue_.Clear();
                 assert(toBondQueue_.Empty());
@@ -85,27 +89,32 @@ namespace net {
 
         // write package to toBond_ queue
         toBondQueue_.Insert(flowPacket);
+        // update backlog
         context_->flows()->addByteSize(bytes_read);
     }
 
     void Flow::SendToConnection() {
-        // try to get next package
+        // try to get next package, blocking here
         packet::FlowPacket *flowPacket = toConnectionQueue_.Pop();
 
         // close packet
         if (flowPacket->header()->size() == 0) {
+            // should not be sent
             delete flowPacket;
 
             //assert(toConnectionQueue_.Empty());
 
+            // stop send to connection loop
             sendToConnectionLooper_.Stop();
 
+            // if closed alredy -> delete flow
             if (closed_) {
                 assert(!recvFromConnectionLooper_.IsRunning() && !sendToConnectionLooper_.IsRunning() && !sendToBondLooper_.IsRunning());
                 std::thread([this] {
                     delete this;
                 }).detach();
             } else {
+                // otherwise mark as closed and shutdown connection to endpoint
                 closed_ = true;
                 connection_->Shutdown(SHUT_RDWR);
             }
@@ -120,7 +129,6 @@ namespace net {
             //LOG(INFO) << "SENT " << bytes_sent << "bytes -> " << connection_->ToString();
         } catch (Exception e) {
             //LOG(ERROR) << e.ToString();
-            // socket closed, skipping packets until close packet arrive
         }
 
         //DLOG(INFO) << flowPacket->ToString() << " -> " << connection_->ToString();

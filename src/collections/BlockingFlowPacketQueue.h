@@ -16,10 +16,6 @@
 #include "../packet/FlowHeader.h"
 #include "IFlowPacketQueue.h"
 
-/*namespace packet {
-    class FlowPacket;
-}*/
-
 namespace collections {
 
     class BlockingFlowPacketQueue : IFlowPacketQueue, std::deque<packet::FlowPacket *> {
@@ -34,53 +30,62 @@ namespace collections {
             return currentId_.load();
         }
 
+        // insert FlowPacket into dequeue
         void Insert(packet::FlowPacket *flowPacket) {
             std::lock_guard lock(mutex_);
 
-            //DLOG(INFO) << ToString() << ".Insert(" << flowPacket->ToString() << ")";
-
-            if (deque_.empty()) { // if deque is empty
-                //LOG(INFO) << "PUSH EMPTY";
+            // insert packet into dequeue
+            if (deque_.empty()) { // if deque is empty -> push front
                 deque_.push_front(flowPacket);
-            } else if (flowPacket->header()->id() < deque_.front()->header()->id()) {
-                //LOG(INFO) << "PUSH FRONT";
+            } else if (flowPacket->header()->id() < deque_.front()->header()->id()) { // if packet id is smaller than first packet in queue -> push front
                 deque_.push_front(flowPacket);
-            } else {
+            } else { // sorted insert packet from back
+                // loop backwards
                 for (auto it = deque_.crbegin(); it != deque_.crend(); ++it) {
+                    // check if id of the packets is smaller than current packet
                     if ((*it)->header()->id() < flowPacket->header()->id()) {
-                        //LOG(INFO) << "PUSH " << flowPacket->header()->id() << " BEFORE " << (*it)->header()->id();
+                        // insert packet
                         deque_.insert(it.base(), flowPacket);
                         break;
                     }
                 }
             }
 
+            // increase size of dequeue
             size_ += 1;
+            // update backlog
             byteSize_ += flowPacket->header()->size();
 
+            // notify waiting threads that next packet is available
             if (deque_.front()->header()->id() == currentId_.load()) {
                 nextAvailable_ = true;
                 conditionVariable_.notify_one();
             }
         }
 
+        // pop next packet
         packet::FlowPacket *Pop() {
             std::unique_lock lock(mutex_);
+            // cv, waiting for next packet available
             conditionVariable_.wait(lock, [this] { return nextAvailable_; });
 
-            //DLOG(INFO) << ToString() << ".Pop()";
-
+            // pop packet
             packet::FlowPacket *flowPacket = deque_.front();
             assert(flowPacket->header()->id() == currentId_.load());
             deque_.pop_front();
 
+            // increase next packet counter
             currentId_.fetch_add(1);
+            // decrease size of dequeue
             size_ -= 1;
+            // update backlog
             byteSize_.fetch_sub(flowPacket->header()->size());
 
             if (deque_.empty() || deque_.front()->header()->id() != currentId_.load()) {
+                // next packet isn't available
                 nextAvailable_ = false;
             } else {
+                // next packet is available -> do nothing
                 assert(deque_.front()->header()->id() == currentId_.load());
             }
 
@@ -101,15 +106,6 @@ namespace collections {
             size_ = 0;
             deque_.clear();
             nextAvailable_ = false;
-        }
-
-        std::string Print() {
-            std::stringstream stringStream;
-            for (auto it = deque_.cbegin(); it != deque_.cend(); ++it) {
-                LOG(INFO) << (*it)->ToString();
-            }
-
-            return stringStream.str();
         }
 
         std::string ToString() {

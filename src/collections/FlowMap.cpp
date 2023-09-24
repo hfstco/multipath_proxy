@@ -20,15 +20,16 @@ namespace collections {
         return std::unordered_map<SockAddr_In_Pair, net::Flow *>::size();
     }
 
+    // insert new flow to map
     void FlowMap::Insert(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::Flow *flow) {
-        //LOG(ERROR) << ToString() <<  ".Insert(" << source.ToString() + ", " + destination.ToString() << ")";
-
         std::unordered_map<SockAddr_In_Pair, net::Flow *>::insert(std::pair<SockAddr_In_Pair, net::Flow *>(SockAddr_In_Pair(source, destination), flow));
     }
 
+    // find flow in map
     net::Flow *FlowMap::Find(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination) { // TODO width ::at(key)? -> return nullptr (https://cplusplus.com/reference/map/map/at/)
         std::unordered_map<SockAddr_In_Pair, net::Flow *>::iterator flow = std::unordered_map<SockAddr_In_Pair, net::Flow *>::find(SockAddr_In_Pair(source, destination)); // std::unordered_map<std::string, std::string>::at(utils::connectionString(header));
         if (flow == std::unordered_map<SockAddr_In_Pair, net::Flow *>::end()) {
+            // return nullptr if flow doesn't exist
             return nullptr;
         } else {
             return flow->second;
@@ -39,16 +40,14 @@ namespace collections {
         return "FlowMap[Size=" + std::to_string(size()) + "]"; // TODO print flows
     }
 
+    // erase flow from map
     void FlowMap::Erase(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination) {
         std::unordered_map<SockAddr_In_Pair, net::Flow *>::iterator flow = std::unordered_map<SockAddr_In_Pair, net::Flow *>::find(SockAddr_In_Pair(source, destination));
-        if (flow == std::unordered_map<SockAddr_In_Pair, net::Flow *>::end()) {
+        if (flow == std::unordered_map<SockAddr_In_Pair, net::Flow *>::end()) { // if flow doesn't exist throw exception
             NotFoundException e = NotFoundException("key=" + source.ToString() + "|" + destination.ToString() + " not found in map.");
-            //LOG(INFO) << ToString() << ".Erase(" << source.ToString() << "|" << destination.ToString() << ") ~> " << e.ToString();
 
             throw e;
         } else {
-            //LOG(INFO) << ToString() << ".Erase(" << flow->second->ToString() << ")";
-
             std::unordered_map<SockAddr_In_Pair, net::Flow *>::erase(flow);
         }
     }

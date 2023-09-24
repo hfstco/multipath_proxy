@@ -42,18 +42,20 @@ int main(int argc, char *argv[]) {
     try {
         // init mpp
         if (args::MODE == args::mode::REMOTE) {
-            // create listeners
+            // create ter & sat listeners
             if(args::TER_ENABLED) {
                 net::ipv4::TcpListener *terListener = net::ipv4::TcpListener::make(
                         net::ipv4::SockAddr_In(ter.ip(), ter.port()));
                 terConnection = terListener->Accept();
-                //terConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
+                // enable no delay option
+                terConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
             }
             if(args::SAT_ENABLED) {
                 net::ipv4::TcpListener *satListener = net::ipv4::TcpListener::make(
                         net::ipv4::SockAddr_In(sat.ip(), sat.port()));
                 satConnection = satListener->Accept();
-                //satConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
+                // enable no delay option
+                satConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
             }
 
             // create Bond
@@ -62,16 +64,18 @@ int main(int argc, char *argv[]) {
             //exit when key pressed
             std::cin.ignore();
         } else {
-            // create connections
+            // create ter & sat connections
             if(args::TER_ENABLED) {
                 terConnection = net::ipv4::TcpConnection::make(
                         net::ipv4::SockAddr_In(ter.ip(), ter.port()));
-                //terConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
+                // enable no delay option
+                terConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
             }
             if(args::SAT_ENABLED) {
                 satConnection = net::ipv4::TcpConnection::make(
                         net::ipv4::SockAddr_In(sat.ip(), sat.port()));
-                //satConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
+                // enable no delay option
+                satConnection->SetSockOpt(IPPROTO_TCP, TCP_NODELAY, 1);
             }
 
             // create Bond
@@ -89,8 +93,6 @@ int main(int argc, char *argv[]) {
 
     delete terConnection;
     delete satConnection;
-
-    //delete context;
 
     return 0;
 }
