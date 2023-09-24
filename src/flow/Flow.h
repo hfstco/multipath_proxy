@@ -10,9 +10,10 @@
 
 #include "../net/SockAddr.h"
 #include "../worker/Looper.h"
-#include "../backlog/UnsortedBacklog.h"
+#include "../backlog/ChunkQueue.h"
 #include "../quic/Stream.h"
-#include "Buffer.h"
+#include "../net/TcpSocket.h"
+#include "../backlog/Backlog.h"
 
 namespace net::ipv4 {
     class TcpConnection;
@@ -29,52 +30,54 @@ namespace quic {
 namespace flow {
 
     struct __attribute__((packed)) FlowHeader {
-        struct in_addr source_ip;           // 4
-        struct in_addr destination_ip;      // 8
-        in_port_t source_port;              // 10
-        in_port_t destination_port;         // 12
+        struct in_addr ip;      // 8
+        in_port_t port;         // 12
 
         [[nodiscard]] std::string to_string() const {
-            return "FlowHeader[source=" + net::ipv4::SockAddr_In(source_ip, source_port).to_string() + ", destination=" +
-                   net::ipv4::SockAddr_In(destination_ip, destination_port).to_string() + "]";
+            return "FlowHeader[source=" + net::ipv4::SockAddr_In(ip, port).to_string() + "]";
         };
     };
 
     class Flow : public quic::Stream {
+        // new_flow()
         friend class quic::FlowContext;
+        // new_stream()
         friend class quic::Context;
     public:
-        backlog::UnsortedBacklog backlog;
-        std::atomic<std::chrono::time_point<std::chrono::steady_clock>> last_satellite_timestamp;
-
+        // tcp connection
         void recv_from_connection();
+        void send_to_connection();
+
+        // quic connection
+        int prepare_to_send(uint8_t *bytes, size_t length);
+        int stream_data(uint8_t *bytes, size_t length);
+        int stream_fin(uint8_t *bytes, size_t length);
 
         std::string to_string();
-
-        int prepare_to_send(uint8_t *bytes, size_t length);
-
-        int stream_data(uint8_t *bytes, size_t length);
-
-        int stream_fin(uint8_t *bytes, size_t length);
 
         virtual ~Flow();
 
     private:
-        net::ipv4::SockAddr_In _source;
-        net::ipv4::SockAddr_In _destination;
         // tcp connection
         net::ipv4::TcpConnection *_connection;
 
-        std::mutex _recving;
-        std::atomic<bool> _active = false;
-        std::atomic<uint64_t> _path = 0;
+        // rx pipe
+        std::mutex _rx_mutex;
+        int _rx_pipe[2];
+        std::atomic<size_t> _backlog;
 
-        backlog::Chunk *_tx_buffer;
-        uint64_t _tx_buffer_offset;
+        // tx pipe
+        //std::mutex _tx_mutex;
+        int _tx_pipe[2];
+        std::atomic<size_t> _tx_size;
 
-        worker::Looper _recv_from_connection_looper;
+        std::atomic<bool> _active;
+        std::atomic<bool> _closed;
+        std::atomic<uint64_t> _path;
 
-        Flow(quic::FlowContext *context, uint64_t stream_id, net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection);
+        std::atomic<std::chrono::time_point<std::chrono::steady_clock>> _last_satellite_timestamp;
+
+        Flow(quic::FlowContext *context, uint64_t stream_id, net::ipv4::TcpConnection *connection);
     };
 
 } // flow

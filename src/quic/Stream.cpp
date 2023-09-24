@@ -11,6 +11,7 @@
 namespace quic {
     Stream::Stream(Context *context, uint64_t stream_id) : StreamBase(context, stream_id) {
         VLOG(2) << "*" << to_string();
+        LOG(INFO) << "New Stream with ID=" << _stream_id;
     };
 
     int Stream::callback(picoquic_cnx_t *cnx, uint64_t stream_id, uint8_t *bytes, size_t length,
@@ -25,6 +26,7 @@ namespace quic {
 
     Stream::~Stream() {
         VLOG(2) << "~" << to_string();
+        LOG(INFO) << "Delete Stream with ID=" << _stream_id;
         //_context->delete_stream(_stream_id);
     }
 } // quic

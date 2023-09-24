@@ -11,8 +11,12 @@
 
 namespace backlog {
 
+    class Backlog;
+
+    // singleton pattern
+    // https://stackoverflow.com/questions/1008019/c-singleton-design-pattern
     class TotalBacklog {
-        friend class UnsortedBacklog;
+        friend class Backlog;
     public:
         explicit operator uint64_t() const noexcept
         { return _size; }
@@ -22,56 +26,73 @@ namespace backlog {
 
         friend std::ostream& operator<<(std::ostream& os, const TotalBacklog& dt)
         {
-            os << std::to_string(backlog::TotalBacklog::_size);
+            os << std::to_string(dt._size);
             return os;
         }
 
         friend bool operator== (const TotalBacklog &backlog, const uint64_t &value)
         {
-            return backlog::TotalBacklog::_size == value;
+            return backlog._size == value;
         }
 
         friend bool operator!= (const TotalBacklog &backlog, const uint64_t &value)
         {
-            return backlog::TotalBacklog::_size != value;
+            return backlog._size != value;
         }
 
         friend bool operator> (const TotalBacklog &backlog, const uint64_t &value)
         {
-            return backlog::TotalBacklog::_size > value;
+            return backlog._size > value;
         }
 
         friend bool operator< (const TotalBacklog &backlog, const uint64_t &value)
         {
-            return backlog::TotalBacklog::_size < value;
+            return backlog._size < value;
         }
 
         friend bool operator<= (const TotalBacklog &backlog, const uint64_t &value)
         {
-            return backlog::TotalBacklog::_size <= value;
+            return backlog._size <= value;
         }
 
         friend bool operator>= (const TotalBacklog &backlog, const uint64_t &value)
         {
-            return backlog::TotalBacklog::_size >= value;
+            return backlog._size >= value;
         }
 
-        static uint64_t size() {
-            return _size;
+        uint64_t operator+=(uint64_t size) noexcept
+        { return _size += size; }
+
+        uint64_t operator-=(uint64_t size) volatile noexcept
+        { return _size -= size; }
+
+        static TotalBacklog& get()
+        {
+            static TotalBacklog threadpool; // Guaranteed to be destroyed.
+            // Instantiated on first use.
+            return threadpool;
         }
 
+        // C++ 11
+        // =======
+        // We can use the better technique of deleting the methods
+        // we don't want.
+        TotalBacklog(TotalBacklog const&) = delete;
+        void operator=(TotalBacklog const&) = delete;
+
+        // Note: Scott Meyers mentions in his Effective Modern
+        //       C++ book, that deleted functions should generally
+        //       be public as it results in better error messages
+        //       due to the compilers behavior to check accessibility
+        //       before deleted status
     private:
-        inline static std::atomic<uint64_t> _size = 0;
+        std::atomic<uint64_t> _size = 0;
 
-        uint64_t operator+=(uint64_t size) const noexcept
-        { return _size.fetch_add(size); }
-
-        uint64_t operator-=(uint64_t size) const volatile noexcept
-        { return _size.fetch_sub(size); }
+        TotalBacklog() = default; // Constructor? (the {} brackets) are needed here.
     };
 
-    static inline TotalBacklog total_backlog;
-
 } // backlog
+
+#define TOTAL_BACKLOG backlog::TotalBacklog::get()
 
 #endif //MPP_TOTALBACKLOG_H

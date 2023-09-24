@@ -16,7 +16,33 @@
           </excludedPaths>
         </serverdata>
       </paths>
+      <paths name="local (uni) (2ab749c9-737c-4de2-acfa-6ec1ee0691b8)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/mpp_quic_multipath" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-local" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-remote" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-local" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-remote" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
       <paths name="remote (566ed601-6af6-48a7-b49b-c3818034083c)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/mpp_quic_multipath" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-local" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-release-remote" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-local" />
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug-remote" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="remote (uni) (e7ad3712-9f5c-4301-8d7f-629c48432c90)">
         <serverdata>
           <mappings>
             <mapping deploy="/tmp/mpp_quic_multipath" local="$PROJECT_DIR$" />

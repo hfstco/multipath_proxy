@@ -21,12 +21,13 @@ namespace quic {
         friend class Quic;
         friend class Context;
     public:
-        flow::Flow *new_flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection);
+        flow::Flow *new_flow(net::ipv4::TcpConnection* connection);
+        void delete_flow(uint64_t stream_id);
 
     private:
         explicit FlowContext(Quic *quic, picoquic_cnx_t *cnx);
 
-        flow::Flow *new_flow(uint64_t stream_id, net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection);
+        flow::Flow *new_flow(uint64_t stream_id, net::ipv4::TcpConnection* connection);
 
         static int stream_data_cb(picoquic_cnx_t* cnx, uint64_t stream_id, uint8_t* bytes, size_t length, picoquic_call_back_event_t fin_or_event, void* callback_ctx, void* v_stream_ctx);
     };

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <netinet/tcp.h>
 #include <glog/logging.h>
+#include <csignal>
 
 #include "args/ARGS.h"
 #include "net/TcpListener.h"
@@ -23,6 +24,13 @@ int main(int argc, char *argv[]) {
 
     // init arguments
     args::init(argc, argv);
+
+    // ignore sigpipe signals
+    struct sigaction action{};
+    action.sa_handler = SIG_IGN;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+    sigaction(SIGPIPE, &action, nullptr);
 
     //net::ipv4::SockAddr_In sockaddr = net::ipv4::SockAddr_In(args::SAT_STRING);
 

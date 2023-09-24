@@ -45,12 +45,12 @@ namespace net {
         }
 
         virtual ~Listener() {
-            DLOG(INFO) << ToString() << ".~Listener()";
+            VLOG(2) << ToString() << ".~Listener()";
         }
 
     protected:
         Listener(SA sockaddr) : Listener() {
-            DLOG(INFO) << "Listener(sockaddr=" << sockaddr.to_string() << ") * " << ToString();
+            VLOG(2) << "Listener(sockaddr=" << sockaddr.to_string() << ") * " << ToString();
 
             S::Bind(sockaddr);
             S::Listen();

@@ -12,6 +12,7 @@
 #include "../net/TcpConnection.h"
 #include "../backlog/TotalBacklog.h"
 #include "../flow/Flow.h"
+#include "../threadpool/Threadpool.h"
 
 namespace quic {
 
@@ -20,34 +21,50 @@ namespace quic {
         set_callback(stream_data_cb, this);
     }
 
-    flow::Flow *FlowContext::new_flow(net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination,
-                                      net::ipv4::TcpConnection *tcp_connection) {
-        auto* flow = new_stream<flow::Flow, quic::FlowContext, net::ipv4::SockAddr_In, net::ipv4::SockAddr_In, net::ipv4::TcpConnection *>(0, source, destination, tcp_connection);
+    // local
+    flow::Flow *FlowContext::new_flow(net::ipv4::TcpConnection *connection) {
+        auto* flow = new_stream<flow::Flow, quic::FlowContext, net::ipv4::TcpConnection *>(0, connection);
 
+        // get destination address
+        net::ipv4::SockAddr_In destination = connection->GetSockName();
+
+        // TODO move to prepare_to_send?
         // send flow header
-        auto flowHeader = flow::FlowHeader(source.sin_addr, destination.sin_addr, source.sin_port, destination.sin_port);
+        auto flowHeader = flow::FlowHeader(destination.sin_addr, destination.sin_port);
         add_to_stream(flow->_stream_id, (uint8_t *)&flowHeader, sizeof(flow::FlowHeader), 0); // TODO _stream_id
+
+        THREADPOOL.push_task(&flow::Flow::recv_from_connection, flow);
+        THREADPOOL.push_task(&flow::Flow::send_to_connection, flow);
 
         return flow;
     }
 
-    flow::Flow *FlowContext::new_flow(uint64_t stream_id, net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination,
-                          net::ipv4::TcpConnection *tcp_connection) {
-        return new_stream<flow::Flow, quic::FlowContext, net::ipv4::SockAddr_In, net::ipv4::SockAddr_In, net::ipv4::TcpConnection *>(stream_id, source, destination, tcp_connection);;
+    // remote
+    flow::Flow *FlowContext::new_flow(uint64_t stream_id, net::ipv4::TcpConnection *connection) {
+        auto* flow = new_stream<flow::Flow, quic::FlowContext, net::ipv4::TcpConnection *>(stream_id, connection);
+
+        THREADPOOL.push_task(&flow::Flow::recv_from_connection, flow);
+        THREADPOOL.push_task(&flow::Flow::send_to_connection, flow);
+
+        return flow;
+    }
+
+    void FlowContext::delete_flow(uint64_t stream_id) {
+        delete_stream(stream_id);
     }
 
     int FlowContext::stream_data_cb(picoquic_cnx_t *cnx, uint64_t stream_id, uint8_t *bytes, size_t length,
                                     picoquic_call_back_event_t fin_or_event, void *callback_ctx, void *v_stream_ctx) {
         int ret = 0;
 
-        auto* context = (FlowContext *)callback_ctx;
+        auto *context = (FlowContext *) callback_ctx;
 
         switch (fin_or_event) {
             case picoquic_callback_stream_data:
                 // fall through
             case picoquic_callback_stream_fin: {
                 // get flow
-                auto *flow = (flow::Flow *)v_stream_ctx;
+                auto *flow = (flow::Flow *) v_stream_ctx;
                 // create flow if not exists
                 if (flow == nullptr) {
                     assert(length == sizeof(flow::FlowHeader));
@@ -56,11 +73,10 @@ namespace quic {
                     memcpy(&header, bytes, sizeof(flow::FlowHeader));
 
                     // connect to endpoint
-                    // TODO offload connect to flow
-                    net::ipv4::TcpConnection* tcp_connection = net::ipv4::TcpConnection::make(net::ipv4::SockAddr_In(header.destination_ip, header.destination_port));
+                    net::ipv4::TcpConnection *connection = net::ipv4::TcpConnection::make(net::ipv4::SockAddr_In(header.ip, header.port));
 
                     // create new stream
-                    flow = context->new_flow(stream_id, net::ipv4::SockAddr_In(header.source_ip, header.source_port), net::ipv4::SockAddr_In(header.destination_ip, header.destination_port), tcp_connection);
+                    flow = context->new_flow(stream_id, connection);
                     // set default path to TER
                     flow->set_stream_path_affinity(0);
 
@@ -77,7 +93,7 @@ namespace quic {
             }
             case picoquic_callback_prepare_to_send: {
                 // get flow from stream context
-                auto *flow = (flow::Flow *)v_stream_ctx;
+                auto *flow = (flow::Flow *) v_stream_ctx;
                 // redirect
                 ret = flow->prepare_to_send(bytes, length);
 
@@ -126,13 +142,14 @@ namespace quic {
                     picoquic_get_server_address("172.30.21.3", 6000, &addr_from, &addr_from_is_name); // remote_addr
                     picoquic_get_server_address("172.30.20.2", 0, &addr_to, &addr_to_is_name); // local_addr
 
-                    context->probe_new_path_ex((struct sockaddr *) &addr_from, /*(struct sockaddr *) &addr_to*/nullptr, 0, picoquic_current_time(), 0);
+                    context->probe_new_path_ex((struct sockaddr *) &addr_from, /*(struct sockaddr *) &addr_to*/nullptr,
+                                               0, picoquic_current_time(), 0);
 
                     // subscribe to quality update
                 }
 
                 // add default (stream_id=0) path and subscribe to path quality updates
-                auto* path = context->new_path(0);
+                auto *path = context->new_path(0);
                 ret = path->set_app_path_ctx(path); // TODO move to context->new_path()?
                 //ret = path->subscribe_to_quality_update_per_path(50000, 15000);
 
@@ -185,7 +202,7 @@ namespace quic {
                 }*/
                 assert(v_stream_ctx == nullptr);
 
-                auto* path = context->new_path(stream_id);
+                auto *path = context->new_path(stream_id);
                 //ret = path->subscribe_to_quality_update_per_path(500000, 50000);
 
                 VLOG(3) << path->to_string() << " picoquic_callback_path_available";
@@ -193,7 +210,7 @@ namespace quic {
                 break;
             }
             case picoquic_callback_path_suspended: {
-                auto *path = (quic::Path *)v_stream_ctx;
+                auto *path = (quic::Path *) v_stream_ctx;
                 if (path == nullptr) {
                     // create new stream
                     path = context->new_path(stream_id);
@@ -211,7 +228,7 @@ namespace quic {
                 //uint64_t unique_path_id = stream_id; // stream_id = unique_path_id
 
                 // TODO minimize, delete_path(stream_id) only
-                auto *path = (quic::Path *)v_stream_ctx;
+                auto *path = (quic::Path *) v_stream_ctx;
                 if (path == nullptr) {
                     // create new stream
                     path = context->new_path(stream_id);
@@ -222,7 +239,7 @@ namespace quic {
                 break;
             }
             case picoquic_callback_path_quality_changed: {
-                auto *path = (quic::Path *)v_stream_ctx;
+                auto *path = (quic::Path *) v_stream_ctx;
                 if (path == nullptr) {
                     // create new stream
                     path = context->new_path(stream_id);

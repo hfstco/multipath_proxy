@@ -32,9 +32,7 @@ namespace proxy {
 
     private:
         quic::FlowContext *_context;
-        net::ipv4::TcpListener *_tcp_listener;
-
-        worker::Looper _accept_looper;
+        net::ipv4::TcpListener *_listener;
     };
 
 } // proxy

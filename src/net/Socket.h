@@ -63,7 +63,7 @@ namespace net {
         AS *Accept() { // TODO merge with accept(SA &sockaddr)
             int fd = -1;
 
-            if ((fd = accept(fd_, NULL, NULL)) < 0) {
+            if ((fd = accept4(fd_, nullptr, nullptr, SOCK_NONBLOCK)) < 0) {
                 SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
 
                 VLOG(3) << to_string() << ".accept() ! " << socketErrorException.ToString();
@@ -83,7 +83,7 @@ namespace net {
             int fd = -1;
             socklen_t addrlen = sizeof(addr);
 
-            if ((fd = accept(fd_, (struct sockaddr *) &addr, &addrlen)) < 0) {
+            if ((fd = accept4(fd_, (struct sockaddr *) &addr, &addrlen, SOCK_NONBLOCK)) < 0) {
                 SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
 
                 VLOG(3) << to_string() << ".accept(" << addr.to_string() << ") ! " << socketErrorException.ToString();
@@ -112,11 +112,14 @@ namespace net {
 
         void Connect(SA addr) {
             if (connect(fd_, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-                SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
+                if (errno != EINPROGRESS && errno != EALREADY) {
+                    SocketErrorException socketErrorException = SocketErrorException(std::string(strerror(errno)));
 
-                VLOG(3) << to_string() << ".Connect(" << addr.to_string() << ") ! " << socketErrorException.ToString();
+                    VLOG(3) << to_string() << ".Connect(" << addr.to_string() << ") ! "
+                            << socketErrorException.ToString();
 
-                throw socketErrorException;
+                    throw socketErrorException;
+                }
             }
 
             //VLOG(3) << to_string() << ".Connect(" << addr.to_string() << ")";
@@ -341,7 +344,7 @@ namespace net {
         virtual ~Socket() {
             this->Close();
 
-            DLOG(INFO) << to_string() << ".~Socket()";
+            VLOG(3) << to_string() << ".~Socket()";
         }
 
     protected:
@@ -354,14 +357,14 @@ namespace net {
                 throw socketErrorException;
             }
 
-            DLOG(INFO) << "Socket(domain=" << domain << ", type=" << type << ", protocol=" << protocol << ") * " +
+            VLOG(3) << "Socket(domain=" << domain << ", type=" << type << ", protocol=" << protocol << ") * " +
                     to_string();
         }
 
         explicit Socket(int fd) {
             fd_ = fd;
 
-            DLOG(INFO) << "Socket(fd=" << fd << ") * " << to_string();
+            VLOG(3) << "Socket(fd=" << fd << ") * " << to_string();
         }
 
     private:

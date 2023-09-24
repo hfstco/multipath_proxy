@@ -160,25 +160,25 @@ namespace net {
         }
 
         virtual ~Connection() {
-            DLOG(INFO) << ToString() << ".~Connection()";
+            VLOG(2) << ToString() << ".~Connection()";
         }
 
     protected:
         explicit Connection(SA peeraddr) : Connection() {
-            DLOG(INFO) << "Connection(peeraddr=" << peeraddr.to_string() << ") * " << ToString();
+            VLOG(2) << "Connection(peeraddr=" << peeraddr.to_string() << ") * " << ToString();
 
             S::Connect(peeraddr);
         }
 
         Connection(SA peeraddr, SA sockaddr) : Connection() {
-            DLOG(INFO) << "Connection(peeraddr=" << peeraddr.to_string() << ", sockaddr=" << sockaddr.to_string() << ") * " << ToString();
+            VLOG(2) << "Connection(peeraddr=" << peeraddr.to_string() << ", sockaddr=" << sockaddr.to_string() << ") * " << ToString();
 
             S::Bind(peeraddr);
             S::Connect(peeraddr);
         };
 
         explicit Connection(int fd) : S(fd) {
-            DLOG(INFO) << "Connection(fd=" + std::to_string(fd) + ") * " << ToString();
+            VLOG(2) << "Connection(fd=" + std::to_string(fd) + ") * " << ToString();
         }
 
     private:

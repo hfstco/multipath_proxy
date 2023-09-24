@@ -9,6 +9,10 @@
       <sshConfig authType="PASSWORD" host="10.11.12.172" id="e1a1adbe-e75c-476d-a1c2-51a929175fb2" port="2201" customName="root@10.11.12.172:2201" nameFormat="CUSTOM" username="root" useOpenSSHConfig="true">
         <option name="customName" value="root@10.11.12.172:2201" />
       </sshConfig>
+      <sshConfig authType="PASSWORD" host="faui7s3.informatik.uni-erlangen.de" id="864d01c3-1f97-402b-883c-9584abea727b" port="22" nameFormat="DESCRIPTIVE" username="mhof" useOpenSSHConfig="true" />
+      <sshConfig authType="PASSWORD" host="faui7s3.informatik.uni-erlangen.de" id="af8958a3-a5b1-445b-bdbc-615772bdca1f" port="2205" customName="mhof@faui7s3.informatik.uni-erlangen.de:2205" nameFormat="CUSTOM" username="root" useOpenSSHConfig="true">
+        <option name="customName" value="mhof@faui7s3.informatik.uni-erlangen.de:2205" />
+      </sshConfig>
     </configs>
   </component>
 </project>

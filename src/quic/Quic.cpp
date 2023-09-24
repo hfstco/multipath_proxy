@@ -140,8 +140,6 @@ namespace quic {
                         it.second->_paths.find(0)->second
                     }
                 }*/
-                LOG(INFO) << context->to_string() << " PORT UPDATE";
-
                 break;
             }
             case picoquic_packet_loop_time_check: {

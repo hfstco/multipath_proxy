@@ -5,6 +5,8 @@
 #include <thread>
 #include <cassert>
 #include <future>
+#include <fcntl.h>
+#include <csignal>
 
 #include "Flow.h"
 
@@ -14,54 +16,74 @@
 #include "picoquic_internal.h"
 #include "../backlog/Chunk.h"
 #include "../backlog/TotalBacklog.h"
-
+#include "../threadpool/Threadpool.h"
 
 namespace flow {
 
-    Flow::Flow(quic::FlowContext *context, uint64_t stream_id, net::ipv4::SockAddr_In source, net::ipv4::SockAddr_In destination, net::ipv4::TcpConnection *tcp_connection) :   Stream((quic::Context *)context, stream_id),
-                                                                                                                                                                                _source(source), // source of Flow
-                                                                                                                                                                                _destination(destination), // destination of Flow
-                                                                                                                                                                                _connection(tcp_connection), // connection to endpoint (local -> source, remote -> destination)
-                                                                                                                                                                                _tx_buffer(nullptr),
-                                                                                                                                                                                _tx_buffer_offset(0),
-                                                                                                                                                                                _recv_from_connection_looper([this] { recv_from_connection(); }) { // loop for recv_from_connection() (own thread)
-        LOG(INFO) << "*" << to_string();
+    Flow::Flow(quic::FlowContext *context, uint64_t stream_id, net::ipv4::TcpConnection *connection) : Stream((quic::Context *) context, stream_id),
+                                                                                                       _connection(connection),
+                                                                                                       _active(false),
+                                                                                                       _path(0) {
+        VLOG(1) << "*" << to_string();
+        LOG(INFO) << "New Flow width ID=" << _stream_id;
 
-        // start flow workers
-        _recv_from_connection_looper.start();
+        int ret = 0;
+        // pipes
+        if ((ret = pipe2(_rx_pipe, O_NONBLOCK)) == -1) {
+            assert(false); // not implemented
+        }
+        if ((ret = fcntl(_rx_pipe[0], F_SETPIPE_SZ, 1000000)) == -1) {
+            assert(false); // not implemented
+        }
+        if ((ret = fcntl(_rx_pipe[1], F_SETPIPE_SZ, 1000000)) == -1) {
+            assert(false); // not implemented
+        }
+
+        if ((ret = pipe2(_tx_pipe, O_NONBLOCK)) == -1) {
+            assert(false);
+        }
+        if ((ret = fcntl(_tx_pipe[0], F_SETPIPE_SZ, 1000000)) == -1) {
+            assert(false); // not implemented
+        }
+        if ((ret = fcntl(_tx_pipe[1], F_SETPIPE_SZ, 1000000)) == -1) {
+            assert(false); // not implemented
+        }
+
     }
 
     void Flow::recv_from_connection() {
-        // wait for new data
-        _connection->Poll(POLLIN | POLLHUP | POLLRDHUP, -1);
+        std::lock_guard lock(_rx_mutex);
 
-        std::lock_guard lock(_recving);
-
-        // create chunk
-        auto *chunk = new backlog::Chunk(1024);
-
-        // read available data
-        ssize_t bytes_read = 0;
-        try {
-            bytes_read = _connection->Recv(chunk->bytes(), 1024, 0);
-        } catch (Exception &e) {
-            LOG(INFO) << e.what();
+        if (_backlog > 100000) {
+            return;
         }
 
-        chunk->length(bytes_read);
+        ssize_t bytes_spliced = 0;
+        if ((bytes_spliced = splice(_connection->fd(), nullptr, _rx_pipe[1], nullptr, 4096, SPLICE_F_MOVE | SPLICE_F_NONBLOCK)) == -1) {
+            if (errno == EAGAIN) {
+                THREADPOOL.push_task(&Flow::recv_from_connection, this);
+                return;
+            }
+            LOG(INFO) << "recv_from_connection splice errno=" << errno;
 
-        // socket closed
-        if (bytes_read == 0) {
-            // stop looper
-            _recv_from_connection_looper.stop();
+            LOG(INFO) << "CLOSED recv_from_connection";
 
-            LOG(INFO) << "SOCKET CLOSED!";
-        }
+            // mark stream active if inactive
+            bool expected = false;
+            if (_active.compare_exchange_strong(expected, true)) {
+                LOG(INFO) << "STREAM ACTIVE CHANGED: TRUE";
+                mark_active_stream(1, this);
+            }
 
-        //LOG(INFO) << _connection->to_string() << " -> " << chunk->to_string();
+            close(_rx_pipe[1]);
+            close(_rx_pipe[0]);
+            return;
+        };
 
-        // add packet to backlog
-        backlog.insert(chunk);
+        LOG(INFO) << "SPLICED IN " << bytes_spliced << " bytes";
+
+        _backlog += bytes_spliced;
+        TOTAL_BACKLOG += bytes_spliced;
 
         // mark stream active if inactive
         bool expected = false;
@@ -69,83 +91,136 @@ namespace flow {
             LOG(INFO) << "STREAM ACTIVE CHANGED: TRUE";
             mark_active_stream(1, this);
         }
+
+        // close pipe if connection closed
+        if (bytes_spliced == 0) {
+            LOG(INFO) << "CLOSED recv_from_connection";
+
+            close(_rx_pipe[1]);
+            close(_rx_pipe[0]);
+            return;
+        }
+
+        THREADPOOL.push_task(&Flow::recv_from_connection, this);
     }
 
-    std::string Flow::to_string() {
-        return "Flow[source=" + _source.to_string() + ", destination=" + _destination.to_string() + ", stream_id=" + std::to_string(_stream_id) + "]";
-    }
+    void Flow::send_to_connection() {
+        ssize_t bytes_spliced = 0;
+        if ((bytes_spliced = splice(_tx_pipe[0], nullptr, _connection->fd(), nullptr, 1024, SPLICE_F_MOVE)) == -1) {
+            if (errno == EAGAIN) {
+                THREADPOOL.push_task(&Flow::send_to_connection, this);
+                return;
+            }
 
-    Flow::~Flow() {
-        // close and delete connection
-        _connection->Close();
-        delete _connection;
+            LOG(INFO) << "send_to_connection splice errno=" << errno;
+        }
 
-        LOG(INFO) << "~" << to_string();
+        LOG(INFO) << "SPLICED OUT " << bytes_spliced << " bytes";
+
+        if (bytes_spliced == 0 || bytes_spliced == -1) {
+            LOG(INFO) << "CLOSED send_to_connection";
+
+            if (_closed) {
+                THREADPOOL.push_task(&quic::FlowContext::delete_flow, (quic::FlowContext*) _context, _stream_id);
+            } else {
+                _closed = true;
+                _connection->Close();
+            }
+
+            return;
+        }
+
+        THREADPOOL.push_task(&Flow::send_to_connection, this);
     }
 
     int Flow::prepare_to_send(uint8_t *bytes, size_t length) {
+        int ret = 0;
+
+        std::lock_guard lock(_rx_mutex);
+
         // update path affinity
-        if ((backlog <= 2000 || backlog::total_backlog <= 74219)) { // && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - flow->last_satellite_timestamp.load()).count() > 600) {
+        if ((_backlog <= 2000 || TOTAL_BACKLOG <= 74219)) { // && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - flow->last_satellite_timestamp.load()).count() > 600) {
+            // switch to ter
             uint64_t path = 1;
             if (_path.compare_exchange_strong(path, 0)) {
-                set_stream_path_affinity(0); // TER
+                ret = set_stream_path_affinity(0); // TER
 
                 LOG(INFO) << "SWITCH TO TER";
             }
         } else {
+            // switch to sat
             // TODO is available?
             uint64_t path = 0;
             if (_path.compare_exchange_strong(path, 1)) {
-                set_stream_path_affinity(1); // SAT
+                ret = set_stream_path_affinity(1); // SAT
 
                 LOG(INFO) << "SWITCH TO SAT";
             }
         }
 
-        // get next chunk
-        if (_tx_buffer_offset == 0) {
-            _tx_buffer = backlog.next();
+        // get max size
+        auto *data = (uint8_t*) malloc(length);
+        ssize_t size = 0;
+        if ((size = read(_rx_pipe[0], data, length)) == -1) { // avoid unnecessary memcpy
+            LOG(INFO) << "prepare_to_send read errno=" << errno;
+            if (errno == EAGAIN) {
+                // no data available, mark flow/stream inactive
+                bool expected = true;
+                if (_active.compare_exchange_strong(expected, false)) {
+                    picoquic_provide_stream_data_buffer(bytes, 0, 0, 0);
 
-            {
-                // sync with recv
-                std::lock_guard lock(_recving);
-
-                if (_tx_buffer == nullptr) {
-                    // no data available, mark flow/stream inactive
-                    bool expected = true;
-                    if (_active.compare_exchange_strong(expected, false)) {
-                        picoquic_provide_stream_data_buffer(bytes, 0, 0, 0);
-
-                        LOG(INFO) << "STEAM INACTIVE";
-
-                        return 0;
-                    }
+                    LOG(INFO) << "STEAM INACTIVE";
                 }
+                return 0;
             }
         }
 
-        uint64_t to_send = std::min(_tx_buffer->length() - _tx_buffer_offset, length);
-
         // send chunk
-        uint8_t *buffer = picoquic_provide_stream_data_buffer(bytes, to_send, (_tx_buffer->length() == 0 ) ? 1 : 0, (_tx_buffer->length() == 0 ) ? 0 : 1);
+        uint8_t *buffer = picoquic_provide_stream_data_buffer(bytes, (size == -1) ? 0 : size, (size == -1) ? 1 : 0, (size == -1) ? 0 : 1);
         if (buffer != nullptr) {
             // write chunk data
-            memcpy(buffer, _tx_buffer->bytes() + _tx_buffer_offset, to_send);
+            memcpy(buffer, data, (size == -1) ? 0 : size);
+
+            if (_backlog > 100000) {
+                THREADPOOL.push_task(&Flow::recv_from_connection, this);
+            }
+
+            _backlog -= (size == -1) ? 0 : size;
         }
 
-        _tx_buffer_offset += to_send;
-        if (_tx_buffer_offset == _tx_buffer->length()) {
-            // reset buffer
-            _tx_buffer = nullptr;
-            _tx_buffer_offset = 0;
+        LOG(INFO) << "SEND IN " << size << " bytes";
+
+        if (size == -1) {
+            if (_closed) {
+                THREADPOOL.push_task(&quic::FlowContext::delete_flow, (quic::FlowContext*) _context, _stream_id);
+            } else {
+                LOG(INFO) << "MARKED closed";
+
+                _closed = true;
+            }
         }
 
-        return 0;
+        return ret;
     }
 
     int Flow::stream_data(uint8_t *bytes, size_t length) {
-        // TODO loop until send
-        _connection->Send(bytes, length, 0);
+        // push to tx queue
+        size_t bytes_written = 0;
+        while(bytes_written < length) {
+            int ret = 0;
+            if ((ret = write(_tx_pipe[1], bytes, length)) == -1) {
+                LOG(INFO) << "stream_data write errno=" << errno;
+                if (errno == EAGAIN) {
+                    continue;
+                }
+
+                return 0;
+            }
+            bytes_written += ret;
+            _tx_size += ret;
+        }
+
+        LOG(INFO) << "RECV OUT " << length << " bytes";
 
         return 0;
     }
@@ -153,11 +228,24 @@ namespace flow {
     int Flow::stream_fin(uint8_t *bytes, size_t length) {
         LOG(INFO) << "FIN received";
 
-        // TODO loop until send
-        _connection->Send(bytes, length, 0);
-        _connection->Shutdown(SHUT_RDWR);
+        //stream_data(bytes, length);
+        assert(length == 0);
+        close(_tx_pipe[1]);
+        close(_tx_pipe[0]);
 
         return 0;
+    }
+
+    std::string Flow::to_string() {
+        return "Flow[stream_id=" + std::to_string(_stream_id) + "]";
+    }
+
+    Flow::~Flow() {
+        // delete connection
+        delete _connection;
+
+        VLOG(1) << "~" << to_string();
+        LOG(INFO) << "Delete Flow with ID=" << _stream_id;
     }
 
 } // flow

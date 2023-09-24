@@ -7,7 +7,7 @@
 
 namespace backlog {
     Chunk::Chunk(uint64_t length) : _data((uint8_t *) malloc(length  + (2 * sizeof(uint64_t)))) {
-        *(_data + sizeof(uint64_t)) = length;
+        *(uint64_t *) (_data + sizeof(uint64_t)) = length;
     }
 
     uint64_t Chunk::offset() {

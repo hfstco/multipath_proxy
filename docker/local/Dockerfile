@@ -37,7 +37,7 @@ RUN echo /proc/sys/kernel/perf_event_paranoid
 RUN echo /proc/sys/kernel/kptr_restrict
 
 # glog
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libunwind-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libunwind-dev liburing-dev
 
 WORKDIR /root
 RUN git clone https://github.com/google/glog.git

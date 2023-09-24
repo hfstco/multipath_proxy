@@ -37,7 +37,7 @@ RUN echo /proc/sys/kernel/perf_event_paranoid
 RUN echo /proc/sys/kernel/kptr_restrict
 
 # mpp
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libgoogle-glog-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libgoogle-glog-dev liburing-dev
 
 # glog
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y libunwind-dev

@@ -2,18 +2,19 @@
 // Created by Matthias Hofstätter on 04.04.23.
 //
 
+#include <fcntl.h>
 #include "TcpSocket.h"
 
 
 namespace net {
     namespace ipv4 {
 
-        TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In>(AF_INET, SOCK_STREAM, 0) {
-            DLOG(INFO) << "TcpSocket() * " + to_string();
+        TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In>(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0) {
+            VLOG(3) << "TcpSocket() * " + to_string();
         }
 
         TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In>(sock_fd) {
-            DLOG(INFO) << "TcpSocket(fd=" + std::to_string(sock_fd) + ") * " + to_string();
+            VLOG(3) << "TcpSocket(fd=" + std::to_string(sock_fd) + ") * " + to_string();
         }
 
         TcpSocket *TcpSocket::make() {
@@ -61,18 +62,18 @@ namespace net {
         }
 
         TcpSocket::~TcpSocket() {
-            DLOG(INFO) << to_string() << ".~TcpSocket()";
+            VLOG(3) << to_string() << ".~TcpSocket()";
         }
 
     } // ipv4
 
 
     namespace ipv6 {
-        TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In6>(AF_INET6, SOCK_STREAM, 0) {
-            DLOG(INFO) << "TcpSocket() * " + to_string();
+        TcpSocket::TcpSocket() : Socket<TcpSocket, SockAddr_In6>(AF_INET6, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0) {
+            VLOG(3) << "TcpSocket() * " + to_string();
         }
         TcpSocket::TcpSocket(int sock_fd) : Socket<TcpSocket, SockAddr_In6>(sock_fd) {
-            DLOG(INFO) << "TcpSocket(" + std::to_string(sock_fd) + ") * " + to_string();
+            VLOG(3) << "TcpSocket(" + std::to_string(sock_fd) + ") * " + to_string();
         }
 
         TcpSocket *TcpSocket::make() {
@@ -120,7 +121,7 @@ namespace net {
         }
 
         TcpSocket::~TcpSocket() {
-            DLOG(INFO) << to_string() << ".~TcpSocket()";
+            VLOG(3) << to_string() << ".~TcpSocket()";
         }
 
     } // ipv6

@@ -1,32 +1,28 @@
 //
-// Created by Matthias Hofstätter on 22.08.23.
+// Created by Matthias Hofstätter on 06.09.23.
 //
 
 #ifndef MPP_BACKLOG_H
 #define MPP_BACKLOG_H
 
-#include <cstdint>
-#include <mutex>
-#include <atomic>
+#include "ChunkQueue.h"
 
 namespace backlog {
 
     class Chunk;
 
-    class Backlog {
+    class Backlog : public ChunkQueue {
     public:
-        Backlog() = default;
-
         explicit operator uint64_t() const noexcept
         { return _size; }
 
         explicit operator uint64_t() const volatile noexcept
         { return _size; }
 
-        friend std::ostream& operator<<(std::ostream& ostream, const Backlog& backlog)
+        friend std::ostream& operator<<(std::ostream& os, const Backlog& dt)
         {
-            ostream << std::to_string(backlog._size);
-            return ostream;
+            os << std::to_string(dt._size);
+            return os;
         }
 
         friend bool operator== (const Backlog &backlog, const uint64_t &value)
@@ -59,23 +55,17 @@ namespace backlog {
             return backlog._size >= value;
         }
 
-        [[nodiscard]] uint64_t size() const {
-            return _size;
-        };
+        Backlog();
 
-        [[nodiscard]] bool empty() const {
-            return _size == 0;
-        };
+        uint64_t size();
 
-        virtual void reset() = 0;
+        void clear() override;
+        void push(Chunk *chunk) override;
+        Chunk *pop() override;
 
-        virtual void insert(Chunk *chunk) = 0;
-        virtual Chunk *next() = 0;
+        ~Backlog() override;
 
-    protected:
-        std::mutex _mutex;
-
-        uint64_t _offset;
+    private:
         uint64_t _size;
     };
 

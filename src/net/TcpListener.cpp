@@ -9,7 +9,7 @@ namespace net {
     namespace ipv4 {
 
         TcpListener::TcpListener(SockAddr_In sockaddr) : Listener<TcpSocket, SockAddr_In>(sockaddr) {
-            DLOG(INFO) << "TcpListener(" << sockaddr.to_string() << ") * " + ToString();
+            VLOG(2) << "TcpListener(" << sockaddr.to_string() << ") * " + ToString();
         }
 
         TcpListener *TcpListener::make(SockAddr_In sockaddr) {
@@ -40,7 +40,7 @@ namespace net {
     namespace ipv6 {
 
         TcpListener::TcpListener(SockAddr_In6 sockaddr) : Listener<TcpSocket, SockAddr_In6>(sockaddr) {
-            DLOG(INFO) << "TcpListener(" << sockaddr.to_string() << ") * " + ToString();
+            VLOG(2) << "TcpListener(" << sockaddr.to_string() << ") * " + ToString();
         }
 
         TcpListener *TcpListener::make(SockAddr_In6 sockaddr) {

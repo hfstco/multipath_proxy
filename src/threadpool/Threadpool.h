@@ -1,64 +1,39 @@
 //
-// Created by Matthias Hofstätter on 03.09.23.
+// Created by Matthias Hofstätter on 06.09.23.
 //
 
 #ifndef MPP_THREADPOOL_H
 #define MPP_THREADPOOL_H
 
-#include <functional>
-#include <future>
-#include <iostream>
-#include <queue>
-#include <thread>
-#include <vector>
+#include "../BS/BS_thread_pool_light.h"
 
-// https://www.cnblogs.com/sinkinben/p/16064857.html
-namespace threadpool {
+// singleton pattern
+// https://stackoverflow.com/questions/1008019/c-singleton-design-pattern
+class Threadpool : public BS::thread_pool_light {
+public:
+    static Threadpool& get()
+    {
+        static Threadpool threadpool = Threadpool(4); // Guaranteed to be destroyed.
+        // Instantiated on first use.
+        return threadpool;
+    }
 
-    class Threadpool {
-    public:
-        Threadpool(const Threadpool &) = delete;
-        Threadpool(Threadpool &&) = delete;
-        Threadpool &operator=(const Threadpool &) = delete;
-        Threadpool &operator=(Threadpool &&) = delete;
+    // C++ 11
+    // =======
+    // We can use the better technique of deleting the methods
+    // we don't want.
+    Threadpool(Threadpool const&) = delete;
+    void operator=(Threadpool const&) = delete;
 
-        Threadpool(size_t nr_threads);
-        virtual ~Threadpool();
+    // Note: Scott Meyers mentions in his Effective Modern
+    //       C++ book, that deleted functions should generally
+    //       be public as it results in better error messages
+    //       due to the compilers behavior to check accessibility
+    //       before deleted status
+private:
+    Threadpool(const unsigned int thread_count) : BS::thread_pool_light(thread_count) {};                    // Constructor? (the {} brackets) are needed here.
+};
 
-        template <class F, class... Args>
-        std::future<std::result_of_t<F(Args...)>> üenqueue(F &&f, Args &&...args)
-        {
-            /* The return type of task `F` */
-            using return_type = std::result_of_t<F(Args...)>;
-
-            /* wrapper for no arguments */
-            auto task = std::make_shared<std::packaged_task<return_type()>>(
-                    std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-
-            std::future<return_type> res = task->get_future();
-            {
-                std::unique_lock lock(mtx);
-
-                if (stop)
-                    throw std::runtime_error("The thread pool has been stop.");
-
-                /* wrapper for no returned value */
-                tasks.emplace([task]() -> void { (*task)(); });
-            }
-            cv.notify_one();
-            return res;
-        }
-
-    private:
-        std::vector<std::thread> workers;
-        std::queue<std::function<void()>> tasks;
-
-        /* For sync usage, protect the `tasks` queue and `stop` flag. */
-        std::mutex mtx;
-        std::condition_variable cv;
-        bool stop;
-    };
-
-} // threadpool
+#define THREADPOOL Threadpool::get()
 
 #endif //MPP_THREADPOOL_H
