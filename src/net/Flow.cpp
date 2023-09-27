@@ -70,11 +70,11 @@ namespace net {
              LOG(INFO) << e.what();
         }
 
-        // socket closed
+        // close packet
         if (bytes_read == 0) {
             recvFromConnectionLooper_.Stop();
 
-            // of socket already closed clear rx queue, next packet should be close packet
+            // socket already closed clear rx queue, next packet should be close packet
             if(closed_) {
                 toBondQueue_.Clear();
                 assert(toBondQueue_.Empty());
