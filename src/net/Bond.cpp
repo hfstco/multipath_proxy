@@ -17,7 +17,6 @@
 #include "Flow.h"
 #include "../collections/FlowMap.h"
 #include "../packet/HeartBeatPacket.h"
-#include "../task/ThreadPool.h"
 #include "../context/Context.h"
 
 namespace net {

@@ -9,11 +9,11 @@
 
 namespace packet {
 
-        static const uint32_t MAGIC = 0xAAAAAAAA;
+        static const uint16_t MAGIC = 0xAAAA;
 
-        enum TYPE : uint32_t {
-            FLOW = 0xC001DA7A,
-            HEARTBEAT = 0xC0DECAFE
+        enum TYPE : uint16_t {
+            FLOW = 0xDA7A,
+            HEARTBEAT = 0xBEA7
         };
 
         struct __attribute__((packed)) Header {
@@ -26,8 +26,8 @@ namespace packet {
             Header(TYPE type);
 
         private:
-            uint32_t magic_ = MAGIC;     // 4
-            TYPE type_;                  // 8
+            uint16_t magic_ = MAGIC;     // 2
+            TYPE type_;                  // 4
         };
 
 } // packet

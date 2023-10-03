@@ -12,7 +12,6 @@
 #include "net/Bond.h"
 #include "net/Proxy.h"
 #include "collections/FlowMap.h"
-#include "task/ThreadPool.h"
 #include "context/Context.h"
 
 

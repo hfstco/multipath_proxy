@@ -13,7 +13,6 @@
 #include "../packet/FlowHeader.h"
 #include "Bond.h"
 #include "../collections/FlowMap.h"
-#include "../task/ThreadPool.h"
 #include "../context/Context.h"
 
 namespace net {
