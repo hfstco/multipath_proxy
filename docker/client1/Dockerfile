@@ -18,6 +18,7 @@ COPY GetParallel.py /root/GetParallel.py
 COPY GetSequential.py /root/GetSequential.py
 COPY GetMultipleSequential.py /root/GetMultipleSequential.py
 COPY GetHeartBeatPacketTest.py /root/GetHeartBeatPacketTest.py
+COPY TestSlowStart.py /root/TestSlowStart.py
 
 # entrypoint
 COPY docker/client1/config/entrypoint.sh /entrypoint.sh

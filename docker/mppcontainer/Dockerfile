@@ -33,7 +33,7 @@ RUN ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_key
 RUN mkdir -p /run/sshd
 
 # wireshark
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wireshark tcpdump
 
 # network configuration
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y net-tools iputils-ping iptables iproute2

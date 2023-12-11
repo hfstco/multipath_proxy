@@ -303,7 +303,7 @@ namespace net {
         }
 
         // wait if BufferFillLevel = BDP + 20%
-        while(terConnection_->IoCtl<int>(TIOCOUTQ) > 9000) { // BDP + 20% = 7500 + 1500 = 9000 bytes
+        while(terConnection_->IoCtl<int>(TIOCOUTQ) > 7500) { // BDP + 20% = 7500 + 1500 = 9000 bytes
             usleep(4219); // 2MBit/s / 8 = 0.25 MB/s = 250000byte/s / 1056 = ~237 packet/s = 1 packet every 4.219 ms = 4129 us
         }
 
@@ -325,7 +325,7 @@ namespace net {
             return;
         }
 
-        while(satConnection_->IoCtl<int>(TIOCOUTQ) > 4500000) { // 3750000
+        while(satConnection_->IoCtl<int>(TIOCOUTQ) > 3750000) { // 3750000
             // bandwidth aggregation
             /*if(args::TER_ENABLED) {
                 if (terConnection_->IoCtl<int>(TIOCOUTQ) < 9000) {
